@@ -20,6 +20,24 @@ db/init/kyq.sql
 
 MariaDB 只会在首次创建 `db/data` 数据目录时自动导入该文件。数据库已经初始化后，替换 `kyq.sql` 不会自动重新导入。
 
+## 运行目录
+
+运行时目录约定如下：
+
+```text
+db/init/kyq.sql        首次初始化数据库备份，不提交 git
+db/data/               MariaDB 数据目录，不提交 git
+db/logs/               MariaDB 日志目录，不提交 git
+runtime/attachment/    BPMT 附件目录，不提交 git
+runtime/download/      BPMT 下载目录，不提交 git
+runtime/ueditor-upload/ UEditor 上传目录，不提交 git
+runtime/platform-logs/ BPMT 平台日志目录，不提交 git
+runtime/tomcat-logs/   Tomcat 日志目录，不提交 git
+config/overrides/      properties 覆盖文件目录，不提交具体覆盖文件
+```
+
+`config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件后面，因此覆盖文件中的同名 key 优先级更高。
+
 ## 维护者构建
 
 维护者需要 Java 8、Maven、Docker，以及可访问旧私有依赖的 Maven 仓库。
