@@ -29,3 +29,10 @@ aspose-*.jar
 jpedal*.jar
 patch-implementation*.jar
 ueditor*.war
+
+Thumbs.db
+**/Thumbs.db
+*.h2.db
+*.h2.db.bak
+util/src/main/resources/aspose/*-license.xml
+util/src/test/resources/*-license.xml
