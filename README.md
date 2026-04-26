@@ -37,6 +37,13 @@ mkdir -p bpmt-lite/db/init && cd bpmt-lite && curl -fsSL https://raw.githubuserc
 http://127.0.0.1:8080/
 ```
 
+默认登录账号：
+
+```text
+用户名：admin
+密码：admin
+```
+
 第一次启动会自动拉取镜像、创建 `db/data`、导入 `db/init/kyq.sql`。这里下载的最小库包含 173 张表和最小系统数据，仅用于本地体验和验证。
 
 ### 一条命令完整初始化
@@ -96,6 +103,8 @@ UEditor 应用：
 ```text
 http://127.0.0.1:8080/ueditor/
 ```
+
+默认登录账号为 `admin/admin`。
 
 ### 停止
 
