@@ -48,11 +48,21 @@
 - `scripts/verify-repo.sh` 通过。
 - Java 8 下 Maven 全仓编译通过。
 - 使用空 Maven 本地仓库和公共 Maven 设置时，全仓编译通过。
+- `scripts/build-image.sh` 构建 `ghcr.io/wodenwang/bpmt-lite:1.1.0` 通过。
 - 使用极简 `kyq` SQL 初始化后，MariaDB 健康检查通过。
 - 使用极简 `kyq` SQL 初始化后，`/` 返回 200。
 - 使用极简 `kyq` SQL 初始化后，`/ueditor/` 返回 200。
 - 默认 `docker-compose.yml` 中只保留必要环境变量。
 - 至少验证一个 `config/overrides/*.properties` 覆盖文件仍然生效。
+
+## 当前状态
+
+截至 2026-04-26：
+
+- 历史 Maven 依赖阻断已通过依赖裁剪和公开坐标替换解决，不再需要额外分发历史 Maven artifact。
+- `database/bpmt-db.sql` 已生成并作为最小初始化库，导入后共 173 张表。
+- `docker-compose.yml` 已完成配置瘦身，高级配置通过 `config/overrides/*.properties` 覆盖。
+- 本地发布候选镜像 `ghcr.io/wodenwang/bpmt-lite:1.1.0` 已构建并完成 compose 启动验收。
 
 ## 文档结构
 

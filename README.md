@@ -4,18 +4,20 @@
 
 本项目只调整代码结构、打包方式、配置方式和部署方式，不升级技术栈、不重写功能、不增加功能。运行栈继续保持 Java 8、Tomcat 7、MariaDB。
 
-## v1.0.0 状态
+## v1.1.0 状态
 
-`v1.0.0` 是 bpmt-lite 的首个正式 Docker 化版本。
+`v1.1.0` 是 bpmt-lite 的第二个 Docker 化版本，重点收口公开构建、最小初始化库和 compose 配置体验。
 
-- GitHub Release: https://github.com/wodenwang/bpmt-lite/releases/tag/v1.0.0
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.0.0`
-- 同步镜像 tag：`ghcr.io/wodenwang/bpmt-lite:latest`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.1.0`
+- 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
 - 默认 Web 访问地址：`http://127.0.0.1:8080/`
 - Tomcat 中的 `ROOT` 应用是 BPMT `platform`
 - Tomcat 中额外包含 `/ueditor` 应用
 - MariaDB 初始化数据库名：`kyq`
-- 发布验收：`kyq` 初始化后 383 张表，`/` 和 `/ueditor/` 均返回 200
+- 最小初始化库：`database/bpmt-db.sql`
+- 发布验收：最小库初始化后 173 张表，`/` 和 `/ueditor/` 均返回 200
+
+历史 `v1.0.0` 发布说明见 [docs/release-v1.0.0.md](docs/release-v1.0.0.md)。
 
 ## Quick Start
 
@@ -26,7 +28,7 @@
 适合先快速体验容器是否能跑起来：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.0.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
 ```
 
 然后访问：
@@ -35,14 +37,24 @@ mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.c
 http://127.0.0.1:8080/
 ```
 
-说明：这个命令不会初始化业务数据，因为公开仓库不包含 `kyq.sql`。
+说明：这个命令不会导入数据库初始化数据。需要最小系统数据时，使用下一节的极简初始化方式。
+
+### 一条命令极简初始化
+
+适合快速得到可访问的最小 BPMT 数据库：
+
+```bash
+mkdir -p bpmt-lite/db/init && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/database/bpmt-db.sql -o db/init/kyq.sql && docker compose up -d
+```
+
+第一次启动会自动拉取镜像、启动 MariaDB、导入最小初始化库。该库包含 173 张表和最小系统数据，仅用于本地体验和验证。
 
 ### 一条命令完整初始化
 
 如果你本机已经有 `kyq.sql`，使用下面的命令。把 `/path/to/kyq.sql` 改成你的真实文件路径：
 
 ```bash
-KYQ_SQL=/path/to/kyq.sql; mkdir -p bpmt-lite/db/init && cp "$KYQ_SQL" bpmt-lite/db/init/kyq.sql && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.0.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
+KYQ_SQL=/path/to/kyq.sql; mkdir -p bpmt-lite/db/init && cp "$KYQ_SQL" bpmt-lite/db/init/kyq.sql && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
 ```
 
 第一次启动会自动拉取镜像、启动 MariaDB、导入 `db/init/kyq.sql`。
@@ -61,7 +73,7 @@ db/init/kyq.sql
 docker compose up -d
 ```
 
-如果没有 `kyq.sql`，容器仍会启动，但不会得到完整的初始化业务数据。
+如果没有完整 `kyq.sql`，可以把 [database/bpmt-db.sql](database/bpmt-db.sql) 复制为 `db/init/kyq.sql`，得到最小可访问数据库。
 
 ### 查看状态
 
@@ -113,7 +125,7 @@ docker compose up -d
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.0.0` | Web 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.1.0` | Web 镜像 tag |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
 | `DB_NAME` | `kyq` | 数据库名 |
 | `DB_USER` | `root` | 数据库用户 |

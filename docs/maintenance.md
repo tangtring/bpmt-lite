@@ -104,7 +104,7 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='kyq';"
 ```
 
-`v1.0.0` 的期望结果是 `383`。
+使用完整历史 `kyq.sql` 时，`v1.0.0` 的期望结果是 `383`。使用 `v1.1.0` 最小初始化库 `database/bpmt-db.sql` 时，期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。
 
 检查 Web：
 
@@ -132,6 +132,19 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 11. 合并 PR 到 `main`
 12. 在合并后的 `main` 打 git tag
 13. 创建 GitHub Release
+
+## v1.1.0 发布候选验收
+
+截至 2026-04-26，当前分支已完成一次 `v1.1.0` 发布候选验收：
+
+- Java 8 + public-only 临时 Maven settings + 空本地 Maven 仓库：`mvn -s <tmp-settings> -DskipTests compile` 通过。
+- `scripts/build-image.sh` 通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.1.0`。
+- 使用 `database/bpmt-db.sql` 从零初始化 MariaDB 通过。
+- 初始化后 `kyq` 表数量为 173，Activiti 24 张，Quartz 11 张。
+- `http://127.0.0.1:<test-port>/` 返回 200。
+- `http://127.0.0.1:<test-port>/ueditor/` 返回 200。
+- `config/overrides/page.properties` 覆盖已验证。
+- 容器内默认 `log.properties` 为 `log.encoding=utf8`、`log.level=debug`。
 
 ## GHCR 发布
 
