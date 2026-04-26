@@ -8,7 +8,8 @@
 
 本 spec 的实现来源调整为：
 
-- 表结构借鉴旧项目 `/Users/wenzhewang/workspace/bpmt_project/riversoft/trunk/support/hbm2ddl`，由 Hibernate HBM 映射生成 MySQL DDL。
+- 平台表结构借鉴旧项目 `/Users/wenzhewang/workspace/bpmt_project/riversoft/trunk/support/hbm2ddl`，由 Hibernate HBM 映射生成 MySQL DDL。
+- Activiti 和 Quartz 这类框架表不由项目 HBM 生成，需从对应框架 SQL 来源补齐。
 - 最小初始化数据以旧项目 `/Users/wenzhewang/workspace/bpmt_project/riversoft/package/database/bpmt_init_data.xlsx` 为准。
 - 当前本地 `db/init/kyq.sql` 保留，不作为清洗输入，不做任何修改。
 
@@ -16,7 +17,7 @@
 
 - 交付一份可公开提交的最小 `bpmt-db.sql`。
 - 初始化后平台首页 `/` 返回 200，`/ueditor/` 返回 200。
-- 初始化库只包含 HBM 表结构和 `bpmt_init_data.xlsx` 中定义的最小系统数据。
+- 初始化库包含 HBM 平台表结构、Activiti 表结构、Quartz 表结构，以及 `bpmt_init_data.xlsx` 中定义的最小系统数据。
 - 不从完整历史 `kyq.sql` 中抽取或清洗数据。
 - 形成可重复的生成脚本，避免手工不可追溯。
 
@@ -52,6 +53,18 @@ java -Dfile.encoding=UTF-8 -cp "$CP" com.riversoft.hbm2ddl.Main \
 ```
 
 本轮已确认 `target/sql-bpmt-lite/mysql/create_model.sql` 可生成。
+
+框架表结构来源：
+
+```text
+/Volumes/vm/maven/repository/org/activiti/activiti-engine/5.16.3/activiti-engine-5.16.3.jar
+/Volumes/vm/maven/repository/com/riversoft/quartz-ddl/2.2.1/quartz-ddl-2.2.1.zip
+```
+
+其中：
+
+- Activiti 使用 jar 内置的 `org/activiti/db/create/activiti.mysql.create.engine.sql`、`history.sql`、`identity.sql`。
+- Quartz `quartz-2.2.1.jar` 本体和 sources jar 不包含 DDL；旧项目通过 `com.riversoft:quartz-ddl:2.2.1` 提供 `quartz-mysql-create.sql`。
 
 初始化数据来源：
 
@@ -116,18 +129,20 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 ## 风险和决策点
 
 - `bpmt_init_data.xlsx` 中包含默认 `admin` 用户，密码哈希为历史初始化数据。README 必须明确该账号仅用于本地体验，生产环境必须修改。
-- HBM 生成的表结构只有核心平台表，不包含历史完整库中的所有业务表；这符合最小化目标，但需要通过 Web 启动验证确认不会缺表。
+- HBM 生成的表结构只有核心平台表，不包含 Activiti/Quartz 这类框架表；生成脚本已显式追加这两类框架表。
+- 最小库仍不包含历史完整库中的所有业务表；这符合最小化目标，但需要通过 Web 启动验证确认不会缺表。
 - `hbm2ddl` 生成的是大写表名；Docker compose 当前 MariaDB 使用 `lower_case_table_names=1`，正式验证应以 compose 路径为准。
 - 如果后续需要加入更多初始化数据，应优先修改或替换 Excel 来源，而不是从 `kyq.sql` 手工抽取。
 
 ## 实施顺序
 
 1. 跑通旧项目 `hbm2ddl`，生成 MySQL `create_model.sql`。
-2. 解析 `bpmt_init_data.xlsx`，将各 sheet 转换为对应表的 `INSERT`。
-3. 合并表结构和初始化数据，生成 `database/bpmt-db.sql`。
-4. 使用临时 MariaDB 容器验证 SQL 可导入。
-5. 使用 Docker compose 从零导入验证 `/` 和 `/ueditor/`。
-6. 更新 README 和维护文档，说明 `bpmt-db.sql` 与 `kyq.sql` 的区别。
+2. 从 Activiti/Quartz 的框架 SQL 来源补齐 `ACT_*`、`QRTZ_*` 表结构。
+3. 解析 `bpmt_init_data.xlsx`，将各 sheet 转换为对应表的 `INSERT`。
+4. 合并表结构和初始化数据，生成 `database/bpmt-db.sql`。
+5. 使用临时 MariaDB 容器验证 SQL 可导入。
+6. 使用 Docker compose 从零导入验证 `/` 和 `/ueditor/`。
+7. 更新 README 和维护文档，说明 `bpmt-db.sql` 与 `kyq.sql` 的区别。
 
 ## 当前实现记录
 
@@ -139,8 +154,8 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 
 当前 `database/bpmt-db.sql` 生成结果：
 
-- SQL 大小约 108KB。
-- 包含 138 张表结构。
+- SQL 大小约 132KB。
+- 包含 173 张表结构，其中 Activiti 24 张、Quartz 11 张。
 - 包含 107 条 `INSERT` 初始化数据。
 - 临时 MariaDB 10.11 容器导入通过。
 - 临时 compose 验证通过：`/` 返回 200，`/ueditor/` 返回 200。

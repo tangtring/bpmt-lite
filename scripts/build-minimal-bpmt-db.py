@@ -114,13 +114,40 @@ def insert_sql(table_name, columns, rows):
     return statements
 
 
-def build_sql(ddl_path, workbook_path, output_path):
+ACTIVITI_SQL_RESOURCES = [
+    "org/activiti/db/create/activiti.mysql.create.engine.sql",
+    "org/activiti/db/create/activiti.mysql.create.history.sql",
+    "org/activiti/db/create/activiti.mysql.create.identity.sql",
+]
+
+QUARTZ_SQL_RESOURCE = "quartz-mysql-create.sql"
+
+
+def zip_text(zip_path, resource_name):
+    with ZipFile(zip_path) as zip_file:
+        return zip_file.read(resource_name).decode("utf-8")
+
+
+def normalize_framework_sql(sql):
+    lines = []
+    for line in sql.splitlines():
+        if line.strip().lower() == "commit;":
+            continue
+        lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def build_sql(ddl_path, workbook_path, output_path, activiti_jar_path, quartz_ddl_zip_path):
     ddl = ddl_path.read_text(encoding="utf-8")
+    activiti_ddls = [normalize_framework_sql(zip_text(activiti_jar_path, resource)) for resource in ACTIVITI_SQL_RESOURCES]
+    quartz_ddl = normalize_framework_sql(zip_text(quartz_ddl_zip_path, QUARTZ_SQL_RESOURCE))
     tables = parse_workbook(workbook_path)
 
     output = []
     output.append("-- bpmt-lite minimal database")
-    output.append("-- schema source: %s" % ddl_path)
+    output.append("-- hbm schema source: %s" % ddl_path)
+    output.append("-- activiti schema source: %s" % activiti_jar_path)
+    output.append("-- quartz schema source: %s" % quartz_ddl_zip_path)
     output.append("-- data source: %s" % workbook_path)
     output.append("SET NAMES utf8;")
     output.append("SET FOREIGN_KEY_CHECKS=0;")
@@ -128,7 +155,15 @@ def build_sql(ddl_path, workbook_path, output_path):
     output.append("CREATE DATABASE IF NOT EXISTS `kyq` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;")
     output.append("USE `kyq`;")
     output.append("")
+    output.append("-- hbm2ddl platform schema")
     output.append(ddl.rstrip())
+    output.append("")
+    output.append("-- Activiti 5.16.3 schema")
+    for activiti_ddl in activiti_ddls:
+        output.append(activiti_ddl)
+        output.append("")
+    output.append("-- Quartz 2.2.1 schema")
+    output.append(quartz_ddl)
     output.append("")
     output.append("-- minimal init data")
     for table_name, columns, rows in tables:
@@ -144,13 +179,21 @@ def build_sql(ddl_path, workbook_path, output_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build minimal bpmt database SQL from hbm2ddl MySQL DDL and init-data workbook.")
+    parser = argparse.ArgumentParser(description="Build minimal bpmt database SQL from hbm2ddl/framework MySQL DDL and init-data workbook.")
     parser.add_argument("--ddl", default="/Users/wenzhewang/workspace/bpmt_project/riversoft/trunk/support/hbm2ddl/target/sql-bpmt-lite/mysql/create_model.sql")
     parser.add_argument("--xlsx", default="/Users/wenzhewang/workspace/bpmt_project/riversoft/package/database/bpmt_init_data.xlsx")
+    parser.add_argument("--activiti-jar", default="/Volumes/vm/maven/repository/org/activiti/activiti-engine/5.16.3/activiti-engine-5.16.3.jar")
+    parser.add_argument("--quartz-ddl-zip", default="/Volumes/vm/maven/repository/com/riversoft/quartz-ddl/2.2.1/quartz-ddl-2.2.1.zip")
     parser.add_argument("--output", default="database/bpmt-db.sql")
     args = parser.parse_args()
 
-    build_sql(Path(args.ddl), Path(args.xlsx), Path(args.output))
+    build_sql(
+        Path(args.ddl),
+        Path(args.xlsx),
+        Path(args.output),
+        Path(args.activiti_jar),
+        Path(args.quartz_ddl_zip),
+    )
 
 
 if __name__ == "__main__":
