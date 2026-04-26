@@ -10,8 +10,8 @@
 
 | Maven 坐标 | 当前本机是否已有 artifact |
 | --- | --- |
-| `org.hyperic:sigar:1.6.5.132-6` | 是 |
-| `org.apache.commons:commons-jexl:2.1.2` | 是 |
+| `org.hyperic:sigar:1.6.5.132-6` | 已确认割舍 |
+| `org.apache.commons:commons-jexl:2.1.2` | 已回退到公共仓库可下载的 `2.1.1` |
 | `org.artofsolving.jodconverter:jodconverter-core:3.1.1` | 是 |
 | `com.aspose:aspose-slides:15.9.0` | 是 |
 | `com.aspose:aspose-words:14.12.0` | 是 |
@@ -49,8 +49,6 @@ bpmt-lite-maven-artifacts-1.1.0.tar.gz
 
 ```text
 repository/
-  org/hyperic/sigar/1.6.5.132-6/
-  org/apache/commons/commons-jexl/2.1.2/
   org/artofsolving/jodconverter/jodconverter-core/3.1.1/
   com/aspose/aspose-slides/15.9.0/
   com/aspose/aspose-words/14.12.0/

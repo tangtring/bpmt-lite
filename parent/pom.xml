@@ -23,7 +23,7 @@
     <hazelcast.version>3.5.4</hazelcast.version>
     <commons-lang.version>3.1</commons-lang.version>
     <commons-dbcp.version>1.4</commons-dbcp.version>
-    <commons-jexl.version>2.1.2</commons-jexl.version>
+    <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-cli.version>1.2</commons-cli.version>
     <commons-io.version>2.4</commons-io.version>
     <commons-codec.version>1.10</commons-codec.version>
@@ -55,7 +55,6 @@
     <bonecp.version>0.8.0.RELEASE</bonecp.version>
     <itext.version>5.2.0</itext.version>
     <pinyin4j.version>2.5.0</pinyin4j.version>
-    <sigar.version>1.6.5.132-6</sigar.version>
     <fasterxml-uuid.version>3.1.4</fasterxml-uuid.version>
     <quartz.version>2.2.1</quartz.version>
     <perf4j.version>0.9.16</perf4j.version>
@@ -321,12 +320,6 @@
         <groupId>org.jodd</groupId>
         <artifactId>jodd-mail</artifactId>
         <version>${jodd-email.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar</artifactId>
-        <version>${sigar.version}</version>
       </dependency>
 
       <!-- groovy -->
