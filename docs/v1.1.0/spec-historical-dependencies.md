@@ -29,8 +29,16 @@
 | `org.jumpmind.symmetric:symmetric-util:3.7.19` | 官方仓库 `https://maven.jumpmind.com/repo` 的 metadata 仍列出 `3.7.19`，但实际 pom/jar 返回 404；已微调到同一 `3.7.x` 线可下载的 `3.7.38` |
 | `org.jumpmind.symmetric:symmetric-db:3.7.19` | 同上，已微调到 `3.7.38` |
 | `org.jumpmind.symmetric:symmetric-jdbc:3.7.19` | 同上，已微调到 `3.7.38` |
-| `com.oracle:ojdbc6:11.2.0.4` | Central、阿里云 public、华为云、腾讯云常见公共仓库均不可下载；可另行评估是否切换到 `com.oracle.database.jdbc:ojdbc6:11.2.0.4` |
-| `com.microsoft:sqlserver-jdbc:4.0.0` | Central、阿里云 public、华为云、腾讯云常见公共仓库均不可下载；可另行评估是否切换到 `com.microsoft.sqlserver:mssql-jdbc` 的 Java 8 兼容版本 |
+| `com.oracle:ojdbc6:11.2.0.4` | 已切换到 Central 可下载的官方坐标 `com.oracle.database.jdbc:ojdbc6:11.2.0.4` |
+| `com.microsoft:sqlserver-jdbc:4.0.0` | 已切换到 Central 可下载的 Java 8 兼容坐标 `com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8` |
+
+完成 JDBC 坐标切换后，空本地仓继续编译已能下载 Oracle、SQL Server 和 JumpMind 依赖，下一批阻断推进到：
+
+| Maven 坐标 | 状态 |
+| --- | --- |
+| `com.taobao:taobao-sdk:1.1` | 待处理 |
+| `com.github.kenglxn.QRGen:javase:2.1.0` | 待处理 |
+| `com.github.kenglxn.QRGen:core:2.1.0` | 待处理 |
 
 ## 目标
 
