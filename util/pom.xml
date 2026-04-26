@@ -110,29 +110,6 @@
       <artifactId>pinyin4j</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.artofsolving.jodconverter</groupId>
-      <artifactId>jodconverter-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-slides</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-words</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-cells</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.jpedal</groupId>
-      <artifactId>pdf2image</artifactId>
-    </dependency>
-
     <!-- Test -->
     <dependency>
       <groupId>org.springframework</groupId>

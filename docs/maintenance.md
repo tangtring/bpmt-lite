@@ -44,7 +44,7 @@ cp settings.example.xml settings.local.xml
 
 `settings.local.xml` 不提交到 git。它用于配置可访问旧私有依赖的 Maven 仓库。
 
-当前仍可能依赖旧包，例如 Aspose、JPedal、patch implementation、UEditor WAR 等。不要在没有专项计划的情况下替换这些依赖。
+当前仍可能依赖旧包，例如 patch implementation、UEditor WAR 等。不要在没有专项计划的情况下替换这些依赖。
 
 ## 仓库检查
 
@@ -189,6 +189,19 @@ sha256:8d3071c2b43e472beb0f453990b95c057895bf02bdd4be0dcdf74e7b336ba961
 - 许可证文件
 
 `db/init/kyq.sql` 只用于首次初始化。已有 `db/data` 时不会再次导入。
+
+## v1.1.0 Office/PDF 转换裁剪
+
+`v1.1.0` 默认发行不再包含 Aspose、JPedal 和 JODConverter。
+
+影响范围：
+
+- 不支持微信/企业微信文件自动转图文素材。
+- 不支持非 PDF Office 附件在线转 PDF 预览。
+- 不支持依赖 Office 服务的 PDF 导出。
+- PDF 文件本身的普通上传、下载和直接预览不受影响。
+
+默认 Docker 配置继续保持 `office.flag=false` 和 `office.prepare=false`。后续如果要恢复 Office/PDF 转换能力，应作为单独版本目标重新设计依赖来源、许可边界和运行服务。
 
 ## 常见问题
 
