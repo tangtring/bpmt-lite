@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-3.4.1-SNAPSHOT}
+    image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-1.0.0}
     platform: linux/amd64
     container_name: bpmt-lite-web
     depends_on:
