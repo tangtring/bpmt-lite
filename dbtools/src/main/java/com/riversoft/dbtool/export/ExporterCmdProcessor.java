@@ -89,7 +89,7 @@ public class ExporterCmdProcessor extends AbstractCmdProcessor {
         Exporter exporter;
         try {
             dataSource = DataSourceInstance.getInstance(conf).getDataSource();
-            databasePlatform = JdbcDatabasePlatformFactory.createNewPlatformInstance(dataSource, new SqlTemplateSettings(), true);
+            databasePlatform = JdbcDatabasePlatformFactory.createNewPlatformInstance(dataSource, new SqlTemplateSettings(), true, false);
             database = databasePlatform.readDatabase(databasePlatform.getDefaultCatalog(), databasePlatform.getDefaultSchema(), new String[]{});
             exporter = new Exporter(dataSource);
         } catch (Exception e) {

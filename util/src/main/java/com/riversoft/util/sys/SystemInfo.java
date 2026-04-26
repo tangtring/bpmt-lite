@@ -15,14 +15,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.hyperic.sigar.CpuInfo;
-import org.hyperic.sigar.Mem;
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
-
 /**
  * @author Borball
- * 
+ *
  */
 public final class SystemInfo {
 
@@ -64,38 +59,12 @@ public final class SystemInfo {
         try {
             return InetAddress.getLocalHost().getCanonicalHostName();
         } catch (UnknownHostException e) {
-            Sigar sigar = null;
-            try {
-                sigar = new Sigar();
-                return sigar.getFQDN();
-            } catch (SigarException ex) {
-                return null;
-            } finally {
-                if (sigar != null) {
-                    sigar.close();
-                }
-            }
+            return null;
         }
     }
 
     public static String getCPUInfo() {
-        StringBuffer sb = new StringBuffer();
-        Sigar sigar = new Sigar();
-        try {
-            CpuInfo[] cpus = sigar.getCpuInfoList();
-
-            for (CpuInfo cpuInfo : cpus) {
-                sb.append(cpuInfo.getVendor()).append("-").append(cpuInfo.getModel()).append("+");
-            }
-        } catch (SigarException e) {
-            // ignore
-        }
-        return sb.toString();
-    }
-
-    public static Mem getMem() throws SigarException {
-        Sigar sigar = new Sigar();
-        return sigar.getMem();
+        return Runtime.getRuntime().availableProcessors() + " processors";
     }
 
     public static String getIdentifier() {

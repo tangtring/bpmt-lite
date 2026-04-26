@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-1.0.0}
+    image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-1.1.0}
     platform: linux/amd64
     container_name: bpmt-lite-web
     depends_on:
@@ -11,106 +11,11 @@ services:
       - "${BPMT_HTTP_PORT:-8080}:8080"
     environment:
       TZ: Asia/Shanghai
-      DB_HOST: mariadb
-      DB_PORT: 3306
-      DB_NAME: kyq
-      DB_USER: root
-      DB_PASSWORD: 123456
-      HIBERNATE_AUTOUPDATE: "false"
-      HIBERNATE_CACHE: "true"
-      JDBC_POOL_PARTITION_COUNT: 2
-      JDBC_POOL_PARTITION_MIN: 5
-      JDBC_POOL_PARTITION_MAX: 50
-      SQL_LOG: "false"
-      SQL_STAT_ENABLE: "false"
-      SQL_STAT_LIMITED: 500
-      FREEMARKER_DELAY: 3600
-      PAGE_TITLE: BPMT
-      PAGE_THEME: smoothness
-      PAGE_THEME_EXT: ""
-      PAGE_THEME_BACKGROUD: 0
-      PAGE_TIPS: ""
-      PAGE_LOGO_URL: ""
-      PAGE_COPYRIGHT: "copyright &copy; 2012-2016 Riversoft Designs"
-      PAGE_RANDOMCODE: 3
-      PAGE_TASKPANEL: "true"
-      PAGE_BROWSER_MSG: ""
-      PAGE_BROWSER_URL: ""
-      PAGE_FRAME_NEW: "false"
-      PAGE_FRAME_LOGIN: ""
-      PAGE_LANGUAGE: "zh_CN;en"
-      SAFE_ROLE: LIGHT_WEIGHT
-      SAFE_SYNC_THREADS: 10
-      SAFE_WHITE_IP: ""
-      SAFE_WHITE_UID: ""
-      SAFE_ADMIN: admin
-      REDIS_FLAG: "false"
-      REDIS_IP: redis
-      REDIS_PORT: 6379
-      REDIS_MAXTOTAL: 5
-      OFFICE_FLAG: "false"
-      OFFICE_PREPARE: "false"
-      OFFICE_PORT: 2002
-      OFFICE_FILE_SIZE: 2
-      OFFICE_UPLOAD_SIZE: 100
-      OFFICE_INSTALLATION_PATH: ""
-      MAIL_NOTIFY_FLAG: "false"
-      MAIL_NOTIFY_USER_SETTING: "false"
-      MAIL_RECEIVER_HOST: ""
-      MAIL_SENDER_HOST: ""
-      MAIL_SENDER_ACCOUNT: ""
-      MAIL_SENDER_PASSWORD: ""
-      MAIL_FLOW_SUBJECT_TYPE: 2
-      MAIL_FLOW_CONTENT_TYPE: 2
-      MAIL_FLOW_SUBJECT_SCRIPT: "[\\u00c1\\u00f7\\u00b3\\u00cc\\u00cd\\u00a8\\u00d6\\u00aa]$${fo.pdName}:$${fo.activityName}"
-      MAIL_FLOW_CONTENT_SCRIPT: ""
-      SMS_ALI_ENABLE: "false"
-      SMS_VERIFIED_SYSTEM: BPMT
-      SMS_VERIFIED_LENGTH: 6
-      SMS_VERIFIED_TEMPLATE_DEFAULT: ""
-      SMS_ALI_ENDPOINT: https://eco.taobao.com/router/rest
-      SMS_ALI_APPKEY: ""
-      SMS_ALI_APPSECRET: ""
-      SMS_ALI_SIGNNAME: ""
-      WX_WEB_LOGIN_QRCODE: "false"
-      WX_WEB_APPID: ""
-      WX_WEB_APPSECRET: ""
-      WX_WEB_MP_APPIDS: ""
-      WX_NET_DOMAIN: localhost
-      WX_NET_HTTPS: "false"
-      WX_QY_FLAG: "false"
-      WX_QY_CORPID: ""
-      WX_QY_CORPSECRET: ""
-      WX_QY_CONTACTMODE: 0
-      WX_QY_PAY_FLAG: "false"
-      WX_QY_PAY_MCHID: ""
-      WX_QY_PAY_KEY: ""
-      WX_QY_PAY_CERTPATH: ""
-      WX_QY_PAY_CERTPASSWORD: ""
-      WX_OPEN_FLAG: "false"
-      WX_OPEN_APPID: ""
-      WX_OPEN_APPSECRET: ""
-      WX_OPEN_TABLE: ""
-      LOG_ENCODING: UTF-8
-      LOG_LEVEL: info
-      LOG_JOLBOX_LEVEL: warn
-      LOG_3PP_LEVEL: warn
-      LOG_KEEPDAYS: 30
-      HAZELCAST_GROUP_NAME: bpmt
-      HAZELCAST_GROUP_PASSWORD: bpmt
-      HAZELCAST_MANAGEMENT_CENTER_ENABLE: "false"
-      HAZELCAST_MANAGEMENT_CENTER_URL: http://localhost:8080/mancenter
-      HAZELCAST_PORT: 5701
-      HAZELCAST_MULTICAST: "false"
-      HAZELCAST_MULTICAST_GROUP: 224.2.2.3
-      HAZELCAST_MULTICAST_PORT: 54327
-      HAZELCAST_TCPIP: "false"
-      HAZELCAST_TCPIP_MEMBERS: 127.0.0.1
-      ACTIVITI_FONT: simsun
-      QUARTZ_THREADPOOL_THREADCOUNT: 5
-      QUARTZ_JOBSTORE_CLASS: org.quartz.impl.jdbcjobstore.JobStoreTX
-      QUARTZ_JOBSTORE_DRIVERDELEGATECLASS: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
-      ORG_QUARTZ_JOBSTORE_SELECTWITHLOCKSQL: ""
+      DB_HOST: ${DB_HOST:-mariadb}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-kyq}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
     volumes:
       - ./config/overrides:/config/overrides:ro
       - ./runtime/attachment:/usr/local/tomcat/webapps/attachment
@@ -128,8 +33,8 @@ services:
       - "${BPMT_DB_PORT:-3306}:3306"
     environment:
       TZ: Asia/Shanghai
-      MARIADB_ROOT_PASSWORD: 123456
-      MARIADB_DATABASE: kyq
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-123456}
+      MARIADB_DATABASE: ${DB_NAME:-kyq}
     volumes:
       - ./db/data:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d

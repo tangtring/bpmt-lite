@@ -3,7 +3,7 @@
   <parent>
     <artifactId>parent</artifactId>
     <groupId>com.riversoft</groupId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <relativePath>../parent/</relativePath>
   </parent>
   <artifactId>util</artifactId>
@@ -32,11 +32,6 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>sigar</artifactId>
     </dependency>
 
     <!-- LOGGING begin -->
@@ -108,29 +103,6 @@
     <dependency>
       <groupId>com.belerweb</groupId>
       <artifactId>pinyin4j</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.artofsolving.jodconverter</groupId>
-      <artifactId>jodconverter-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-slides</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-words</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-cells</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.jpedal</groupId>
-      <artifactId>pdf2image</artifactId>
     </dependency>
 
     <!-- Test -->

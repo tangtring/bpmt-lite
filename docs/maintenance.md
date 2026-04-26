@@ -44,7 +44,7 @@ cp settings.example.xml settings.local.xml
 
 `settings.local.xml` 不提交到 git。它用于配置可访问旧私有依赖的 Maven 仓库。
 
-当前仍可能依赖旧包，例如 Aspose、JPedal、patch implementation、UEditor WAR 等。不要在没有专项计划的情况下替换这些依赖。
+当前仍可能依赖旧包，例如 patch implementation、UEditor WAR 等。不要在没有专项计划的情况下替换这些依赖。
 
 ## 仓库检查
 
@@ -104,7 +104,7 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='kyq';"
 ```
 
-`v1.0.0` 的期望结果是 `383`。
+使用完整历史 `kyq.sql` 时，`v1.0.0` 的期望结果是 `383`。使用 `v1.1.0` 最小初始化库 `database/bpmt-db.sql` 时，期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。
 
 检查 Web：
 
@@ -132,6 +132,19 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 11. 合并 PR 到 `main`
 12. 在合并后的 `main` 打 git tag
 13. 创建 GitHub Release
+
+## v1.1.0 发布候选验收
+
+截至 2026-04-26，当前分支已完成一次 `v1.1.0` 发布候选验收：
+
+- Java 8 + public-only 临时 Maven settings + 空本地 Maven 仓库：`mvn -s <tmp-settings> -DskipTests compile` 通过。
+- `scripts/build-image.sh` 通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.1.0`。
+- 使用 `database/bpmt-db.sql` 从零初始化 MariaDB 通过。
+- 初始化后 `kyq` 表数量为 173，Activiti 24 张，Quartz 11 张。
+- `http://127.0.0.1:<test-port>/` 返回 200。
+- `http://127.0.0.1:<test-port>/ueditor/` 返回 200。
+- `config/overrides/page.properties` 覆盖已验证。
+- 容器内默认 `log.properties` 为 `log.encoding=utf8`、`log.level=debug`。
 
 ## GHCR 发布
 
@@ -190,6 +203,19 @@ sha256:8d3071c2b43e472beb0f453990b95c057895bf02bdd4be0dcdf74e7b336ba961
 
 `db/init/kyq.sql` 只用于首次初始化。已有 `db/data` 时不会再次导入。
 
+## v1.1.0 Office/PDF 转换裁剪
+
+`v1.1.0` 默认发行不再包含 Aspose、JPedal 和 JODConverter。
+
+影响范围：
+
+- 不支持微信/企业微信文件自动转图文素材。
+- 不支持非 PDF Office 附件在线转 PDF 预览。
+- 不支持依赖 Office 服务的 PDF 导出。
+- PDF 文件本身的普通上传、下载和直接预览不受影响。
+
+默认 Docker 配置继续保持 `office.flag=false` 和 `office.prepare=false`。后续如果要恢复 Office/PDF 转换能力，应作为单独版本目标重新设计依赖来源、许可边界和运行服务。
+
 ## 常见问题
 
 ### 修改 kyq.sql 后为什么没有重新导入？
@@ -200,9 +226,19 @@ MariaDB 官方初始化机制只在数据目录为空时执行 `/docker-entrypoi
 
 本项目目标是发行方式现代化，不是技术栈升级。老技术栈虽然陈旧，但业务功能已经稳定；贸然升级会带来较高回归风险。
 
-### 为什么有些配置在 docker-compose.yml 里很多？
+### 为什么 docker-compose.yml 只保留少量配置？
 
-这是为了让原 properties 中的关键配置可以通过 compose 管理，而不是进入 Docker image 内部修改。
+`v1.1.0` 起，默认 compose 只保留快速启动需要的端口、镜像 tag 和数据库连接信息。原 properties 的低频参数仍由 `docker/docker-entrypoint.sh` 生成默认值。
+
+需要调整高级配置时，在 `config/overrides/` 下创建同名 properties 文件，例如：
+
+```text
+config/overrides/page.properties
+config/overrides/log.properties
+config/overrides/jdbc.properties
+```
+
+覆盖文件会追加到容器内 `ROOT/WEB-INF/classes/` 的同名文件末尾，因此同名 key 以覆盖文件为准。仓库中的 `*.example` 文件只作为模板，不会被运行时读取。
 
 ### UEditor 上传文件保存在哪里？
 

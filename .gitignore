@@ -18,6 +18,7 @@ runtime/*
 
 config/overrides/*
 !config/overrides/.gitkeep
+!config/overrides/*.example
 
 *.log
 *.tmp

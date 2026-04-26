@@ -3,7 +3,7 @@
   <parent>
     <artifactId>parent</artifactId>
     <groupId>com.riversoft</groupId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <relativePath>../parent/</relativePath>
   </parent>
   <artifactId>platform</artifactId>
@@ -393,11 +393,11 @@
       <artifactId>mysql-connector-java</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.microsoft</groupId>
-      <artifactId>sqlserver-jdbc</artifactId>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.oracle</groupId>
+      <groupId>com.oracle.database.jdbc</groupId>
       <artifactId>ojdbc6</artifactId>
     </dependency>
     <dependency>
@@ -412,11 +412,6 @@
     <dependency>
       <groupId>org.perf4j</groupId>
       <artifactId>perf4j</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.artofsolving.jodconverter</groupId>
-      <artifactId>jodconverter-core</artifactId>
     </dependency>
 
     <dependency>
@@ -450,11 +445,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.taobao</groupId>
-      <artifactId>taobao-sdk</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>fluent-hc</artifactId>
     </dependency>
@@ -462,16 +452,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.kenglxn.QRGen</groupId>
-      <artifactId>javase</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.kenglxn.QRGen</groupId>
-      <artifactId>core</artifactId>
     </dependency>
 
     <dependency>

@@ -151,8 +151,8 @@ EOF
 append_override office.properties
 
 cat > "$APP_CLASSES/log.properties" <<EOF
-log.encoding=${LOG_ENCODING:-UTF-8}
-log.level=${LOG_LEVEL:-info}
+log.encoding=${LOG_ENCODING:-utf8}
+log.level=${LOG_LEVEL:-debug}
 log.jolbox.level=${LOG_JOLBOX_LEVEL:-warn}
 log.3pp.level=${LOG_3PP_LEVEL:-warn}
 log.keepdays=${LOG_KEEPDAYS:-30}

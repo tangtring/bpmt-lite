@@ -42,7 +42,7 @@ public class DatabaseManager {
 
 	public DatabaseManager(DataSource dataSource) {
 		this.dataSource = dataSource;
-		this.databasePlatform = JdbcDatabasePlatformFactory.createNewPlatformInstance(dataSource, new SqlTemplateSettings(), true);
+		this.databasePlatform = JdbcDatabasePlatformFactory.createNewPlatformInstance(dataSource, new SqlTemplateSettings(), true, false);
 	}
 
 	public IDatabasePlatform getDatabasePlatform() {

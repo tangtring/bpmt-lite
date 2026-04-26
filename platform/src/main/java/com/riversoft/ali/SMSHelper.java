@@ -33,8 +33,8 @@ public class SMSHelper {
      */
     public static void send(String templateId, String mobile, Map<String, String> params) {
         if(Boolean.valueOf(Config.get("sms.ali.enable", "false"))) {
-            logger.info("sms send({}, {}, {}) with ali dayu implementation.", templateId, mobile, JsonMapper.defaultMapper().toJson(params));
-            SmsClient.getInstance().send(templateId, mobile, params);
+            logger.warn("sms send({}, {}, {}) skipped because ali dayu implementation has been removed in bpmt-lite v1.1.0.",
+                    templateId, mobile, JsonMapper.defaultMapper().toJson(params));
         } else {
             logger.debug("sms send({}, {}, {}) without being implemented.", templateId, mobile, JsonMapper.defaultMapper().toJson(params));
         }

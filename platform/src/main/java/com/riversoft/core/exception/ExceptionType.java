@@ -13,7 +13,6 @@ import java.util.List;
 import jodd.mail.MailException;
 
 import org.hibernate.JDBCException;
-import org.jpedal.exception.PdfException;
 import org.quartz.SchedulerException;
 
 /**
@@ -125,7 +124,7 @@ public enum ExceptionType {
 	/**
 	 * PDF文档处理相关异常
 	 */
-	PDF(1200, "PDF文件处理异常", PdfException.class),
+	PDF(1200, "PDF文件处理异常"),
 
 	/**
 	 * 邮件收发相关异常

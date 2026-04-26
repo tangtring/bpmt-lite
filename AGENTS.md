@@ -16,14 +16,15 @@
 ## README 约定
 
 - `v1.0.0` 是首个正式 Docker 化版本。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.0.0`
-- 同步镜像 tag：`ghcr.io/wodenwang/bpmt-lite:latest`
+- `v1.1.0` 是当前发布候选版本。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.1.0`
+- 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - `ROOT` 应用对应 BPMT `platform`
 - 额外包含 `/ueditor` 应用
 - MariaDB 初始化数据库名：`kyq`
 - README 中记录的发布验收基线是：
-  - `kyq` 初始化后 383 张表
+  - 使用 `database/bpmt-db.sql` 最小库初始化后 173 张表
   - `/` 返回 200
   - `/ueditor/` 返回 200
 
@@ -201,6 +202,13 @@ docker compose ps
 - `settings.local.xml` 与 `settings.example.xml` 已对齐到 `/Volumes/vm/maven/repository`
 - 根 `pom.xml` 中已移除退役私服和旧的 distribution-management 引用
 - 全仓 `mvn -s settings.local.xml -DskipTests compile` 已验证成功
+- Maven 项目版本已切到 `1.1.0`
+- 默认 `docker-compose.yml` 镜像 tag 已切到 `1.1.0`
+- `database/bpmt-db.sql` 是 v1.1.0 最小初始化库，导入后 173 张表，其中 Activiti 24 张、Quartz 11 张
+- `docker-compose.yml` 已完成配置瘦身，高级配置继续通过 `config/overrides/*.properties` 覆盖
+- `scripts/build-image.sh` 已验证可构建本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.1.0`
+- 使用 `database/bpmt-db.sql` + 本地 `1.1.0` 镜像的临时 compose 验证通过：`/` 和 `/ueditor/` 均返回 200
+- 使用 public-only 临时 Maven settings + 空本地 Maven 仓库执行 `mvn -s <tmp-settings> -DskipTests compile` 已验证成功
 
 ## 后续 agent 编辑规则
 

@@ -1,69 +1,28 @@
 package com.riversoft.platform.office.pdf;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.URL;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.riversoft.core.BeanFactory;
-import com.riversoft.core.Config;
 import com.riversoft.platform.office.ConverterHelper;
 
-/**
- * Created by exizhai on 07/11/2014.
- */
 public class ConverterHelperTest {
 
-	@BeforeClass
-	public static void beforeClass() {
-		BeanFactory.init("classpath:applicationContext-office-test.xml");
-	}
+    @Test
+    public void testTouchReturnsFalseWhenOfficeConversionDisabled() {
+        Assert.assertFalse(ConverterHelper.touch());
+    }
 
-	@Ignore
-	public void testWord2PDF() {
-		try {
-			URL debugURL = ClassLoader.getSystemClassLoader().getResource("debug.properties");
-			File debugFile = new File(debugURL.getFile());
-			File root = debugFile.getParentFile();
+    @Test
+    public void testStreamConvertReturnsFalseWhenOfficeConversionDisabled() {
+        Assert.assertFalse(ConverterHelper.convert(new ByteArrayInputStream(new byte[0]), "doc", new ByteArrayOutputStream(), "pdf"));
+    }
 
-			File pdfFolder = new File(root, "pdf");
-			File word = new File(pdfFolder, "20140923电商业务系统需求说明书V2.doc");
-			for (int i = 0; i < 10; i++) {
-				File pdf = new File(pdfFolder, "20140923电商业务系统需求说明书V2" + i + ".pdf");
-				OutputStream os = new FileOutputStream(pdf);
-
-				ConverterHelper.convert(new FileInputStream(word), "doc", os, "pdf");
-
-				Assert.assertTrue(pdf.exists());
-			}
-		} catch (Exception e) {
-			Assert.fail(e.getMessage());
-		}
-	}
-
-	@Ignore
-	public void testExcel2PDF() {
-		try {
-			URL debugURL = ClassLoader.getSystemClassLoader().getResource("debug.properties");
-			File debugFile = new File(debugURL.getFile());
-			File root = debugFile.getParentFile();
-
-			File pdfFolder = new File(root, "pdf");
-			File excel = new File(pdfFolder, "动态表结构导出.xls");
-			for (int i = 0; i < 10; i++) {
-				File pdf = new File(pdfFolder, "动态表结构导出" + i + ".pdf");
-
-				OutputStream os = new FileOutputStream(pdf);
-				ConverterHelper.convert(new FileInputStream(excel), "xlsx", os, "pdf");
-
-				Assert.assertTrue(pdf.exists());
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail(e.getMessage());
-		}
-	}
+    @Test
+    public void testFileConvertReturnsFalseWhenOfficeConversionDisabled() {
+        Assert.assertFalse(ConverterHelper.convert(new File("sample.doc"), new File("sample.pdf")));
+    }
 }
