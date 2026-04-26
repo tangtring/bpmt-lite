@@ -4,68 +4,94 @@
 
 `v1.0.0` 支持通过 `db/init/kyq.sql` 初始化完整业务数据库，但公开仓库不包含可分发 SQL。使用者如果没有历史 `kyq.sql`，只能启动空数据库，无法得到可体验的 BPMT 初始化状态。
 
-`v1.1.0` 需要清洗一份更小、更适合公开分发的 `kyq` 初始化库，让使用者可以用 Docker compose 快速得到一个最小可访问环境。
+`v1.1.0` 需要整理一份更小、更适合公开分发的初始化库，让使用者可以用 Docker compose 快速得到一个最小可访问环境。
+
+本 spec 的实现来源调整为：
+
+- 表结构借鉴旧项目 `/Users/wenzhewang/workspace/bpmt_project/riversoft/trunk/support/hbm2ddl`，由 Hibernate HBM 映射生成 MySQL DDL。
+- 最小初始化数据以旧项目 `/Users/wenzhewang/workspace/bpmt_project/riversoft/package/database/bpmt_init_data.xlsx` 为准。
+- 当前本地 `db/init/kyq.sql` 保留，不作为清洗输入，不做任何修改。
 
 ## 目标
 
-- 交付一份可公开提交或作为 Release asset 发布的极简 `kyq` SQL。
+- 交付一份可公开提交的最小 `bpmt-db.sql`。
 - 初始化后平台首页 `/` 返回 200，`/ueditor/` 返回 200。
-- 初始化库只包含系统启动、登录、基础权限、基础菜单和必要元数据。
-- 清洗掉历史业务数据、客户数据、流程实例数据、附件引用、消息记录、日志和第三方集成账号。
-- 形成可重复的清洗脚本或操作说明，避免手工不可追溯。
+- 初始化库只包含 HBM 表结构和 `bpmt_init_data.xlsx` 中定义的最小系统数据。
+- 不从完整历史 `kyq.sql` 中抽取或清洗数据。
+- 形成可重复的生成脚本，避免手工不可追溯。
 
 ## 非目标
 
 - 不迁移或改造表结构。
 - 不把完整历史业务库公开分发。
+- 不修改 `db/init/kyq.sql`。
 - 不修复历史测试数据质量问题。
 - 不保证所有业务流程、报表、动态表单样例都可用。
 - 不在本 spec 中调整 Docker compose 配置结构。
 
-## 清洗原则
+## 数据来源
 
-极简库按“保留系统骨架，删除业务内容”的原则处理。
+表结构来源：
 
-优先保留：
+```text
+/Users/wenzhewang/workspace/bpmt_project/riversoft/trunk/support/hbm2ddl
+```
 
-- 系统用户、角色、权限、菜单和基础字典。
-- 平台启动必须读取的配置表。
-- 开发平台元数据中与首页、菜单、基础页面访问直接相关的记录。
-- Hibernate 或调度器启动所需的空表结构。
+`hbm2ddl` 的运行方式：
 
-优先删除或置空：
+```bash
+cd /Users/wenzhewang/workspace/bpmt_project/riversoft/trunk
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:$PATH"
+mvn -s settings.xml -pl support/hbm2ddl -am -DskipTests dependency:build-classpath -Dmdep.outputFile=/tmp/hbm2ddl.classpath
+CP="support/hbm2ddl/target/classes:util/target/classes:platform/target/classes:$(cat /tmp/hbm2ddl.classpath)"
+java -Dfile.encoding=UTF-8 -cp "$CP" com.riversoft.hbm2ddl.Main \
+  /Users/wenzhewang/workspace/bpmt_project/riversoft/trunk/support/hbm2ddl \
+  target/hbm \
+  target/sql-bpmt-lite
+```
 
-- 流程实例、任务实例、历史审批意见和运行中队列。
-- 动态业务表中的业务数据。
-- 报表结果、统计缓存、SQL 执行历史和访问日志。
-- 邮件、短信、微信、企业微信、支付和第三方回调历史。
-- 附件、下载文件、UEditor 上传文件的历史引用。
-- 真实手机号、邮箱、微信标识、客户名称、账号密钥等敏感数据。
+本轮已确认 `target/sql-bpmt-lite/mysql/create_model.sql` 可生成。
+
+初始化数据来源：
+
+```text
+/Users/wenzhewang/workspace/bpmt_project/riversoft/package/database/bpmt_init_data.xlsx
+```
+
+当前 Excel 包含以下 sheet：
+
+- `CM_BASE_CATELOG`
+- `CM_BASE_DATA`
+- `CM_BASE_TYPE`
+- `CM_DOMAIN`
+- `CM_MENU`
+- `CM_PRI`
+- `US_USER`
+- `US_GROUP`
+- `US_ROLE`
+- `US_GROUP_ROLE`
+- `US_USER_GROUP_ROLE`
 
 ## 交付物
 
-推荐交付结构：
+交付结构：
 
 ```text
-db/init/minimal-kyq.sql
-scripts/export-minimal-kyq.sh
+database/bpmt-db.sql
+database/README.md
+scripts/build-minimal-bpmt-db.py
 docs/v1.1.0/spec-minimal-kyq.md
 ```
 
-如果 SQL 体积过大，不直接提交到 git，则改为 GitHub Release asset：
-
-```text
-bpmt-lite-minimal-kyq-1.1.0.sql.gz
-```
-
-仓库中仍需保留清洗脚本、校验脚本和 SHA256。
+`database/bpmt-db.sql` 不放入 `db/init/`，避免覆盖或混淆本地完整库 `db/init/kyq.sql`。用户需要使用最小库时，可以显式复制到运行目录的 `db/init/kyq.sql`。
 
 ## 验收标准
 
 使用全新运行目录验证：
 
 1. 删除或换用全新的 `db/data`。
-2. 将极简 SQL 放入 `db/init/kyq.sql`。
+2. 将 `database/bpmt-db.sql` 复制为运行目录中的 `db/init/kyq.sql`。
 3. 执行 `docker compose up -d`。
 4. MariaDB 健康检查通过。
 5. 表数量记录到发布文档中。
@@ -78,7 +104,7 @@ bpmt-lite-minimal-kyq-1.1.0.sql.gz
 ```bash
 docker compose down
 rm -rf db/data
-cp db/init/minimal-kyq.sql db/init/kyq.sql
+cp database/bpmt-db.sql db/init/kyq.sql
 docker compose up -d
 docker compose ps
 docker compose exec -T mariadb mariadb -uroot -p123456 -N \
@@ -89,17 +115,34 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 
 ## 风险和决策点
 
-- 是否保留默认管理员账号需要单独确认。保留账号体验更好，但必须避免默认弱密码在生产环境被误用。
-- 如果清洗后首页依赖某些历史菜单或元数据，需要把这些记录纳入“系统骨架”而不是业务数据。
-- 如果 SQL 体积仍明显偏大，应优先继续删数据，而不是压缩后直接发布。
-- 如果公开 SQL 涉及任何历史客户或人员痕迹，不能发布。
+- `bpmt_init_data.xlsx` 中包含默认 `admin` 用户，密码哈希为历史初始化数据。README 必须明确该账号仅用于本地体验，生产环境必须修改。
+- HBM 生成的表结构只有核心平台表，不包含历史完整库中的所有业务表；这符合最小化目标，但需要通过 Web 启动验证确认不会缺表。
+- `hbm2ddl` 生成的是大写表名；Docker compose 当前 MariaDB 使用 `lower_case_table_names=1`，正式验证应以 compose 路径为准。
+- 如果后续需要加入更多初始化数据，应优先修改或替换 Excel 来源，而不是从 `kyq.sql` 手工抽取。
 
 ## 实施顺序
 
-1. 从当前可运行 `kyq` 库导出结构和数据概览。
-2. 按表名前缀和 Hibernate 映射归类系统表、运行表、业务表、日志表。
-3. 先生成只含结构的 SQL。
-4. 补入最小系统数据。
-5. 使用 Docker compose 从零导入验证。
-6. 根据启动日志和页面访问结果补齐必要元数据。
-7. 固化清洗脚本和验收记录。
+1. 跑通旧项目 `hbm2ddl`，生成 MySQL `create_model.sql`。
+2. 解析 `bpmt_init_data.xlsx`，将各 sheet 转换为对应表的 `INSERT`。
+3. 合并表结构和初始化数据，生成 `database/bpmt-db.sql`。
+4. 使用临时 MariaDB 容器验证 SQL 可导入。
+5. 使用 Docker compose 从零导入验证 `/` 和 `/ueditor/`。
+6. 更新 README 和维护文档，说明 `bpmt-db.sql` 与 `kyq.sql` 的区别。
+
+## 当前实现记录
+
+已新增：
+
+- `scripts/build-minimal-bpmt-db.py`
+- `database/bpmt-db.sql`
+- `database/README.md`
+
+当前 `database/bpmt-db.sql` 生成结果：
+
+- SQL 大小约 108KB。
+- 包含 138 张表结构。
+- 包含 107 条 `INSERT` 初始化数据。
+- 临时 MariaDB 10.11 容器导入通过。
+- 临时 compose 验证通过：`/` 返回 200，`/ueditor/` 返回 200。
+
+本轮未修改 `db/init/kyq.sql`。
