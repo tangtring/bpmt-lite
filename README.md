@@ -4,36 +4,117 @@
 
 本项目只调整代码结构、打包方式、配置方式和部署方式，不升级技术栈、不重写功能、不增加功能。运行栈继续保持 Java 8、Tomcat 7、MariaDB。
 
-## 使用者运行
+## v1.0.0 状态
 
-默认使用已发布 Docker 镜像 `ghcr.io/wodenwang/bpmt-lite:1.0.0`：
+`v1.0.0` 是 bpmt-lite 的首个正式 Docker 化版本。
 
-```bash
-docker compose up -d
-```
+- GitHub Release: https://github.com/wodenwang/bpmt-lite/releases/tag/v1.0.0
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.0.0`
+- 同步镜像 tag：`ghcr.io/wodenwang/bpmt-lite:latest`
+- 默认 Web 访问地址：`http://127.0.0.1:8080/`
+- Tomcat 中的 `ROOT` 应用是 BPMT `platform`
+- Tomcat 中额外包含 `/ueditor` 应用
+- MariaDB 初始化数据库名：`kyq`
+- 发布验收：`kyq` 初始化后 383 张表，`/` 和 `/ueditor/` 均返回 200
 
-如果需要初始化干净数据库，将 `kyq.sql` 放到：
+## Quick Start
+
+只想把系统跑起来，按下面做。
+
+### 1. 准备文件
+
+确认本机已经安装 Docker Desktop 或 Docker Engine，并且可以运行 `docker compose`。
+
+把初始化数据库文件放到：
 
 ```text
 db/init/kyq.sql
 ```
 
-MariaDB 只会在首次创建 `db/data` 数据目录时自动导入该文件。数据库已经初始化后，替换 `kyq.sql` 不会自动重新导入。
+如果没有 `kyq.sql`，容器仍会启动，但不会得到完整的初始化业务数据。
+
+### 2. 启动
+
+```bash
+docker compose up -d
+```
+
+第一次启动会自动拉取镜像、启动 MariaDB、导入 `db/init/kyq.sql`。
+
+### 3. 访问
+
+```text
+http://127.0.0.1:8080/
+```
+
+UEditor 应用地址：
+
+```text
+http://127.0.0.1:8080/ueditor/
+```
+
+### 4. 查看状态
+
+```bash
+docker compose ps
+```
+
+看到 `bpmt-lite-mariadb` 是 `healthy`，`bpmt-lite-web` 是 `Up` 即可。
+
+### 5. 停止
+
+```bash
+docker compose down
+```
+
+该命令只停止并删除容器，不会删除 `db/data`、`runtime` 下的数据文件。
+
+## 重新初始化数据库
+
+MariaDB 只会在首次创建 `db/data` 数据目录时自动导入 `db/init/kyq.sql`。
+
+如果已经启动过，再替换 `kyq.sql` 不会自动重新导入。需要重新初始化时，先确认已经备份数据，然后删除本地数据目录：
+
+```bash
+docker compose down
+rm -rf db/data
+docker compose up -d
+```
+
+## 常用配置
+
+默认配置都写在 `docker-compose.yml` 中，可以直接通过环境变量修改常用项。
+
+| 配置 | 默认值 | 说明 |
+| --- | --- | --- |
+| `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
+| `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
+| `BPMT_IMAGE_TAG` | `1.0.0` | Web 镜像 tag |
+| `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
+| `DB_NAME` | `kyq` | 数据库名 |
+| `DB_USER` | `root` | 数据库用户 |
+| `DB_PASSWORD` | `123456` | 数据库密码 |
+
+示例：把 Web 端口改成 18080。
+
+```bash
+BPMT_HTTP_PORT=18080 docker compose up -d
+```
 
 ## 运行目录
 
 运行时目录约定如下：
 
 ```text
-db/init/kyq.sql        首次初始化数据库备份，不提交 git
-db/data/               MariaDB 数据目录，不提交 git
-db/logs/               MariaDB 日志目录，不提交 git
-runtime/attachment/    BPMT 附件目录，不提交 git
-runtime/download/      BPMT 下载目录，不提交 git
-runtime/ueditor-upload/ UEditor 上传目录，不提交 git
-runtime/platform-logs/ BPMT 平台日志目录，不提交 git
-runtime/tomcat-logs/   Tomcat 日志目录，不提交 git
-config/overrides/      properties 覆盖文件目录，不提交具体覆盖文件
+db/init/kyq.sql          首次初始化数据库备份，不提交 git
+db/data/                 MariaDB 数据目录，不提交 git
+db/logs/                 MariaDB 日志目录，不提交 git
+runtime/attachment/      BPMT 附件目录，不提交 git
+runtime/download/        BPMT 下载目录，不提交 git
+runtime/ueditor-upload/  UEditor 上传目录，不提交 git
+runtime/platform-logs/   BPMT 平台日志目录，不提交 git
+runtime/tomcat-logs/     Tomcat 日志目录，不提交 git
+config/overrides/        properties 覆盖文件目录，不提交具体覆盖文件
 ```
 
 `config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件后面，因此覆盖文件中的同名 key 优先级更高。
@@ -48,6 +129,8 @@ scripts/build-image.sh
 ```
 
 `settings.local.xml` 不提交到 git。
+
+更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
 
 ## 项目语言
 
