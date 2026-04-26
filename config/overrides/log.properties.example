@@ -1,2 +1,3 @@
-log.level=info
+log.encoding=utf8
+log.level=debug
 log.3pp.level=warn

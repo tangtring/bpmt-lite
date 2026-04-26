@@ -38,7 +38,7 @@ DB_PASSWORD: 123456
 可选保留：
 
 ```yaml
-LOG_LEVEL: info
+LOG_LEVEL: debug
 SAFE_ADMIN: admin
 ```
 
