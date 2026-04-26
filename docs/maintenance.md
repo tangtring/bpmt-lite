@@ -213,9 +213,19 @@ MariaDB 官方初始化机制只在数据目录为空时执行 `/docker-entrypoi
 
 本项目目标是发行方式现代化，不是技术栈升级。老技术栈虽然陈旧，但业务功能已经稳定；贸然升级会带来较高回归风险。
 
-### 为什么有些配置在 docker-compose.yml 里很多？
+### 为什么 docker-compose.yml 只保留少量配置？
 
-这是为了让原 properties 中的关键配置可以通过 compose 管理，而不是进入 Docker image 内部修改。
+`v1.1.0` 起，默认 compose 只保留快速启动需要的端口、镜像 tag 和数据库连接信息。原 properties 的低频参数仍由 `docker/docker-entrypoint.sh` 生成默认值。
+
+需要调整高级配置时，在 `config/overrides/` 下创建同名 properties 文件，例如：
+
+```text
+config/overrides/page.properties
+config/overrides/log.properties
+config/overrides/jdbc.properties
+```
+
+覆盖文件会追加到容器内 `ROOT/WEB-INF/classes/` 的同名文件末尾，因此同名 key 以覆盖文件为准。仓库中的 `*.example` 文件只作为模板，不会被运行时读取。
 
 ### UEditor 上传文件保存在哪里？
 

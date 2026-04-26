@@ -92,3 +92,17 @@ page.title=BPMT Lite
 4. 更新 README 和 `docs/maintenance.md`。
 5. 用默认 compose 验证启动和访问。
 6. 用一个 override 文件验证覆盖机制。
+
+## 当前实现状态
+
+已完成：
+
+- 默认 `docker-compose.yml` 的 `web.environment` 已收敛为 `TZ`、`DB_HOST`、`DB_PORT`、`DB_NAME`、`DB_USER`、`DB_PASSWORD`。
+- MariaDB 初始化库名和 root 密码与 `DB_NAME`、`DB_PASSWORD` 保持一致。
+- 已补充 `config/overrides/page.properties.example`、`log.properties.example`、`jdbc.properties.example`。
+- README 和维护文档已改为“常用配置 + override 高级配置”说明。
+
+已验收：
+
+- 默认 compose 启动后 `/` 和 `/ueditor/` 均返回 200。
+- 使用 `config/overrides/page.properties` 后，容器内 `ROOT/WEB-INF/classes/page.properties` 末尾包含 override 内容。

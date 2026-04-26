@@ -107,7 +107,7 @@ docker compose up -d
 
 ## 常用配置
 
-默认配置都写在 `docker-compose.yml` 中，可以直接通过环境变量修改常用项。
+默认 `docker-compose.yml` 只保留快速启动需要的常用项，可以直接通过环境变量覆盖。
 
 | 配置 | 默认值 | 说明 |
 | --- | --- | --- |
@@ -123,6 +123,21 @@ docker compose up -d
 
 ```bash
 BPMT_HTTP_PORT=18080 docker compose up -d
+```
+
+高级配置不再展开在默认 compose 中。需要覆盖历史 `*.properties` 参数时，在 `config/overrides/` 下创建同名 properties 文件即可。该目录提供了几个示例：
+
+```text
+config/overrides/page.properties.example
+config/overrides/log.properties.example
+config/overrides/jdbc.properties.example
+```
+
+例如覆盖页面标题：
+
+```bash
+printf 'page.title=BPMT Lite\n' > config/overrides/page.properties
+docker compose up -d
 ```
 
 ## 运行目录
@@ -141,7 +156,7 @@ runtime/tomcat-logs/     Tomcat 日志目录，不提交 git
 config/overrides/        properties 覆盖文件目录，不提交具体覆盖文件
 ```
 
-`config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件后面，因此覆盖文件中的同名 key 优先级更高。
+`config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件后面，因此覆盖文件中的同名 key 优先级更高。`.example` 文件只作为示例，不会被运行时读取。
 
 ## 维护者构建
 

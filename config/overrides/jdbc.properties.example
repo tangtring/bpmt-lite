@@ -1,0 +1,3 @@
+jdbc.pool.partition.min=5
+jdbc.pool.partition.max=50
+sql.log=false

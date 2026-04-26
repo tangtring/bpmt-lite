@@ -1,0 +1,2 @@
+log.level=info
+log.3pp.level=warn
