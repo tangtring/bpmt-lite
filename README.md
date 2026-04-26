@@ -21,14 +21,14 @@
 
 ## Quick Start
 
-只想把系统跑起来，不需要 clone 本项目。任选下面一种方式。
+只想把系统跑起来，不需要 clone 本项目。推荐直接使用“极简初始化”命令：它会下载 `docker-compose.yml` 和最小数据库 `bpmt-db.sql`，并在首次启动 MariaDB 时自动导入到 `kyq` 库。
 
-### 一条命令启动
+### 一条命令极简初始化
 
-适合先快速体验容器是否能跑起来：
+适合第一次体验 bpmt-lite。该命令会创建运行目录、下载最小库、启动 MariaDB 和 Web 应用：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
+mkdir -p bpmt-lite/db/init && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/database/bpmt-db.sql -o db/init/kyq.sql && docker compose up -d
 ```
 
 然后访问：
@@ -37,21 +37,11 @@ mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.c
 http://127.0.0.1:8080/
 ```
 
-说明：这个命令不会导入数据库初始化数据。需要最小系统数据时，使用下一节的极简初始化方式。
-
-### 一条命令极简初始化
-
-适合快速得到可访问的最小 BPMT 数据库：
-
-```bash
-mkdir -p bpmt-lite/db/init && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/database/bpmt-db.sql -o db/init/kyq.sql && docker compose up -d
-```
-
-第一次启动会自动拉取镜像、启动 MariaDB、导入最小初始化库。该库包含 173 张表和最小系统数据，仅用于本地体验和验证。
+第一次启动会自动拉取镜像、创建 `db/data`、导入 `db/init/kyq.sql`。这里下载的最小库包含 173 张表和最小系统数据，仅用于本地体验和验证。
 
 ### 一条命令完整初始化
 
-如果你本机已经有 `kyq.sql`，使用下面的命令。把 `/path/to/kyq.sql` 改成你的真实文件路径：
+如果你本机已经有完整历史业务库 `kyq.sql`，使用下面的命令。把 `/path/to/kyq.sql` 改成你的真实文件路径：
 
 ```bash
 KYQ_SQL=/path/to/kyq.sql; mkdir -p bpmt-lite/db/init && cp "$KYQ_SQL" bpmt-lite/db/init/kyq.sql && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
@@ -74,6 +64,16 @@ docker compose up -d
 ```
 
 如果没有完整 `kyq.sql`，可以把 [database/bpmt-db.sql](database/bpmt-db.sql) 复制为 `db/init/kyq.sql`，得到最小可访问数据库。
+
+### 空库启动
+
+只想检查容器和端口是否正常、暂时不导入初始化数据时，可以只下载 compose：
+
+```bash
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
+```
+
+这种方式不会导入最小系统数据，通常不作为首次体验路径。
 
 ### 查看状态
 
