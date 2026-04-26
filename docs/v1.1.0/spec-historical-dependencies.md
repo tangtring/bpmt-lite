@@ -37,8 +37,10 @@
 | Maven 坐标 | 状态 |
 | --- | --- |
 | `com.taobao:taobao-sdk:1.1` | 待处理 |
-| `com.github.kenglxn.QRGen:javase:2.1.0` | 待处理 |
-| `com.github.kenglxn.QRGen:core:2.1.0` | 待处理 |
+| `com.github.kenglxn.QRGen:javase:2.1.0` | 已移除，二维码生成改为使用项目已有的 ZXing 依赖 |
+| `com.github.kenglxn.QRGen:core:2.1.0` | 已移除，二维码生成改为使用项目已有的 ZXing 依赖 |
+
+继续使用空本地 Maven 仓库验证后，QRGen 不再阻断编译；当前公开仓路径只剩 `com.taobao:taobao-sdk:1.1` 无法下载。该依赖用于 `platform/src/main/java/com/riversoft/ali/` 下的阿里短信能力，属于生产代码依赖，不能按测试依赖直接删除。
 
 ## 目标
 
@@ -49,8 +51,8 @@
 
 ## 非目标
 
-- 不替换这些 jar。
-- 不修改业务代码绕过依赖。
+- 对最终仍需保留的历史 jar，不做等价替换。
+- 对必须保留的业务能力，不通过删除代码绕过依赖。
 - 不重新引入退役 RiverSoft 私服。
 - 不把二进制 jar 直接提交到 git 工作树。
 - 不绕过第三方依赖的再分发许可审查。
