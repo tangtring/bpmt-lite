@@ -6,30 +6,6 @@
   <packaging>pom</packaging>
   <name>RiverSoft Product</name>
 
-  <properties>
-    <riversoft.deploy.repository.id>Riversoft-snapshot</riversoft.deploy.repository.id>
-    <riversoft.deploy.url>https://nexus.riversoft.com.cn/repository/Riversoft-snapshot/</riversoft.deploy.url>
-  </properties>
-  
-  <repositories>
-    <repository>
-      <id>maven-public</id>
-      <name>RiverSoft Public Repository</name>
-      <url>https://nexus.riversoft.com.cn/repository/maven-public/</url>
-    </repository>
-  </repositories>
-
-  <distributionManagement>
-    <repository>
-      <id>Riversoft-release</id>
-      <url>https://nexus.riversoft.com.cn/repository/Riversoft-release/</url>
-    </repository>
-    <snapshotRepository>
-      <id>Riversoft-snapshot</id>
-      <url>https://nexus.riversoft.com.cn/repository/Riversoft-snapshot/</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <developers>
     <developer>
       <id>woden</id>
@@ -105,13 +81,6 @@
       <properties>
         <maven.test.skip>true</maven.test.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-      </properties>
-    </profile>
-    <profile>
-      <id>Release</id>
-      <properties>
-        <riversoft.deploy.repository.id>Riversoft-release</riversoft.deploy.repository.id>
-        <riversoft.deploy.url>http://o.gzriver.com:8081/repository/Riversoft-release/</riversoft.deploy.url>
       </properties>
     </profile>
     <profile>

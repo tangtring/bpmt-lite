@@ -2,7 +2,7 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <localRepository>${user.home}/.m2/repository</localRepository>
+  <localRepository>/Volumes/vm/maven/repository</localRepository>
 
   <mirrors>
     <mirror>
@@ -21,17 +21,6 @@
           <id>local-file-repo</id>
           <name>Local file repository for historical BPMT artifacts</name>
           <url>file:///Volumes/vm/maven/repository</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>
-        <repository>
-          <id>maven-public</id>
-          <name>RiverSoft historical Maven repository</name>
-          <url>https://nexus.riversoft.com.cn/repository/maven-public/</url>
           <releases>
             <enabled>true</enabled>
           </releases>

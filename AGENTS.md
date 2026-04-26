@@ -1,0 +1,211 @@
+# AGENTS.md
+
+## 作用范围
+
+本文件是 `bpmt-lite` 仓库的本地协作与交接文档。
+后续 Codex agent 在本仓处理环境、编译、打包、Docker 运行、配置覆盖、文档更新时，必须先读本文件，再做判断。
+
+## 项目定位
+
+- 仓库：`bpmt-lite`
+- 目标：对遗留 BPMT 平台做简化发行工程
+- 核心原则：只调整代码结构、打包方式、配置方式、部署方式
+- 明确边界：不升级技术栈、不重写功能、不额外增加功能
+- 运行栈：Java 8、Maven 3、Tomcat 7、MariaDB
+
+## README 约定
+
+- `v1.0.0` 是首个正式 Docker 化版本。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.0.0`
+- 同步镜像 tag：`ghcr.io/wodenwang/bpmt-lite:latest`
+- 默认访问地址：`http://127.0.0.1:8080/`
+- `ROOT` 应用对应 BPMT `platform`
+- 额外包含 `/ueditor` 应用
+- MariaDB 初始化数据库名：`kyq`
+- README 中记录的发布验收基线是：
+  - `kyq` 初始化后 383 张表
+  - `/` 返回 200
+  - `/ueditor/` 返回 200
+
+## 文档与沟通规则
+
+- 本项目沟通和文档统一使用简体中文。
+- 代码、命令、配置键名、Maven 坐标、镜像名等技术标识保持原样。
+- 如果后续 agent 更新运行说明、维护说明或交接说明，应与 README 的中文风格保持一致。
+
+## 已验证的本地编译基线
+
+2026-04-26 在当前 checkout 已验证：
+
+- JDK：`/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home`
+- Maven 本地仓库：`/Volumes/vm/maven/repository`
+- Maven settings：`settings.local.xml`
+- 全仓编译命令：
+
+```bash
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:$PATH"
+mvn -s settings.local.xml -DskipTests compile
+```
+
+验证结果：
+
+- Reactor 模块：`riversoft-product`、`parent`、`util`、`magic`、`magic-api`、`magic-api-impl`、`dbtools`、`platform`
+- 结果：`BUILD SUCCESS`
+
+## 不可变的环境规则
+
+- 本仓所有构建、依赖导入、IDE Java language server 都必须使用 Java 8。
+- 不要假设本仓 Maven 使用 `~/.m2/repository`。
+- 当前机器在本仓应使用的 Maven 本地仓库路径是 `/Volumes/vm/maven/repository`。
+- 优先使用 `mvn -s settings.local.xml ...`，不要默认裸跑 `mvn`。
+- 如果 VS Code 出现大量 Java 编译错误，先检查：
+  - 工作区 JDK 是否为 Java 8
+  - Maven settings 是否指向 `settings.local.xml`
+  - `/Volumes/vm/maven/repository` 是否可读
+
+## Maven 配置规则
+
+- `settings.local.xml` 是当前 checkout 的有效本地配置。
+- `settings.example.xml` 必须反映同样的仓库拓扑，供新环境复制初始化。
+- 已退役的 RiverSoft 私有仓库地址不得重新引入：
+  - `https://nexus.riversoft.com.cn/repository/maven-public/`
+  - `https://nexus.riversoft.com.cn/repository/Riversoft-release/`
+  - `https://nexus.riversoft.com.cn/repository/Riversoft-snapshot/`
+- 当前仓库策略：
+  - 本地 file repo：`file:///Volumes/vm/maven/repository`
+  - 公共镜像：Aliyun mirror of Central
+  - Central：兜底仓库定义
+
+## VS Code / IDE 规则
+
+当前仓库已有 repo-local VS Code 设置，且已验证可用：
+
+- `.vscode/settings.json` 固定 Java runtime 为 Java 8
+- `.vscode/settings.json` 显式指定 Maven / Java import 使用 `settings.local.xml`
+
+如果 IDE 仍显示旧错误，按以下顺序处理：
+
+1. 执行 `Java: Clean Java Language Server Workspace`
+2. Reload VS Code 窗口
+3. 重新触发 Maven project import
+
+## Docker 与运行约定
+
+- 默认启动方式是 `docker compose up -d`。
+- 快速体验允许只拉起容器而不导入业务数据。
+- 若要得到完整初始化业务数据，必须提供 `db/init/kyq.sql`。
+- MariaDB 只会在首次创建 `db/data` 时自动导入 `db/init/kyq.sql`。
+- 如果已经启动过，再替换 `kyq.sql` 不会自动重新导入。
+- 需要重新初始化数据库时，先确认数据已备份，再执行：
+
+```bash
+docker compose down
+rm -rf db/data
+docker compose up -d
+```
+
+## 默认访问与常用配置
+
+- 平台入口：`http://127.0.0.1:8080/`
+- UEditor：`http://127.0.0.1:8080/ueditor/`
+- 常用环境变量：
+  - `BPMT_HTTP_PORT`
+  - `BPMT_DB_PORT`
+  - `BPMT_IMAGE_TAG`
+  - `DB_HOST`
+  - `DB_NAME`
+  - `DB_USER`
+  - `DB_PASSWORD`
+
+后续 agent 如果修改 `docker-compose.yml`、镜像构建脚本或 README，不能破坏这些默认约定，除非用户明确要求变更。
+
+## 运行目录约定
+
+以下目录是 README 明确约定的运行目录，后续 agent 不应随意改语义：
+
+- `db/init/kyq.sql`
+  - 首次初始化数据库备份
+  - 不提交 git
+- `db/data/`
+  - MariaDB 数据目录
+  - 不提交 git
+- `db/logs/`
+  - MariaDB 日志目录
+  - 不提交 git
+- `runtime/attachment/`
+  - BPMT 附件目录
+  - 不提交 git
+- `runtime/download/`
+  - BPMT 下载目录
+  - 不提交 git
+- `runtime/ueditor-upload/`
+  - UEditor 上传目录
+  - 不提交 git
+- `runtime/platform-logs/`
+  - 平台日志目录
+  - 不提交 git
+- `runtime/tomcat-logs/`
+  - Tomcat 日志目录
+  - 不提交 git
+- `config/overrides/`
+  - properties 覆盖目录
+  - 不提交具体覆盖文件
+
+额外规则：
+
+- `config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件之后。
+- 覆盖文件中的同名 key 优先级更高。
+
+## 维护者构建约定
+
+README 中的维护者构建入口是：
+
+```bash
+cp settings.example.xml settings.local.xml
+scripts/build-image.sh
+```
+
+维护相关约束：
+
+- 维护者需要 Java 8、Maven、Docker，以及可访问历史依赖的 Maven 仓库。
+- `settings.local.xml` 是本地文件，不应提交到 git。
+- 更多维护和发布细节见 `docs/maintenance.md`。
+
+## 构建与排障顺序
+
+遇到构建或导入异常时，按下面顺序排查：
+
+1. 确认 `JAVA_HOME` 指向上面的 Java 8 JDK
+2. 确认 Maven 使用 `-s settings.local.xml`
+3. 确认 `/Volumes/vm/maven/repository` 已挂载且可读
+4. 先跑窄范围模块，再跑全仓
+
+常用验证命令：
+
+```bash
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:$PATH"
+java -version
+mvn -version
+mvn -s settings.local.xml -pl dbtools -am -DskipTests compile
+mvn -s settings.local.xml -DskipTests compile
+docker compose ps
+```
+
+## 当前状态
+
+截至 2026-04-26，本仓当前状态：
+
+- VS Code 工作区已修正为 Java 8 + repo-local Maven settings
+- `settings.local.xml` 与 `settings.example.xml` 已对齐到 `/Volumes/vm/maven/repository`
+- 根 `pom.xml` 中已移除退役私服和旧的 distribution-management 引用
+- 全仓 `mvn -s settings.local.xml -DskipTests compile` 已验证成功
+
+## 后续 agent 编辑规则
+
+- 保持 Java 8 兼容性。
+- 未经用户明确要求，不做技术栈升级。
+- 不要凭印象恢复已退役私服配置。
+- 涉及运行、打包、初始化数据库、目录语义时，先以 README 和本文件为准。
+- 如果用户要求记录当前阶段、当前环境或交接状态，优先更新本文件。
