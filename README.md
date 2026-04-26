@@ -6,7 +6,7 @@
 
 ## 使用者运行
 
-默认使用已发布 Docker 镜像：
+默认使用已发布 Docker 镜像 `ghcr.io/wodenwang/bpmt-lite:1.0.0`：
 
 ```bash
 docker compose up -d
