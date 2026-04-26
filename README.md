@@ -19,41 +19,51 @@
 
 ## Quick Start
 
-只想把系统跑起来，按下面做。
+只想把系统跑起来，不需要 clone 本项目。任选下面一种方式。
 
-### 1. 准备文件
+### 一条命令启动
 
-确认本机已经安装 Docker Desktop 或 Docker Engine，并且可以运行 `docker compose`。
-
-把初始化数据库文件放到：
-
-```text
-db/init/kyq.sql
-```
-
-如果没有 `kyq.sql`，容器仍会启动，但不会得到完整的初始化业务数据。
-
-### 2. 启动
+适合先快速体验容器是否能跑起来：
 
 ```bash
-docker compose up -d
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.0.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
 ```
 
-第一次启动会自动拉取镜像、启动 MariaDB、导入 `db/init/kyq.sql`。
-
-### 3. 访问
+然后访问：
 
 ```text
 http://127.0.0.1:8080/
 ```
 
-UEditor 应用地址：
+说明：这个命令不会初始化业务数据，因为公开仓库不包含 `kyq.sql`。
 
-```text
-http://127.0.0.1:8080/ueditor/
+### 一条命令完整初始化
+
+如果你本机已经有 `kyq.sql`，使用下面的命令。把 `/path/to/kyq.sql` 改成你的真实文件路径：
+
+```bash
+KYQ_SQL=/path/to/kyq.sql; mkdir -p bpmt-lite/db/init && cp "$KYQ_SQL" bpmt-lite/db/init/kyq.sql && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.0.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
 ```
 
-### 4. 查看状态
+第一次启动会自动拉取镜像、启动 MariaDB、导入 `db/init/kyq.sql`。
+
+### 常规方式启动
+
+如果你已经 clone 了项目，或者已经有完整目录结构，将初始化数据库文件放到：
+
+```text
+db/init/kyq.sql
+```
+
+然后启动：
+
+```bash
+docker compose up -d
+```
+
+如果没有 `kyq.sql`，容器仍会启动，但不会得到完整的初始化业务数据。
+
+### 查看状态
 
 ```bash
 docker compose ps
@@ -61,7 +71,21 @@ docker compose ps
 
 看到 `bpmt-lite-mariadb` 是 `healthy`，`bpmt-lite-web` 是 `Up` 即可。
 
-### 5. 停止
+### 访问地址
+
+平台入口：
+
+```text
+http://127.0.0.1:8080/
+```
+
+UEditor 应用：
+
+```text
+http://127.0.0.1:8080/ueditor/
+```
+
+### 停止
 
 ```bash
 docker compose down
