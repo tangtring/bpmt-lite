@@ -22,6 +22,16 @@
 
 其中 `com.aspose:*`、`com.jpedal:pdf2image`、`org.artofsolving.jodconverter:jodconverter-core` 已进入前置取舍评估，并确认不作为 v1.1.0 默认分发对象。
 
+后续公共仓库空仓验证继续暴露数据库工具链依赖缺口：
+
+| Maven 坐标 | 处理方式 |
+| --- | --- |
+| `org.jumpmind.symmetric:symmetric-util:3.7.19` | 官方仓库 `https://maven.jumpmind.com/repo` 的 metadata 仍列出 `3.7.19`，但实际 pom/jar 返回 404；已微调到同一 `3.7.x` 线可下载的 `3.7.38` |
+| `org.jumpmind.symmetric:symmetric-db:3.7.19` | 同上，已微调到 `3.7.38` |
+| `org.jumpmind.symmetric:symmetric-jdbc:3.7.19` | 同上，已微调到 `3.7.38` |
+| `com.oracle:ojdbc6:11.2.0.4` | Central、阿里云 public、华为云、腾讯云常见公共仓库均不可下载；可另行评估是否切换到 `com.oracle.database.jdbc:ojdbc6:11.2.0.4` |
+| `com.microsoft:sqlserver-jdbc:4.0.0` | Central、阿里云 public、华为云、腾讯云常见公共仓库均不可下载；可另行评估是否切换到 `com.microsoft.sqlserver:mssql-jdbc` 的 Java 8 兼容版本 |
+
 ## 目标
 
 - 提供一份机器可读的历史依赖清单。

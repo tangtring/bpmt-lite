@@ -39,6 +39,17 @@
             <enabled>false</enabled>
           </snapshots>
         </repository>
+        <repository>
+          <id>jumpmind</id>
+          <name>JumpMind Maven Repository</name>
+          <url>https://maven.jumpmind.com/repo</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
       </repositories>
       <pluginRepositories>
         <pluginRepository>

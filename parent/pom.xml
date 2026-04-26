@@ -42,7 +42,7 @@
     <jackson.version>2.8.6</jackson.version>
     <freemarker.version>2.3.23</freemarker.version>
     <xstream.version>1.4.8</xstream.version>
-    <symmetric.version>3.7.19</symmetric.version>
+    <symmetric.version>3.7.38</symmetric.version>
     <poi.version>3.16</poi.version>
     <jxls.version>2.4.5</jxls.version>
     <jxls-poi.version>1.0.15</jxls-poi.version>
