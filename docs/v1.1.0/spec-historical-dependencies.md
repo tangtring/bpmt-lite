@@ -36,11 +36,13 @@
 
 | Maven 坐标 | 状态 |
 | --- | --- |
-| `com.taobao:taobao-sdk:1.1` | 待处理 |
+| `com.taobao:taobao-sdk:1.1` | 已移除，阿里大鱼短信实现裁剪为日志兼容入口 |
 | `com.github.kenglxn.QRGen:javase:2.1.0` | 已移除，二维码生成改为使用项目已有的 ZXing 依赖 |
 | `com.github.kenglxn.QRGen:core:2.1.0` | 已移除，二维码生成改为使用项目已有的 ZXing 依赖 |
 
-继续使用空本地 Maven 仓库验证后，QRGen 不再阻断编译；当前公开仓路径只剩 `com.taobao:taobao-sdk:1.1` 无法下载。该依赖用于 `platform/src/main/java/com/riversoft/ali/` 下的阿里短信能力，属于生产代码依赖，不能按测试依赖直接删除。
+继续使用空本地 Maven 仓库验证后，QRGen 不再阻断编译；随后确认 `com.taobao:taobao-sdk:1.1` 只影响 `platform/src/main/java/com/riversoft/ali/` 下的阿里大鱼短信能力，v1.1.0 已按取舍结论裁剪旧实现。相关类保留配置兼容入口和裁剪说明，未来可在合适版本通过其他方式重新实现短信能力。
+
+完成 Taobao SDK 裁剪后，使用空本地 Maven 仓库、Aliyun mirror of Central、Central 和 JumpMind 官方仓库重新执行全仓 `compile`，结果为 `BUILD SUCCESS`。截至当前判断，v1.1.0 已不再需要额外分发历史 Maven artifact 才能完成公开仓编译。
 
 ## 目标
 

@@ -62,7 +62,6 @@
     <ueditor.version>1.4.3</ueditor.version>
     <jsoup.version>1.8.2</jsoup.version>
     <weixin-sdk.version>0.9.6</weixin-sdk.version>
-    <taobao-sdk.version>1.1</taobao-sdk.version>
     <guava.version>19.0</guava.version>
     <zxing.version>3.1.0</zxing.version>
     <rest-assured.version>2.8.0</rest-assured.version>
@@ -711,12 +710,6 @@
         <groupId>cn.com.riversoft</groupId>
         <artifactId>weixin-app</artifactId>
         <version>${weixin-sdk.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.taobao</groupId>
-        <artifactId>taobao-sdk</artifactId>
-        <version>${taobao-sdk.version}</version>
       </dependency>
 
       <dependency>

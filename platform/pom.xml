@@ -445,11 +445,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.taobao</groupId>
-      <artifactId>taobao-sdk</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>fluent-hc</artifactId>
     </dependency>
