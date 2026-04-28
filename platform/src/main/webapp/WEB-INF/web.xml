@@ -32,21 +32,15 @@
     <url-pattern>*.shtml</url-pattern>
   </servlet-mapping>
 
-  <!-- Restlet adapter, used to expose modeler functionality through REST -->
-  <!-- 
+  <!-- Activiti modeler compatibility endpoints without Restlet -->
   <servlet>
-    <servlet-name>RestletServlet</servlet-name>
-    <servlet-class>org.restlet.ext.servlet.ServerServlet</servlet-class>
-    <init-param>
-      <param-name>org.restlet.application</param-name>
-      <param-value>com.riversoft.platform.web.ExplorerRestApplication</param-value>
-    </init-param>
+    <servlet-name>ModelerServiceServlet</servlet-name>
+    <servlet-class>com.riversoft.platform.web.ModelerServiceServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>RestletServlet</servlet-name>
+    <servlet-name>ModelerServiceServlet</servlet-name>
     <url-pattern>/service/*</url-pattern>
   </servlet-mapping>
-  -->
 
   <!-- 入口页 -->
   <welcome-file-list>
