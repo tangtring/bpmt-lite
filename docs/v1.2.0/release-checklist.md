@@ -25,6 +25,19 @@ mvn -s settings.local.xml -DskipTests compile
 
 期望：`BUILD SUCCESS`。
 
+## Docker 镜像
+
+```bash
+scripts/build-image.sh
+docker run --rm --entrypoint sh ghcr.io/wodenwang/bpmt-lite:<tag> -lc 'fc-match "WenQuanYi Zen Hei" && fc-list :lang=zh | head'
+```
+
+期望：
+
+- 镜像使用当前机器原生架构构建，不再强制 `linux/amd64`。
+- 镜像中存在 `ROOT`、`ueditor` 和 `/usr/local/bin/bpmt-entrypoint.sh`。
+- 镜像中存在 CJK 字体，流程图节点中文不再显示为方框。
+
 ## 数据库初始化
 
 最小库：
@@ -82,6 +95,9 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 - editor 页面可加载模型。
 - 保存请求返回 200。
 - 关闭页面可访问。
+- 审批流流程图可显示，节点中文可读。
+
+注意：如果某些流程定义返回的是部署时缓存的旧 PNG，安装字体后不会自动重绘旧缓存图；验收中文字体时应至少覆盖一条运行时重新生成的流程图，或重新部署流程定义后再检查。
 
 ## 品牌信息
 

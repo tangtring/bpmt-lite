@@ -1,7 +1,6 @@
 services:
   web:
     image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-1.1.0}
-    platform: linux/amd64
     container_name: bpmt-lite-web
     depends_on:
       mariadb:
@@ -26,7 +25,6 @@ services:
 
   mariadb:
     image: mariadb:10.11
-    platform: linux/amd64
     container_name: bpmt-lite-mariadb
     restart: unless-stopped
     ports:

@@ -76,6 +76,13 @@ scripts/build-image.sh
 - 检查当前 Java 是否为 Java 8
 - 执行 Maven `-Pdocker-image verify`
 - 构建 `ghcr.io/wodenwang/bpmt-lite:<project.version>`
+- 启动一次临时容器，验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体可用
+
+镜像构建默认使用 `https://mirrors.aliyun.com/ubuntu-ports` 安装中文字体包。需要使用其他 Ubuntu ports 源时可覆盖 Maven 属性：
+
+```bash
+mvn -s settings.local.xml -pl platform -am -Pdocker-image verify -Ddocker.apt.mirror=http://ports.ubuntu.com/ubuntu-ports
+```
 
 ## 本地运行验证
 
@@ -164,8 +171,15 @@ docker push ghcr.io/wodenwang/bpmt-lite:<tag>
 
 ```bash
 TMP_DOCKER_CONFIG=$(mktemp -d)
-DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull --platform linux/amd64 ghcr.io/wodenwang/bpmt-lite:<tag>
+DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull ghcr.io/wodenwang/bpmt-lite:<tag>
 rm -rf "$TMP_DOCKER_CONFIG"
+```
+
+如果需要分别验证多架构镜像，可以显式指定平台：
+
+```bash
+DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull --platform linux/amd64 ghcr.io/wodenwang/bpmt-lite:<tag>
+DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull --platform linux/arm64 ghcr.io/wodenwang/bpmt-lite:<tag>
 ```
 
 查看 digest：

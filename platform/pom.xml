@@ -15,7 +15,7 @@
     <docker.context.dir>${project.build.directory}/docker</docker.context.dir>
     <docker.image.name>ghcr.io/wodenwang/bpmt-lite</docker.image.name>
     <docker.image.tag>${project.version}</docker.image.tag>
-    <docker.platform>linux/amd64</docker.platform>
+    <docker.apt.mirror>https://mirrors.aliyun.com/ubuntu-ports</docker.apt.mirror>
   </properties>
 
   <dependencies>
@@ -722,8 +722,8 @@
                     <copy file="${project.build.directory}/${project.build.finalName}.war" tofile="${docker.context.dir}/platform.war" />
                     <exec executable="docker" dir="${docker.context.dir}" failonerror="true">
                       <arg value="build" />
-                      <arg value="--platform" />
-                      <arg value="${docker.platform}" />
+                      <arg value="--build-arg" />
+                      <arg value="APT_MIRROR=${docker.apt.mirror}" />
                       <arg value="-t" />
                       <arg value="${docker.image.name}:${docker.image.tag}" />
                       <arg value="." />

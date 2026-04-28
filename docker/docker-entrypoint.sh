@@ -174,7 +174,7 @@ EOF
 append_override hazelcast.properties
 
 cat > "$APP_CLASSES/activiti.properties" <<EOF
-activiti.font=${ACTIVITI_FONT:-simsun}
+activiti.font=${ACTIVITI_FONT:-WenQuanYi Zen Hei}
 EOF
 append_override activiti.properties
 

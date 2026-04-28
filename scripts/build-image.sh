@@ -18,3 +18,17 @@ case "$JAVA_VERSION_OUTPUT" in
 esac
 
 mvn -s settings.local.xml -pl platform -am -Pdocker-image verify
+
+IMAGE_TAG="$(mvn -s settings.local.xml -q -pl platform help:evaluate -Dexpression=project.version -DforceStdout)"
+IMAGE_NAME="ghcr.io/wodenwang/bpmt-lite"
+IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+
+docker run --rm --entrypoint sh "$IMAGE" -lc '
+  test -d /usr/local/tomcat/webapps/ROOT
+  test -d /usr/local/tomcat/webapps/ueditor
+  test -x /usr/local/bin/bpmt-entrypoint.sh
+  fc-match "WenQuanYi Zen Hei" | grep -q "wqy"
+  fc-list :lang=zh | grep -q .
+'
+
+printf '%s\n' "Docker image verified: $IMAGE"

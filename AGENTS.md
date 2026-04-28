@@ -223,6 +223,12 @@ docker compose ps
 - 第一阶段修复 GitHub issue 已在本地提交：
   - `#6`：已清理 `settings.example.xml` 中的本机 Maven 仓库路径和非必要镜像配置
   - `#7`：已通过 `ModelerServiceServlet` 恢复 Activiti Modeler `/service/*` 兼容端点，并验证 editor 打开、保存、关闭路径
+- Docker 运行问题已推进：
+  - Web 镜像构建不再强制 `linux/amd64`，本机 Apple Silicon 构建结果为 `linux/arm64`
+  - `docker/Dockerfile` 改为 `eclipse-temurin:8-jdk-jammy` 并手动安装 Tomcat 7.0.109
+  - 镜像内安装 `fonts-wqy-zenhei`，`activiti.font` 默认改为 `WenQuanYi Zen Hei`
+  - `scripts/build-image.sh` 构建后会启动临时容器验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体
+  - 已用容器内 Java2D 和 Activiti `DefaultProcessDiagramGenerator` 生成临时 PNG，确认中文可读；旧部署缓存 PNG 不会自动重绘
 - 第二阶段整理初始化数据库正在推进：
   - `bpmt` 使用完整 `kyq` 数据源整理出的初始化 SQL
   - `bpmt_min` 使用最小初始化 SQL

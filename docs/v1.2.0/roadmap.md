@@ -5,6 +5,7 @@
 ## 版本目标
 
 - 修复 `v1.1.0` 之后 GitHub issue 中确认的缺陷。
+- 修复 Docker 镜像在 Apple Silicon 上显示 `AMD64` 的问题，并补齐流程图中文字体。
 - 形成 `bpmt` 和 `bpmt_min` 两套初始化数据库选择，允许在同一个 MariaDB 实例中共存。
 - 重构 README，让没有 Java、Maven、旧 BPMT 背景的新用户也能按最短路径启动。
 - 初始化面向 Codex agent 的团队开发说明，明确协作模式、范围控制和交接规则。
@@ -111,4 +112,6 @@ docker compose config
 - `bpmt_min` 初始化后 `/` 返回 200。
 - `bpmt_min` 初始化后 `/ueditor/` 返回 200。
 - 工作流设计入口不再跳转到 404。
+- 审批流流程图可显示，节点中文不再显示为方框。
+- 本地 Docker 镜像可按当前机器原生架构构建，Apple Silicon 上不再强制 `AMD64`。
 - 默认页面 copyright 不包含 `Riversoft Designs`。
