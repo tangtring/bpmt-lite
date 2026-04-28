@@ -37,7 +37,7 @@
 			});
 		});
 
-		$('img', $picture).attr('src', '${_acp}/picture.shtml?_tmp=' + Math.random() + '&_FO=' + $fo.val());
+		$('img', $picture).attr('src', '${_acp}/picture.shtml?_tmp=' + Math.random() + '&_FO=' + encodeURIComponent($fo.val()));
 
 		var $currentActivity = $('#${_zone}_current_activity', $zone);
 		if ($currentActivity.val() != '') {
