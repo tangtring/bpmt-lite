@@ -62,8 +62,7 @@ scripts/init-db.sh
 
 - 生成或下载 `db/init/bpmt.sql`。
 - 首次初始化后 MariaDB 中存在 `bpmt`。
-
-当前阻塞：公开 `database/bpmt.sql` 需要先确认完整 `kyq` 数据源可以公开发布，并确认大 SQL 的仓库交付方式。
+- 仓库提交的是 `database/bpmt.sql.gz`，脚本会自动解压。
 
 ## Web 运行
 

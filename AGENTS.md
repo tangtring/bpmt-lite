@@ -101,9 +101,10 @@ mvn -s settings.local.xml -DskipTests compile
 
 - 默认启动方式是 `docker compose up -d`。
 - 快速体验允许只拉起容器而不导入业务数据。
-- 若要得到完整初始化业务数据，必须提供 `db/init/kyq.sql`。
-- MariaDB 只会在首次创建 `db/data` 时自动导入 `db/init/kyq.sql`。
-- 如果已经启动过，再替换 `kyq.sql` 不会自动重新导入。
+- 若要得到完整初始化业务数据，使用 `scripts/init-db.sh` 从 `database/bpmt.sql.gz` 解压生成 `db/init/bpmt.sql`。
+- 若要得到最小初始化库，使用 `scripts/init-db.sh min` 生成 `db/init/bpmt-min.sql`。
+- MariaDB 只会在首次创建 `db/data` 时自动导入 `db/init/*.sql`。
+- 如果已经启动过，再替换初始化 SQL 不会自动重新导入。
 - 需要重新初始化数据库时，先确认数据已备份，再执行：
 
 ```bash
@@ -131,8 +132,8 @@ docker compose up -d
 
 以下目录是 README 明确约定的运行目录，后续 agent 不应随意改语义：
 
-- `db/init/kyq.sql`
-  - 首次初始化数据库备份
+- `db/init/*.sql`
+  - 首次初始化数据库备份或由 `scripts/init-db.sh` 生成的导入文件
   - 不提交 git
 - `db/data/`
   - MariaDB 数据目录
@@ -234,12 +235,14 @@ docker compose ps
   - `bpmt_min` 使用最小初始化 SQL
   - 两个 database 允许在同一个 MariaDB 实例中共存
   - 默认初始化脚本导入 `bpmt`，参数 `min` 导入 `bpmt_min`
-  - 本地完整 `db/init/kyq.sql` 约 173MB 且不提交；生成公开 `database/bpmt.sql` 前必须确认数据可公开和文件体积交付方案
+  - 当前删改后的 `bpmt` 已导出为本地 `database/bpmt.sql` 并压缩提交为 `database/bpmt.sql.gz`
+  - 原始 `database/bpmt.sql` 约 127 MiB，超过 GitHub 普通仓库单文件限制，已加入 `.gitignore`
+  - 旧 `db/init/kyq.sql` 已按用户要求从项目运行目录删除；用户另有源文件备份
 - 第三阶段重构 README 已推进：
   - README 顶部已改为初学者 Docker 运行路径，不再先讲 Java/Maven 历史
   - 默认账号密码已放在启动说明旁边
   - 已说明 `bpmt` 与 `bpmt_min` 的共存、切换和重新初始化方式
-  - 因 `database/bpmt.sql` 尚未确认公开交付，README 当前把完整库默认路径标为发布后可用，并把最小库作为当前公开可验证路径
+  - README 已说明完整库 `database/bpmt.sql.gz` 会由初始化脚本自动解压为 `db/init/bpmt.sql`
 - 第四阶段补齐团队开发模式：
   - 每个阶段要有可验证结果
   - 大改前先写 `docs/v1.2.0/*`

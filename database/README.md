@@ -5,11 +5,19 @@
 ## v1.2.0 约定
 
 - `bpmt-min.sql` 是最小初始化库，数据库名为 `bpmt_min`。
-- `bpmt.sql` 是完整初始化库，数据库名为 `bpmt`。
+- `bpmt.sql.gz` 是完整初始化库压缩包，解压后的数据库名为 `bpmt`。
 - 两份 SQL 都必须自己包含 `CREATE DATABASE IF NOT EXISTS ...` 和 `USE ...`，不能依赖 Docker Compose 的 `MARIADB_DATABASE` 自动建库行为。
 - `db/init/*.sql` 是本地运行目录，不提交 git。
 
-当前已提交的是 `bpmt-min.sql`。完整 `bpmt.sql` 需要从可公开分发的 `kyq` 数据源整理后再放入本目录；不要直接提交本地私有 `db/init/kyq.sql`。
+当前已提交的是 `bpmt-min.sql` 和 `bpmt.sql.gz`。原始 `bpmt.sql` 体积超过 GitHub 普通仓库 100 MiB 单文件限制，因此不直接提交；`scripts/init-db.sh` 会从 `bpmt.sql.gz` 自动解压到 `db/init/bpmt.sql`。
+
+`bpmt.sql.gz` 来自本地删改后的 `bpmt` 数据库备份。导出时排除了失效视图 `v_demo_qj`，因为该视图引用的 demo 表已经不在当前 `bpmt` 数据库中，直接导出会导致备份失败。
+
+已用临时 MariaDB 10.11 容器验证：
+
+- `bpmt.sql.gz` 解压后可导入。
+- `bpmt` 和 `bpmt_min` 可在同一个 MariaDB 实例中共存。
+- 导入后 `bpmt` 包含 377 张表或视图；`bpmt_min` 包含 173 张表。
 
 ## 最小库来源
 
@@ -24,6 +32,22 @@
 
 - 导入后 `bpmt_min` 包含 173 张表，其中 Activiti 24 张、Quartz 11 张。
 - 最小初始化数据包含 1 个用户、26 个菜单、27 条权限和 1 条用户角色关系。
+
+## 完整库来源
+
+`bpmt.sql.gz` 使用当前本地 MariaDB 中的 `bpmt` 数据库导出：
+
+```bash
+docker compose exec -T mariadb mariadb-dump -uroot -p123456 \
+  --default-character-set=utf8 \
+  --single-transaction \
+  --routines --triggers --events \
+  --ignore-table=bpmt.v_demo_qj \
+  --databases bpmt > database/bpmt.sql
+gzip -9 -c database/bpmt.sql > database/bpmt.sql.gz
+```
+
+原始 `database/bpmt.sql` 是本地生成文件，不提交 git。
 
 ## 重新生成最小库
 

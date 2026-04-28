@@ -13,6 +13,7 @@ db/data/
 db/logs/
 db/init/*.sql
 db/init/*.sql.gz
+database/bpmt.sql
 
 runtime/*
 !runtime/.gitkeep

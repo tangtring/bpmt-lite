@@ -4,7 +4,7 @@
 
 | 模式 | 数据库 | SQL | 适用场景 |
 | --- | --- | --- | --- |
-| 默认 | `bpmt` | `database/bpmt.sql` | 使用完整 `kyq` 数据源整理出的本地试运行库。 |
+| 默认 | `bpmt` | `database/bpmt.sql.gz` | 使用当前整理后的 `bpmt` 数据库导出的本地试运行库。 |
 | `min` | `bpmt_min` | `database/bpmt-min.sql` | 快速体验、自动化验收、issue 复现。 |
 
 ## 初始化脚本
@@ -28,7 +28,7 @@ db/init/bpmt.sql
 db/init/bpmt-min.sql
 ```
 
-脚本优先从本地 `database/` 目录复制同名 SQL；如果本地不存在，则从 `BPMT_SQL_BASE_URL` 下载。默认下载地址指向：
+脚本优先从本地 `database/` 目录复制同名 SQL；如果只有 `.sql.gz`，则自动解压到 `db/init/`。如果本地不存在，则从 `BPMT_SQL_BASE_URL` 下载。默认下载地址指向：
 
 ```text
 https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/database
@@ -74,9 +74,6 @@ DB_NAME=bpmt_min docker compose up -d web
 
 ## 完整库交付状态
 
-当前本地存在历史完整 `db/init/kyq.sql`，但该文件是忽略文件，不直接提交。它体积约 173MB，且可能包含历史业务数据。生成公开的 `database/bpmt.sql` 前需要先确认两件事：
+当前完整库以 `database/bpmt.sql.gz` 提交。原始 `database/bpmt.sql` 约 127 MiB，超过 GitHub 普通仓库 100 MiB 单文件限制，因此只保留本地生成文件，不直接提交。
 
-- 数据内容允许公开发布。
-- 文件体积符合 GitHub 仓库限制，必要时需要清洗、压缩或拆分交付方案。
-
-在这两个条件确认前，仓库只提交 `bpmt-min.sql` 和初始化脚本能力，不把本地完整 `kyq.sql` 转入 git。
+本次导出排除了失效视图 `v_demo_qj`。该视图依赖的 demo 表已经不在当前 `bpmt` 数据库中，保留它会导致 `mariadb-dump` 中断，也不利于后续恢复初始化库。

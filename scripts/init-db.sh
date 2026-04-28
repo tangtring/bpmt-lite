@@ -16,6 +16,8 @@ copy_or_download() {
   source_name="$1"
   target="$2"
   local_file="$LOCAL_DATABASE_DIR/$source_name"
+  local_gzip_file="$local_file.gz"
+  tmp_file="$target.tmp"
 
   if [ -f "$local_file" ]; then
     cp "$local_file" "$target"
@@ -23,14 +25,30 @@ copy_or_download() {
     return 0
   fi
 
+  if [ -f "$local_gzip_file" ]; then
+    gzip -dc "$local_gzip_file" > "$target"
+    echo "Initialized $target from $local_gzip_file"
+    return 0
+  fi
+
   if command -v curl >/dev/null 2>&1; then
-    if curl -fsSL "$BASE_URL/$source_name" -o "$target"; then
+    if curl -fsSL "$BASE_URL/$source_name" -o "$tmp_file"; then
+      mv "$tmp_file" "$target"
       echo "Initialized $target from $BASE_URL/$source_name"
       return 0
     fi
+    rm -f "$tmp_file"
+
+    if curl -fsSL "$BASE_URL/$source_name.gz" -o "$tmp_file.gz" && gzip -dc "$tmp_file.gz" > "$tmp_file"; then
+      mv "$tmp_file" "$target"
+      rm -f "$tmp_file.gz"
+      echo "Initialized $target from $BASE_URL/$source_name.gz"
+      return 0
+    fi
+    rm -f "$tmp_file" "$tmp_file.gz"
   fi
 
-  echo "Cannot find $local_file and cannot download $BASE_URL/$source_name" >&2
+  echo "Cannot find $local_file or $local_gzip_file and cannot download $BASE_URL/$source_name" >&2
   return 1
 }
 

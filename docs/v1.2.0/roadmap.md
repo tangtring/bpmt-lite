@@ -29,7 +29,7 @@
 | 数据库 | SQL 文件 | 说明 |
 | --- | --- | --- |
 | `bpmt_min` | `database/bpmt-min.sql` | 最小版初始化库，继承 `v1.1.0` 的 173 张表和最小系统数据，用于快速体验、自动化验收和 issue 复现。 |
-| `bpmt` | `database/bpmt.sql` | 使用 `kyq` 数据源整理出的完整初始化库，用于更接近历史业务数据的本地试运行。完整 SQL 需要确认数据可公开和文件体积方案后再提交。 |
+| `bpmt` | `database/bpmt.sql.gz` | 使用当前整理后的 `bpmt` 数据库导出的完整初始化库，用于更接近历史业务数据的本地试运行。 |
 
 共存原则：
 
@@ -48,7 +48,7 @@ scripts/init-db.sh min
 
 验收要求：
 
-- `scripts/init-db.sh` 默认创建或更新 `db/init/bpmt.sql`。
+- `scripts/init-db.sh` 默认创建或更新 `db/init/bpmt.sql`，可从 `database/bpmt.sql.gz` 自动解压。
 - `scripts/init-db.sh min` 创建或更新 `db/init/bpmt-min.sql`。
 - 首次 `docker compose up -d` 后，MariaDB 中存在目标数据库。
 - 同一次初始化中导入 `bpmt` 和 `bpmt_min` 不互相覆盖。

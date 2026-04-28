@@ -41,7 +41,7 @@ http://127.0.0.1:8080/
 
 ## 完整库启动
 
-`v1.2.0` 计划提供完整初始化库 `database/bpmt.sql`，数据库名为 `bpmt`。完整库来自 `kyq` 数据源，当前还需要确认数据可公开和文件体积交付方案，因此仓库暂未提交 `database/bpmt.sql`。
+`v1.2.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库发布后，一条命令会是：
 
@@ -49,7 +49,7 @@ http://127.0.0.1:8080/
 mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/init-db.sh -o init-db.sh && sh init-db.sh && docker compose up -d
 ```
 
-如果你本机已有可导入的完整 SQL，可以放到：
+如果你本机已有可导入的完整 SQL，也可以直接放到：
 
 ```text
 bpmt-lite/db/init/bpmt.sql
@@ -67,7 +67,7 @@ docker compose up -d
 
 | 数据库 | SQL 文件 | 用途 |
 | --- | --- | --- |
-| `bpmt` | `db/init/bpmt.sql` | 完整业务数据，本地试运行 |
+| `bpmt` | `db/init/bpmt.sql` | 完整业务数据，本地试运行，由 `database/bpmt.sql.gz` 解压生成 |
 | `bpmt_min` | `db/init/bpmt-min.sql` | 最小数据，快速体验和验收 |
 
 Web 应用连接哪个库由 `DB_NAME` 决定。
