@@ -137,14 +137,14 @@ def normalize_framework_sql(sql):
     return "\n".join(lines).strip()
 
 
-def build_sql(ddl_path, workbook_path, output_path, activiti_jar_path, quartz_ddl_zip_path):
+def build_sql(ddl_path, workbook_path, output_path, activiti_jar_path, quartz_ddl_zip_path, database_name):
     ddl = ddl_path.read_text(encoding="utf-8")
     activiti_ddls = [normalize_framework_sql(zip_text(activiti_jar_path, resource)) for resource in ACTIVITI_SQL_RESOURCES]
     quartz_ddl = normalize_framework_sql(zip_text(quartz_ddl_zip_path, QUARTZ_SQL_RESOURCE))
     tables = parse_workbook(workbook_path)
 
     output = []
-    output.append("-- bpmt-lite minimal database")
+    output.append("-- bpmt-lite minimal database for %s" % database_name)
     output.append("-- hbm schema source: %s" % ddl_path)
     output.append("-- activiti schema source: %s" % activiti_jar_path)
     output.append("-- quartz schema source: %s" % quartz_ddl_zip_path)
@@ -152,8 +152,8 @@ def build_sql(ddl_path, workbook_path, output_path, activiti_jar_path, quartz_dd
     output.append("SET NAMES utf8;")
     output.append("SET FOREIGN_KEY_CHECKS=0;")
     output.append("")
-    output.append("CREATE DATABASE IF NOT EXISTS `kyq` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;")
-    output.append("USE `kyq`;")
+    output.append("CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;" % database_name)
+    output.append("USE `%s`;" % database_name)
     output.append("")
     output.append("-- hbm2ddl platform schema")
     output.append(ddl.rstrip())
@@ -184,7 +184,8 @@ def main():
     parser.add_argument("--xlsx", default="/Users/wenzhewang/workspace/bpmt_project/riversoft/package/database/bpmt_init_data.xlsx")
     parser.add_argument("--activiti-jar", default="/Volumes/vm/maven/repository/org/activiti/activiti-engine/5.16.3/activiti-engine-5.16.3.jar")
     parser.add_argument("--quartz-ddl-zip", default="/Volumes/vm/maven/repository/com/riversoft/quartz-ddl/2.2.1/quartz-ddl-2.2.1.zip")
-    parser.add_argument("--output", default="database/bpmt-db.sql")
+    parser.add_argument("--output", default="database/bpmt-min.sql")
+    parser.add_argument("--database-name", default="bpmt_min")
     args = parser.parse_args()
 
     build_sql(
@@ -193,6 +194,7 @@ def main():
         Path(args.output),
         Path(args.activiti_jar),
         Path(args.quartz_ddl_zip),
+        args.database_name,
     )
 
 

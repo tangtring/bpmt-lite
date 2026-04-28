@@ -13,7 +13,7 @@ services:
       TZ: Asia/Shanghai
       DB_HOST: ${DB_HOST:-mariadb}
       DB_PORT: ${DB_PORT:-3306}
-      DB_NAME: ${DB_NAME:-kyq}
+      DB_NAME: ${DB_NAME:-bpmt}
       DB_USER: ${DB_USER:-root}
       DB_PASSWORD: ${DB_PASSWORD:-123456}
     volumes:
@@ -34,7 +34,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-123456}
-      MARIADB_DATABASE: ${DB_NAME:-kyq}
+      MARIADB_DATABASE: ${DB_NAME:-bpmt}
     volumes:
       - ./db/data:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d

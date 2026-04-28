@@ -10,7 +10,7 @@ mkdir -p "$APP_CLASSES" "$APP_ROOT/attachment" "$APP_ROOT/download" "$APP_ROOT/l
 
 DB_HOST="${DB_HOST:-mariadb}"
 DB_PORT="${DB_PORT:-3306}"
-DB_NAME="${DB_NAME:-kyq}"
+DB_NAME="${DB_NAME:-bpmt}"
 DB_USER="${DB_USER:-root}"
 DB_PASSWORD="${DB_PASSWORD:-123456}"
 JDBC_URL="jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=UTF-8"
