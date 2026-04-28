@@ -15,12 +15,13 @@
 
 ## GitHub issue 清单
 
-截至 2026-04-28，GitHub open issue 清单如下：
+截至 2026-04-28，本轮 GitHub issue 已全部关闭：
 
 | Issue | 标题 | 规划处理 |
 | --- | --- | --- |
-| [#6](https://github.com/wodenwang/bpmt-lite/issues/6) | 项目 maven setting example 文件中出现写死的本地路径 | 已移除 `settings.example.xml` 中的本机 Maven 仓库路径，并移除 Aliyun 镜像配置，示例配置只保留可公开复用的 Central 和 JumpMind。 |
+| [#6](https://github.com/wodenwang/bpmt-lite/issues/6) | 项目 maven setting example 文件中出现写死的本地路径 | 已移除 `settings.example.xml` 中的本机 Maven 仓库路径和非必要镜像配置。 |
 | [#7](https://github.com/wodenwang/bpmt-lite/issues/7) | 工作流设计模块中，无法打开 activity 编辑器 | 已通过 `ModelerServiceServlet` 恢复 Activiti Modeler 所需的 `/service/*` 兼容端点，并完成打开、保存、关闭路径验证。 |
+| [#8](https://github.com/wodenwang/bpmt-lite/issues/8) | 项目的业务日志没有生成在正确的映射地址 | 已将 Logback 输出切到 `log.path`，Docker 默认指向 `runtime/platform-logs/` 对应的容器目录，业务日志不再混入 Tomcat 日志目录。 |
 
 ## 初始化数据库规划
 
@@ -115,3 +116,17 @@ docker compose config
 - 审批流流程图可显示，节点中文不再显示为方框。
 - 本地 Docker 镜像可按当前机器原生架构构建，Apple Silicon 上不再强制 `AMD64`。
 - 默认页面 copyright 不包含 `Riversoft Designs`。
+
+## 当前验收状态
+
+截至 2026-04-28，本地已完成以下 gate：
+
+- `scripts/verify-repo.sh` 通过。
+- `docker compose config` 通过。
+- `mvn -s settings.local.xml -DskipTests compile` 通过。
+- `scripts/build-image.sh` 通过，生成并验证本地 `ghcr.io/wodenwang/bpmt-lite:1.1.0` 镜像。
+- GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压。
+- 同一个 MariaDB 实例中已验证 `bpmt` 377 张表、`bpmt_min` 173 张表共存。
+- `bpmt` 与 `bpmt_min` 两种 DB_NAME 下 `/` 和 `/ueditor/` 均返回 200。
+- `bpmt` 完整库和 `bpmt_min` 最小库的 `admin/admin` 登录数据已验证。
+- 默认 logo、copyright、业务日志目录映射已完成运行验证。

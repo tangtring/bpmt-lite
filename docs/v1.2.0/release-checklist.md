@@ -2,6 +2,23 @@
 
 本清单用于 `v1.2.0` 打 tag 和发布镜像前的最终 gate。
 
+## 当前结果
+
+截至 2026-04-28，本地 release gate 已完成：
+
+- `scripts/verify-repo.sh` 通过。
+- `docker compose config` 通过。
+- `mvn -s settings.local.xml -DskipTests compile` 通过。
+- `scripts/build-image.sh` 通过，镜像内 `ROOT`、`ueditor`、entrypoint 和 CJK 字体已验证。
+- GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压。
+- `bpmt` 和 `bpmt_min` 已在同一 MariaDB 实例中验证共存。
+- `bpmt` 连接下 `/` 和 `/ueditor/` 返回 200。
+- `bpmt_min` 连接下 `/` 和 `/ueditor/` 返回 200。
+- `admin/admin` 已在完整库和最小库中验证。
+- 默认 logo、copyright、业务日志目录映射已验证。
+
+最终发布前仍需执行：版本号切换到 `1.2.0`、构建并推送 `ghcr.io/wodenwang/bpmt-lite:1.2.0`、同步 `latest`、打 Git tag、创建 GitHub Release。
+
 ## 静态检查
 
 ```bash

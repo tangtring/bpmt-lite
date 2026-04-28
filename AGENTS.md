@@ -223,9 +223,10 @@ docker compose ps
 
 截至 2026-04-28，v1.2.0 已进入执行阶段，当前状态如下：
 
-- 第一阶段修复 GitHub issue 已在本地提交：
+- 第一阶段修复 GitHub issue 已完成并关闭：
   - `#6`：已清理 `settings.example.xml` 中的本机 Maven 仓库路径和非必要镜像配置
   - `#7`：已通过 `ModelerServiceServlet` 恢复 Activiti Modeler `/service/*` 兼容端点，并验证 editor 打开、保存、关闭路径
+  - `#8`：已通过 `log.path` 修复 BPMT 业务日志映射目录，`platform.log` 等日志落到 `runtime/platform-logs/`
 - Docker 运行问题已推进：
   - Web 镜像构建不再强制 `linux/amd64`，本机 Apple Silicon 构建结果为 `linux/arm64`
   - `docker/Dockerfile` 改为 `eclipse-temurin:8-jdk-jammy` 并手动安装 Tomcat 7.0.109
@@ -252,10 +253,16 @@ docker compose ps
   - 大改前先写 `docs/v1.2.0/*`
   - 需要 reviewer gate 时，先用文档清单审查再收口
 - 第五阶段清理品牌信息：
-  - 默认 logo 替换为简约 `BPMT` 字样
+  - 默认 logo 替换为透明底纯色 `BPMT` PNG
   - 默认 copyright 去掉 `Riversoft Designs`
   - 未来许可证考虑 MIT，主要作者为 `wodenwang` 和 `borballzhai`
-- GitHub issue `#8` 已定位为 Logback 相对路径导致业务日志写入 Tomcat 工作目录，修复方向是使用 `log.path` 指向平台日志目录。
+- 发布验收 gate 已推进：
+  - `scripts/verify-repo.sh`、`docker compose config`、`mvn -s settings.local.xml -DskipTests compile` 已通过
+  - `scripts/build-image.sh` 已通过
+  - GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压
+  - `bpmt` 与 `bpmt_min` 共存、两种 DB_NAME 下 `/` 与 `/ueditor/` 返回 200 已验证
+  - 默认 logo、copyright、业务日志目录映射已完成运行验证
+  - 最终发布前仍需切版本号到 `1.2.0`、推送 `1.2.0`/`latest` 镜像、打 tag 和创建 GitHub Release
 
 v1.2.0 规划文档见：
 
