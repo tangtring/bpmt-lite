@@ -21,7 +21,7 @@
 只想先把系统跑起来，不需要 clone 项目。当前公开仓库已经包含最小初始化库，推荐先使用最小库启动：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/init-db.sh -o init-db.sh && sh init-db.sh min && DB_NAME=bpmt_min docker compose up -d
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh && sh run.sh min
 ```
 
 访问：
@@ -43,10 +43,10 @@ http://127.0.0.1:8080/
 
 `v1.2.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
-完整库发布后，一条命令会是：
+完整库一条命令：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/init-db.sh -o init-db.sh && sh init-db.sh && docker compose up -d
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh && sh run.sh
 ```
 
 如果你本机已有可导入的完整 SQL，也可以直接放到：
@@ -68,7 +68,7 @@ docker compose up -d
 | 数据库 | SQL 文件 | 用途 |
 | --- | --- | --- |
 | `bpmt` | `db/init/bpmt.sql` | 完整业务数据，本地试运行，由 `database/bpmt.sql.gz` 解压生成 |
-| `bpmt_min` | `db/init/bpmt-min.sql` | 最小数据，快速体验和验收 |
+| `bpmt_min` | `db/init/bpmt-min.sql` | 最小数据，快速体验和验收，由 `database/bpmt-min.sql.gz` 解压生成 |
 
 Web 应用连接哪个库由 `DB_NAME` 决定。
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import gzip
 import re
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -174,8 +175,12 @@ def build_sql(ddl_path, workbook_path, output_path, activiti_jar_path, quartz_dd
     output.append("SET FOREIGN_KEY_CHECKS=1;")
     output.append("")
 
+    output_text = "\n".join(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text("\n".join(output), encoding="utf-8")
+    output_path.write_text(output_text, encoding="utf-8")
+    with open(str(output_path) + ".gz", "wb") as raw_gzip_file:
+        with gzip.GzipFile(fileobj=raw_gzip_file, mode="wb", mtime=0) as gzip_file:
+            gzip_file.write(output_text.encode("utf-8"))
 
 
 def main():

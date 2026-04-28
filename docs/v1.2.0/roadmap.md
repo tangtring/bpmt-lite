@@ -28,7 +28,7 @@
 
 | 数据库 | SQL 文件 | 说明 |
 | --- | --- | --- |
-| `bpmt_min` | `database/bpmt-min.sql` | 最小版初始化库，继承 `v1.1.0` 的 173 张表和最小系统数据，用于快速体验、自动化验收和 issue 复现。 |
+| `bpmt_min` | `database/bpmt-min.sql.gz` | 最小版初始化库，继承 `v1.1.0` 的 173 张表和最小系统数据，用于快速体验、自动化验收和 issue 复现。 |
 | `bpmt` | `database/bpmt.sql.gz` | 使用当前整理后的 `bpmt` 数据库导出的完整初始化库，用于更接近历史业务数据的本地试运行。 |
 
 共存原则：
@@ -36,7 +36,7 @@
 - MariaDB 同一个实例中允许同时存在 `bpmt` 和 `bpmt_min` 两个 database。
 - 两份 SQL 必须各自包含 `CREATE DATABASE IF NOT EXISTS ...`、`USE ...`，避免依赖 compose 中的 `MARIADB_DATABASE` 单库初始化语义。
 - Web 应用实际连接哪个库，由 `docker-compose.yml` 中 `DB_NAME` 决定。
-- 默认初始化脚本只下载并导入 `bpmt.sql`，参数 `min` 切换为下载并导入 `bpmt-min.sql`。
+- 默认初始化脚本只下载并解压 `bpmt.sql.gz`，参数 `min` 切换为下载并解压 `bpmt-min.sql.gz`。
 - 切换运行库时不要求重建 MariaDB 容器，只需要修改 `DB_NAME` 后重启 Web 容器；如果 SQL 未导入过，再执行初始化脚本。
 
 建议脚本形态：
@@ -49,7 +49,7 @@ scripts/init-db.sh min
 验收要求：
 
 - `scripts/init-db.sh` 默认创建或更新 `db/init/bpmt.sql`，可从 `database/bpmt.sql.gz` 自动解压。
-- `scripts/init-db.sh min` 创建或更新 `db/init/bpmt-min.sql`。
+- `scripts/init-db.sh min` 创建或更新 `db/init/bpmt-min.sql`，可从 `database/bpmt-min.sql.gz` 自动解压。
 - 首次 `docker compose up -d` 后，MariaDB 中存在目标数据库。
 - 同一次初始化中导入 `bpmt` 和 `bpmt_min` 不互相覆盖。
 - `DB_NAME=bpmt docker compose up -d web` 可连接完整库。

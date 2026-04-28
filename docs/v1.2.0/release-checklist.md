@@ -48,7 +48,7 @@ scripts/init-db.sh min
 
 期望：
 
-- 生成或下载 `db/init/bpmt-min.sql`。
+- 生成或下载并解压 `db/init/bpmt-min.sql`。
 - 首次初始化后 MariaDB 中存在 `bpmt_min`。
 - `bpmt_min` 表数量为 173。
 
@@ -62,7 +62,7 @@ scripts/init-db.sh
 
 - 生成或下载 `db/init/bpmt.sql`。
 - 首次初始化后 MariaDB 中存在 `bpmt`。
-- 仓库提交的是 `database/bpmt.sql.gz`，脚本会自动解压。
+- 仓库提交的是 `database/bpmt.sql.gz` 和 `database/bpmt-min.sql.gz`，脚本会自动解压。
 
 ## Web 运行
 

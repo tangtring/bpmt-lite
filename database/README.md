@@ -4,12 +4,12 @@
 
 ## v1.2.0 约定
 
-- `bpmt-min.sql` 是最小初始化库，数据库名为 `bpmt_min`。
+- `bpmt-min.sql.gz` 是最小初始化库压缩包，解压后的数据库名为 `bpmt_min`。
 - `bpmt.sql.gz` 是完整初始化库压缩包，解压后的数据库名为 `bpmt`。
 - 两份 SQL 都必须自己包含 `CREATE DATABASE IF NOT EXISTS ...` 和 `USE ...`，不能依赖 Docker Compose 的 `MARIADB_DATABASE` 自动建库行为。
 - `db/init/*.sql` 是本地运行目录，不提交 git。
 
-当前已提交的是 `bpmt-min.sql` 和 `bpmt.sql.gz`。原始 `bpmt.sql` 体积超过 GitHub 普通仓库 100 MiB 单文件限制，因此不直接提交；`scripts/init-db.sh` 会从 `bpmt.sql.gz` 自动解压到 `db/init/bpmt.sql`。
+当前已提交的是 `bpmt-min.sql.gz` 和 `bpmt.sql.gz`。原始 `bpmt.sql` 体积超过 GitHub 普通仓库 100 MiB 单文件限制，因此不直接提交；`bpmt-min.sql` 也统一改为压缩交付。`scripts/init-db.sh` 会从 `.sql.gz` 自动解压到 `db/init/`。
 
 `bpmt.sql.gz` 来自本地删改后的 `bpmt` 数据库备份。导出时排除了失效视图 `v_demo_qj`，因为该视图引用的 demo 表已经不在当前 `bpmt` 数据库中，直接导出会导致备份失败。
 
@@ -21,7 +21,7 @@
 
 ## 最小库来源
 
-`bpmt-min.sql` 继承 `v1.1.0` 的最小初始化库：
+`bpmt-min.sql.gz` 继承 `v1.1.0` 的最小初始化库：
 
 - 平台表结构来自旧项目 `support/hbm2ddl` 生成的 MySQL DDL。
 - Activiti 表结构来自 `activiti-engine-5.16.3.jar` 内置的 MySQL DDL。
@@ -47,7 +47,8 @@ docker compose exec -T mariadb mariadb-dump -uroot -p123456 \
 gzip -9 -c database/bpmt.sql > database/bpmt.sql.gz
 ```
 
-原始 `database/bpmt.sql` 是本地生成文件，不提交 git。
+原始 `database/bpmt.sql` 和 `database/bpmt-min.sql` 是本地生成文件，不提交 git。
+`scripts/build-minimal-bpmt-db.py` 重新生成最小库时会同时写出本地 raw SQL 和可提交的 `database/bpmt-min.sql.gz`。
 
 ## 重新生成最小库
 

@@ -112,7 +112,7 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-`v1.2.0` 最小初始化库 `database/bpmt-min.sql` 的期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库 `database/bpmt.sql` 需要先确认数据可公开和交付体积方案。
+`v1.2.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库以 `database/bpmt.sql.gz` 压缩交付。
 
 检查 Web：
 
