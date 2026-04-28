@@ -130,6 +130,7 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
 | `DB_PASSWORD` | `123456` | 数据库密码 |
+| `LOG_PATH` | `/usr/local/tomcat/webapps/logs` | 容器内 BPMT 业务日志目录 |
 
 示例：把 Web 端口改成 18080。
 

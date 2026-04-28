@@ -112,7 +112,7 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-`v1.2.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库以 `database/bpmt.sql.gz` 压缩交付。
+`v1.2.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库以 `database/bpmt.sql.gz` 压缩交付，默认 `admin` 密码为 `admin`。
 
 检查 Web：
 
@@ -122,6 +122,15 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 ```
 
 期望均返回 `HTTP/1.1 200 OK`。
+
+检查日志目录：
+
+```bash
+find runtime/platform-logs -maxdepth 3 -type f | sort
+find runtime/tomcat-logs -maxdepth 2 -type f | sort
+```
+
+`platform.log`、`script.log`、`sql/`、`stat/`、`perf4j/` 应落在 `runtime/platform-logs/`；Tomcat 自身日志应落在 `runtime/tomcat-logs/`。
 
 ## 发布流程
 

@@ -5,8 +5,9 @@ APP_ROOT="${APP_ROOT:-/usr/local/tomcat/webapps}"
 APP_CLASSES="${APP_CLASSES:-$APP_ROOT/ROOT/WEB-INF/classes}"
 CONFIG_OVERRIDE_DIR="${CONFIG_OVERRIDE_DIR:-/config/overrides}"
 TOMCAT_LOGS="${TOMCAT_LOGS:-/usr/local/tomcat/logs}"
+PLATFORM_LOGS="${LOG_PATH:-$APP_ROOT/logs}"
 
-mkdir -p "$APP_CLASSES" "$APP_ROOT/attachment" "$APP_ROOT/download" "$APP_ROOT/logs" "$TOMCAT_LOGS"
+mkdir -p "$APP_CLASSES" "$APP_ROOT/attachment" "$APP_ROOT/download" "$PLATFORM_LOGS" "$TOMCAT_LOGS"
 
 DB_HOST="${DB_HOST:-mariadb}"
 DB_PORT="${DB_PORT:-3306}"
@@ -156,6 +157,7 @@ log.level=${LOG_LEVEL:-debug}
 log.jolbox.level=${LOG_JOLBOX_LEVEL:-warn}
 log.3pp.level=${LOG_3PP_LEVEL:-warn}
 log.keepdays=${LOG_KEEPDAYS:-30}
+log.path=${PLATFORM_LOGS}
 EOF
 append_override log.properties
 

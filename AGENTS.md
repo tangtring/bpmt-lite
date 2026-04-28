@@ -165,6 +165,7 @@ docker compose up -d
 
 - `config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件之后。
 - 覆盖文件中的同名 key 优先级更高。
+- Docker 默认 `LOG_PATH` 指向 `/usr/local/tomcat/webapps/logs`，对应宿主机 `runtime/platform-logs/`；不要把 BPMT 业务日志重新混入 Tomcat 日志目录。
 
 ## 维护者构建约定
 
@@ -238,6 +239,7 @@ docker compose ps
   - 默认初始化脚本导入 `bpmt`，参数 `min` 导入 `bpmt_min`
   - 当前删改后的 `bpmt` 已导出为本地 `database/bpmt.sql` 并压缩提交为 `database/bpmt.sql.gz`
   - 最小库也统一压缩提交为 `database/bpmt-min.sql.gz`
+  - `bpmt` 完整库的 `admin` 密码已调整为 `admin`
   - 原始 `database/bpmt.sql` 约 127 MiB，超过 GitHub 普通仓库单文件限制，已加入 `.gitignore`
   - 旧 `db/init/kyq.sql` 已按用户要求从项目运行目录删除；用户另有源文件备份
 - 第三阶段重构 README 已推进：
@@ -253,6 +255,7 @@ docker compose ps
   - 默认 logo 替换为简约 `BPMT` 字样
   - 默认 copyright 去掉 `Riversoft Designs`
   - 未来许可证考虑 MIT，主要作者为 `wodenwang` 和 `borballzhai`
+- GitHub issue `#8` 已定位为 Logback 相对路径导致业务日志写入 Tomcat 工作目录，修复方向是使用 `log.path` 指向平台日志目录。
 
 v1.2.0 规划文档见：
 

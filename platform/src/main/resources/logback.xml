@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
 
+    <property name="log.path" value="logs" />
     <property resource="log.properties" />
 
 	<appender name="PLATFORM" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<append>true</append>
-		<file>logs/platform.log</file>
+		<file>${log.path}/platform.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/platform-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>${log.path}/platform-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 
 			<timeBasedFileNamingAndTriggeringPolicy	class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
 				<maxFileSize>10MB</maxFileSize>
@@ -24,9 +25,9 @@
 
 	<appender name="SCRIPT" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<append>true</append>
-		<file>logs/script.log</file>
+		<file>${log.path}/script.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/script-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>${log.path}/script-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 
 			<timeBasedFileNamingAndTriggeringPolicy	class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
 				<maxFileSize>10MB</maxFileSize>
@@ -43,7 +44,7 @@
 
     <appender name="SQLFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/sql/sql-%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>${log.path}/sql/sql-%d{yyyy-MM-dd}.log</fileNamePattern>
 		</rollingPolicy>
 
 		<encoder>   
@@ -54,7 +55,7 @@
 
 	<appender name="SQLSTATFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>logs/stat/sql-%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>${log.path}/stat/sql-%d{yyyy-MM-dd}.log</fileNamePattern>
 		</rollingPolicy>
 
 		<encoder>
@@ -65,7 +66,7 @@
 
     <appender name="PERF4JFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/perf4j/perf4j-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${log.path}/perf4j/perf4j-%d{yyyy-MM-dd}.log</fileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 
