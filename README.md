@@ -16,12 +16,16 @@
 - 最小数据库名：`bpmt_min`
 - 默认登录账号：`admin/admin`
 
-## 最快启动
+## Quick Start
 
-只想先把系统跑起来，不需要 clone 项目。当前公开仓库已经包含最小初始化库，推荐先使用最小库启动：
+只想先把系统跑起来，不需要 clone 项目。当前公开仓库已经包含初始化库和一键脚本。
+
+如果只是快速体验，推荐先使用最小库启动：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh && sh run.sh min
+mkdir -p bpmt-lite && cd bpmt-lite
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/main/scripts/run.sh -o run.sh
+sh run.sh min
 ```
 
 访问：
@@ -39,14 +43,31 @@ http://127.0.0.1:8080/
 
 最小库包含 173 张表和最小系统数据，适合快速体验、自动化验收和 issue 复现。
 
+如果要使用完整业务库，执行：
+
+```bash
+mkdir -p bpmt-lite && cd bpmt-lite
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/main/scripts/run.sh -o run.sh
+sh run.sh
+```
+
+上面的命令默认使用 GitHub `main` 分支，适合当前 `v1.2.0` 落地阶段试用。正式发布 `v1.2.0` 后，可以固定版本运行：
+
+```bash
+BPMT_REF=v1.2.0 sh run.sh min
+BPMT_REF=v1.2.0 sh run.sh
+```
+
 ## 完整库启动
 
 `v1.2.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
-完整库一条命令：
+完整库启动命令：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh && sh run.sh
+mkdir -p bpmt-lite && cd bpmt-lite
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/main/scripts/run.sh -o run.sh
+sh run.sh
 ```
 
 如果你本机已有可导入的完整 SQL，也可以直接放到：
