@@ -89,7 +89,8 @@ mvn -s settings.local.xml -pl platform -am -Pdocker-image verify -Ddocker.apt.mi
 准备数据库初始化文件：
 
 ```text
-db/init/kyq.sql
+db/init/bpmt.sql
+db/init/bpmt-min.sql
 ```
 
 启动：
@@ -104,14 +105,14 @@ docker compose up -d
 docker compose ps
 ```
 
-检查数据库表数量：
+检查最小数据库表数量：
 
 ```bash
 docker compose exec -T mariadb mariadb -uroot -p123456 -N \
-  -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='kyq';"
+  -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-使用完整历史 `kyq.sql` 时，`v1.0.0` 的期望结果是 `383`。使用 `v1.1.0` 最小初始化库 `database/bpmt-db.sql` 时，期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。
+`v1.2.0` 最小初始化库 `database/bpmt-min.sql` 的期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库 `database/bpmt.sql` 需要先确认数据可公开和交付体积方案。
 
 检查 Web：
 
@@ -215,7 +216,7 @@ sha256:8d3071c2b43e472beb0f453990b95c057895bf02bdd4be0dcdf74e7b336ba961
 - 私有依赖 jar、war
 - 许可证文件
 
-`db/init/kyq.sql` 只用于首次初始化。已有 `db/data` 时不会再次导入。
+`db/init/*.sql` 只用于首次初始化。已有 `db/data` 时不会再次导入。
 
 ## v1.1.0 Office/PDF 转换裁剪
 
@@ -232,7 +233,7 @@ sha256:8d3071c2b43e472beb0f453990b95c057895bf02bdd4be0dcdf74e7b336ba961
 
 ## 常见问题
 
-### 修改 kyq.sql 后为什么没有重新导入？
+### 修改初始化 SQL 后为什么没有重新导入？
 
 MariaDB 官方初始化机制只在数据目录为空时执行 `/docker-entrypoint-initdb.d`。需要重新导入时，先备份数据，再删除 `db/data` 后重启。
 
@@ -242,7 +243,7 @@ MariaDB 官方初始化机制只在数据目录为空时执行 `/docker-entrypoi
 
 ### 为什么 docker-compose.yml 只保留少量配置？
 
-`v1.1.0` 起，默认 compose 只保留快速启动需要的端口、镜像 tag 和数据库连接信息。原 properties 的低频参数仍由 `docker/docker-entrypoint.sh` 生成默认值。
+`v1.1.0` 起，默认 compose 只保留快速启动需要的端口、镜像 tag 和数据库连接信息。原 properties 的低频参数仍由 `docker/docker-entrypoint.sh` 生成默认值。`v1.2.0` 中 `DB_NAME` 默认连接 `bpmt`，可通过 `DB_NAME=bpmt_min docker compose up -d web` 切换到最小库。
 
 需要调整高级配置时，在 `config/overrides/` 下创建同名 properties 文件，例如：
 

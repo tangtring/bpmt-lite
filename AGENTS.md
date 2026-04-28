@@ -235,7 +235,11 @@ docker compose ps
   - 两个 database 允许在同一个 MariaDB 实例中共存
   - 默认初始化脚本导入 `bpmt`，参数 `min` 导入 `bpmt_min`
   - 本地完整 `db/init/kyq.sql` 约 173MB 且不提交；生成公开 `database/bpmt.sql` 前必须确认数据可公开和文件体积交付方案
-- 第三阶段重构 README，使初学者优先看到 Docker 一条命令启动、默认账号密码、数据库选择和切换方式。
+- 第三阶段重构 README 已推进：
+  - README 顶部已改为初学者 Docker 运行路径，不再先讲 Java/Maven 历史
+  - 默认账号密码已放在启动说明旁边
+  - 已说明 `bpmt` 与 `bpmt_min` 的共存、切换和重新初始化方式
+  - 因 `database/bpmt.sql` 尚未确认公开交付，README 当前把完整库默认路径标为发布后可用，并把最小库作为当前公开可验证路径
 - 第四阶段补齐团队开发模式：
   - 每个阶段要有可验证结果
   - 大改前先写 `docs/v1.2.0/*`

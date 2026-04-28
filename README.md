@@ -2,66 +2,57 @@
 
 `bpmt-lite` 是 BPMT 低代码平台的简化发行工程。BPMT 表示 BPM + table，核心能力是自定义工作流和动态表格。
 
-本项目只调整代码结构、打包方式、配置方式和部署方式，不升级技术栈、不重写功能、不增加功能。运行栈继续保持 Java 8、Tomcat 7、MariaDB。
+本项目只整理发行工程：代码结构、打包方式、配置方式、Docker 运行方式和初始化数据。不升级 Java/Tomcat/MariaDB 技术栈，不重写业务功能。
 
-## v1.1.0 状态
+## 当前版本
 
-`v1.1.0` 是 bpmt-lite 的第二个 Docker 化版本，重点收口公开构建、最小初始化库和 compose 配置体验。
+`v1.2.0` 正在落地中，目标是修复 `v1.1.0` 后发现的问题，并把初始化数据库、文档、品牌信息和 agent 交接方式整理清楚。
 
 - 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.1.0`
-- 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
-- 默认 Web 访问地址：`http://127.0.0.1:8080/`
-- Tomcat 中的 `ROOT` 应用是 BPMT `platform`
-- Tomcat 中额外包含 `/ueditor` 应用
-- MariaDB 初始化数据库名：`kyq`
-- 最小初始化库：`database/bpmt-db.sql`
-- 发布验收：最小库初始化后 173 张表，`/` 和 `/ueditor/` 均返回 200
+- 默认访问地址：`http://127.0.0.1:8080/`
+- Web 应用：Tomcat `ROOT`
+- 附带应用：`/ueditor`
+- 默认数据库名：`bpmt`
+- 最小数据库名：`bpmt_min`
+- 默认登录账号：`admin/admin`
 
-历史 `v1.0.0` 发布说明见 [docs/release-v1.0.0.md](docs/release-v1.0.0.md)。
+## 最快启动
 
-## Quick Start
-
-只想把系统跑起来，不需要 clone 本项目。推荐直接使用“极简初始化”命令：它会下载 `docker-compose.yml` 和最小数据库 `bpmt-db.sql`，并在首次启动 MariaDB 时自动导入到 `kyq` 库。
-
-### 一条命令极简初始化
-
-适合第一次体验 bpmt-lite。该命令会创建运行目录、下载最小库、启动 MariaDB 和 Web 应用：
+只想先把系统跑起来，不需要 clone 项目。当前公开仓库已经包含最小初始化库，推荐先使用最小库启动：
 
 ```bash
-mkdir -p bpmt-lite/db/init && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/database/bpmt-db.sql -o db/init/kyq.sql && docker compose up -d
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/init-db.sh -o init-db.sh && sh init-db.sh min && DB_NAME=bpmt_min docker compose up -d
 ```
 
-然后访问：
+访问：
 
 ```text
 http://127.0.0.1:8080/
 ```
 
-默认登录账号：
+登录：
 
 ```text
 用户名：admin
 密码：admin
 ```
 
-第一次启动会自动拉取镜像、创建 `db/data`、导入 `db/init/kyq.sql`。这里下载的最小库包含 173 张表和最小系统数据，仅用于本地体验和验证。
+最小库包含 173 张表和最小系统数据，适合快速体验、自动化验收和 issue 复现。
 
-### 一条命令完整初始化
+## 完整库启动
 
-如果你本机已经有完整历史业务库 `kyq.sql`，使用下面的命令。把 `/path/to/kyq.sql` 改成你的真实文件路径：
+`v1.2.0` 计划提供完整初始化库 `database/bpmt.sql`，数据库名为 `bpmt`。完整库来自 `kyq` 数据源，当前还需要确认数据可公开和文件体积交付方案，因此仓库暂未提交 `database/bpmt.sql`。
+
+完整库发布后，一条命令会是：
 
 ```bash
-KYQ_SQL=/path/to/kyq.sql; mkdir -p bpmt-lite/db/init && cp "$KYQ_SQL" bpmt-lite/db/init/kyq.sql && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
+mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/docker-compose.yml -o docker-compose.yml && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/init-db.sh -o init-db.sh && sh init-db.sh && docker compose up -d
 ```
 
-第一次启动会自动拉取镜像、启动 MariaDB、导入 `db/init/kyq.sql`。
-
-### 常规方式启动
-
-如果你已经 clone 了项目，或者已经有完整目录结构，将初始化数据库文件放到：
+如果你本机已有可导入的完整 SQL，可以放到：
 
 ```text
-db/init/kyq.sql
+bpmt-lite/db/init/bpmt.sql
 ```
 
 然后启动：
@@ -70,55 +61,46 @@ db/init/kyq.sql
 docker compose up -d
 ```
 
-如果没有完整 `kyq.sql`，可以把 [database/bpmt-db.sql](database/bpmt-db.sql) 复制为 `db/init/kyq.sql`，得到最小可访问数据库。
+## 数据库选择
 
-### 空库启动
+`bpmt` 和 `bpmt_min` 可以共存在同一个 MariaDB 容器里，互不覆盖。
 
-只想检查容器和端口是否正常、暂时不导入初始化数据时，可以只下载 compose：
+| 数据库 | SQL 文件 | 用途 |
+| --- | --- | --- |
+| `bpmt` | `db/init/bpmt.sql` | 完整业务数据，本地试运行 |
+| `bpmt_min` | `db/init/bpmt-min.sql` | 最小数据，快速体验和验收 |
+
+Web 应用连接哪个库由 `DB_NAME` 决定。
+
+切到最小库：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite && curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.1.0/docker-compose.yml -o docker-compose.yml && docker compose up -d
+DB_NAME=bpmt_min docker compose up -d web
 ```
 
-这种方式不会导入最小系统数据，通常不作为首次体验路径。
+切回默认完整库：
 
-### 查看状态
+```bash
+DB_NAME=bpmt docker compose up -d web
+```
+
+注意：MariaDB 官方镜像只会在首次创建 `db/data` 时自动执行 `db/init/*.sql`。如果已经启动过，再新增或替换 SQL 文件不会自动重新导入。
+
+## 常用操作
+
+查看容器状态：
 
 ```bash
 docker compose ps
 ```
 
-看到 `bpmt-lite-mariadb` 是 `healthy`，`bpmt-lite-web` 是 `Up` 即可。
-
-### 访问地址
-
-平台入口：
-
-```text
-http://127.0.0.1:8080/
-```
-
-UEditor 应用：
-
-```text
-http://127.0.0.1:8080/ueditor/
-```
-
-默认登录账号为 `admin/admin`。
-
-### 停止
+停止服务：
 
 ```bash
 docker compose down
 ```
 
-该命令只停止并删除容器，不会删除 `db/data`、`runtime` 下的数据文件。
-
-## 重新初始化数据库
-
-MariaDB 只会在首次创建 `db/data` 数据目录时自动导入 `db/init/kyq.sql`。
-
-如果已经启动过，再替换 `kyq.sql` 不会自动重新导入。需要重新初始化时，先确认已经备份数据，然后删除本地数据目录：
+重新初始化数据库前先确认数据已备份，然后删除本地数据目录：
 
 ```bash
 docker compose down
@@ -126,9 +108,18 @@ rm -rf db/data
 docker compose up -d
 ```
 
+检查入口：
+
+```bash
+curl -fsSI http://127.0.0.1:8080/
+curl -fsSI http://127.0.0.1:8080/ueditor/
+```
+
+期望返回 `HTTP/1.1 200`。
+
 ## 常用配置
 
-默认 `docker-compose.yml` 只保留快速启动需要的常用项，可以直接通过环境变量覆盖。
+默认 `docker-compose.yml` 只保留快速启动需要的常用项。
 
 | 配置 | 默认值 | 说明 |
 | --- | --- | --- |
@@ -136,7 +127,7 @@ docker compose up -d
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
 | `BPMT_IMAGE_TAG` | `1.1.0` | Web 镜像 tag |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
-| `DB_NAME` | `kyq` | 数据库名 |
+| `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
 | `DB_PASSWORD` | `123456` | 数据库密码 |
 
@@ -146,27 +137,12 @@ docker compose up -d
 BPMT_HTTP_PORT=18080 docker compose up -d
 ```
 
-高级配置不再展开在默认 compose 中。需要覆盖历史 `*.properties` 参数时，在 `config/overrides/` 下创建同名 properties 文件即可。该目录提供了几个示例：
-
-```text
-config/overrides/page.properties.example
-config/overrides/log.properties.example
-config/overrides/jdbc.properties.example
-```
-
-例如覆盖页面标题：
-
-```bash
-printf 'page.title=BPMT Lite\n' > config/overrides/page.properties
-docker compose up -d
-```
+高级配置通过 `config/overrides/*.properties` 覆盖。覆盖文件会追加到容器启动时生成的同名 properties 文件后面，因此同名 key 以覆盖文件为准。
 
 ## 运行目录
 
-运行时目录约定如下：
-
 ```text
-db/init/kyq.sql          首次初始化数据库备份，不提交 git
+db/init/                 初始化 SQL 目录，不提交私有 SQL
 db/data/                 MariaDB 数据目录，不提交 git
 db/logs/                 MariaDB 日志目录，不提交 git
 runtime/attachment/      BPMT 附件目录，不提交 git
@@ -177,21 +153,26 @@ runtime/tomcat-logs/     Tomcat 日志目录，不提交 git
 config/overrides/        properties 覆盖文件目录，不提交具体覆盖文件
 ```
 
-`config/overrides/*.properties` 会追加到容器启动时生成的同名 properties 文件后面，因此覆盖文件中的同名 key 优先级更高。`.example` 文件只作为示例，不会被运行时读取。
-
 ## 维护者构建
 
-维护者需要 Java 8、Maven、Docker，以及可访问旧私有依赖的 Maven 仓库。
+维护者需要 Java 8、Maven、Docker，以及可访问历史依赖的 Maven 仓库。
 
 ```bash
 cp settings.example.xml settings.local.xml
 scripts/build-image.sh
 ```
 
-`settings.local.xml` 不提交到 git。
+`scripts/build-image.sh` 会构建本地镜像，并验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体。更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
 
-更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
+## 文档
 
-## 项目语言
+- 初始化数据库设计：[docs/v1.2.0/database-init.md](docs/v1.2.0/database-init.md)
+- v1.2.0 规划：[docs/v1.2.0/roadmap.md](docs/v1.2.0/roadmap.md)
+- 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
+- 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
-本项目沟通和文档统一使用简体中文。代码、命令、配置键名、Maven 坐标、镜像名等技术标识保持原样。
+## 许可证与作者
+
+未来版本计划使用 MIT 许可证。主要作者记录为 `wodenwang` 和 `borballzhai`。
+
+本项目沟通和文档统一使用简体中文；代码、命令、配置键名、Maven 坐标、镜像名等技术标识保持原样。
