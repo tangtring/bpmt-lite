@@ -6,9 +6,9 @@
 
 ## 当前版本
 
-`v1.2.0` 正在落地中，目标是修复 `v1.1.0` 后发现的问题，并把初始化数据库、文档、品牌信息和 agent 交接方式整理清楚。
+`v1.2.0` 已发布，修复了 `v1.1.0` 后发现的问题，并整理了初始化数据库、文档、品牌信息和 agent 交接方式。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.1.0`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.2.0`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - Web 应用：Tomcat `ROOT`
 - 附带应用：`/ueditor`
@@ -24,7 +24,7 @@
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/main/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh
 sh run.sh min
 ```
 
@@ -47,15 +47,8 @@ http://127.0.0.1:8080/
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/main/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh
 sh run.sh
-```
-
-上面的命令默认使用 GitHub `main` 分支，适合当前 `v1.2.0` 落地阶段试用。正式发布 `v1.2.0` 后，可以固定版本运行：
-
-```bash
-BPMT_REF=v1.2.0 sh run.sh min
-BPMT_REF=v1.2.0 sh run.sh
 ```
 
 ## 完整库启动
@@ -66,7 +59,7 @@ BPMT_REF=v1.2.0 sh run.sh
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/main/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -146,7 +139,7 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.1.0` | Web 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.2.0` | Web 镜像 tag |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |

@@ -17,15 +17,17 @@
 
 - `v1.0.0` 是首个正式 Docker 化版本。
 - `v1.1.0` 是已发布的第二个 Docker 化版本。
-- `v1.2.0` 是当前规划中的下一个版本。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.1.0`
+- `v1.2.0` 是当前发布版本。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.2.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - `ROOT` 应用对应 BPMT `platform`
 - 额外包含 `/ueditor` 应用
-- MariaDB 初始化数据库名：`kyq`
+- MariaDB 默认初始化数据库名：`bpmt`
+- MariaDB 最小初始化数据库名：`bpmt_min`
 - README 中记录的发布验收基线是：
-  - 使用 `database/bpmt-db.sql` 最小库初始化后 173 张表
+  - 使用 `database/bpmt-min.sql.gz` 最小库初始化后 173 张表
+  - 使用 `database/bpmt.sql.gz` 完整库初始化后 377 张表
   - `/` 返回 200
   - `/ueditor/` 返回 200
 
@@ -219,9 +221,9 @@ docker compose ps
 - 使用 `database/bpmt-db.sql` + 本地 `1.1.0` 镜像的临时 compose 验证通过：`/` 和 `/ueditor/` 均返回 200
 - 使用 public-only 临时 Maven settings + 空本地 Maven 仓库执行 `mvn -s <tmp-settings> -DskipTests compile` 已验证成功
 
-## v1.2.0 当前规划
+## v1.2.0 发布状态
 
-截至 2026-04-28，v1.2.0 已进入执行阶段，当前状态如下：
+截至 2026-04-28，v1.2.0 已完成发布收口，当前状态如下：
 
 - 第一阶段修复 GitHub issue 已完成并关闭：
   - `#6`：已清理 `settings.example.xml` 中的本机 Maven 仓库路径和非必要镜像配置
@@ -259,12 +261,15 @@ docker compose ps
 - 发布验收 gate 已推进：
   - `scripts/verify-repo.sh`、`docker compose config`、`mvn -s settings.local.xml -DskipTests compile` 已通过
   - `scripts/build-image.sh` 已通过
-  - GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压
+  - GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压；发布后 README 使用 `v1.2.0` tag 路径
   - `bpmt` 与 `bpmt_min` 共存、两种 DB_NAME 下 `/` 与 `/ueditor/` 返回 200 已验证
   - 默认 logo、copyright、业务日志目录映射已完成运行验证
-  - 最终发布前仍需切版本号到 `1.2.0`、推送 `1.2.0`/`latest` 镜像、打 tag 和创建 GitHub Release
+  - Maven 项目版本已切到 `1.2.0`
+  - `ghcr.io/wodenwang/bpmt-lite:1.2.0` 与 `ghcr.io/wodenwang/bpmt-lite:latest` 已推送，digest 为 `sha256:083aeae6de6d1bc42c6c92a53599e431b5c87b839decc2f1b395f2d2ae715bef`
+  - Git tag：`v1.2.0`
+  - GitHub Release：`https://github.com/wodenwang/bpmt-lite/releases/tag/v1.2.0`
 
-v1.2.0 规划文档见：
+v1.2.0 文档见：
 
 - `docs/v1.2.0/roadmap.md`
 - `docs/superpowers/plans/2026-04-28-bpmt-lite-v1.2.0.md`

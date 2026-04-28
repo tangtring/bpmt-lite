@@ -124,9 +124,10 @@ docker compose config
 - `scripts/verify-repo.sh` 通过。
 - `docker compose config` 通过。
 - `mvn -s settings.local.xml -DskipTests compile` 通过。
-- `scripts/build-image.sh` 通过，生成并验证本地 `ghcr.io/wodenwang/bpmt-lite:1.1.0` 镜像。
+- `scripts/build-image.sh` 通过，生成并验证本地 `ghcr.io/wodenwang/bpmt-lite:1.2.0` 镜像。
 - GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压。
 - 同一个 MariaDB 实例中已验证 `bpmt` 377 张表、`bpmt_min` 173 张表共存。
 - `bpmt` 与 `bpmt_min` 两种 DB_NAME 下 `/` 和 `/ueditor/` 均返回 200。
 - `bpmt` 完整库和 `bpmt_min` 最小库的 `admin/admin` 登录数据已验证。
 - 默认 logo、copyright、业务日志目录映射已完成运行验证。
+- `ghcr.io/wodenwang/bpmt-lite:1.2.0` 和 `latest` 已推送，digest 为 `sha256:083aeae6de6d1bc42c6c92a53599e431b5c87b839decc2f1b395f2d2ae715bef`。

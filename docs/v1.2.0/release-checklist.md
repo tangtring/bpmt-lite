@@ -1,23 +1,27 @@
 # v1.2.0 发布验收清单
 
-本清单用于 `v1.2.0` 打 tag 和发布镜像前的最终 gate。
+本清单用于 `v1.2.0` 打 tag 和发布镜像前后的最终 gate。
 
 ## 当前结果
 
-截至 2026-04-28，本地 release gate 已完成：
+截至 2026-04-28，`v1.2.0` release gate 已完成：
 
 - `scripts/verify-repo.sh` 通过。
 - `docker compose config` 通过。
 - `mvn -s settings.local.xml -DskipTests compile` 通过。
-- `scripts/build-image.sh` 通过，镜像内 `ROOT`、`ueditor`、entrypoint 和 CJK 字体已验证。
+- `scripts/build-image.sh` 通过，镜像内 `ROOT`、`ueditor`、entrypoint 和 CJK 字体已验证，生成 `ghcr.io/wodenwang/bpmt-lite:1.2.0`。
 - GitHub raw `main` 路径的一键脚本已验证完整库和最小库下载解压。
 - `bpmt` 和 `bpmt_min` 已在同一 MariaDB 实例中验证共存。
 - `bpmt` 连接下 `/` 和 `/ueditor/` 返回 200。
 - `bpmt_min` 连接下 `/` 和 `/ueditor/` 返回 200。
 - `admin/admin` 已在完整库和最小库中验证。
 - 默认 logo、copyright、业务日志目录映射已验证。
+- `ghcr.io/wodenwang/bpmt-lite:1.2.0` 已推送。
+- `ghcr.io/wodenwang/bpmt-lite:latest` 已同步到同一 digest。
 
-最终发布前仍需执行：版本号切换到 `1.2.0`、构建并推送 `ghcr.io/wodenwang/bpmt-lite:1.2.0`、同步 `latest`、打 Git tag、创建 GitHub Release。
+发布 digest：`sha256:083aeae6de6d1bc42c6c92a53599e431b5c87b839decc2f1b395f2d2ae715bef`。
+
+发布地址：`https://github.com/wodenwang/bpmt-lite/releases/tag/v1.2.0`。
 
 ## 静态检查
 
