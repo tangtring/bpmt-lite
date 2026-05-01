@@ -21,9 +21,11 @@
 		showLoading: function(message) {
 			removeById('bpmt_h5_loading');
 			var loading = document.createElement('div');
+			var content = document.createElement('div');
 			loading.id = 'bpmt_h5_loading';
 			loading.className = 'bpmt-h5-loading';
-			loading.innerHTML = '<div>' + (message || '数据加载中') + '</div>';
+			content.textContent = message || '数据加载中';
+			loading.appendChild(content);
 			document.body.appendChild(loading);
 		},
 		hideLoading: function() {
@@ -34,7 +36,7 @@
 			var toast = document.createElement('div');
 			toast.id = 'bpmt_h5_toast';
 			toast.className = 'bpmt-h5-toast';
-			toast.innerHTML = message || '';
+			toast.textContent = message || '';
 			document.body.appendChild(toast);
 			window.setTimeout(function() {
 				removeById('bpmt_h5_toast');
