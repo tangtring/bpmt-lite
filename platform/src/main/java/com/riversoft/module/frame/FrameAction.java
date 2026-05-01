@@ -7,6 +7,8 @@ package com.riversoft.module.frame;
 
 import static com.riversoft.core.web.Actions.includePage;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -81,7 +83,7 @@ public class FrameAction {
 				if (SessionManager.check((CmPri) domain.get("pri"))) {
 					String domainKey = (String) domain.get("domainKey");
 					if (Actions.Util.isMobile(request)) {
-						Actions.jump(request, response, "/frame/FrameAction/domain.shtml?domain=" + domainKey + "&_action_mode=h5");
+						Actions.jump(request, response, "/frame/FrameAction/domain.shtml?domain=" + urlEncode(domainKey) + "&_action_mode=h5");
 					} else {
 						Actions.jump(request, response, "/" + domainKey + ".xhtml");
 					}
@@ -119,6 +121,14 @@ public class FrameAction {
 		request.setAttribute("visitors", visitors);
 
 		includePage(request, response, Util.getPagePath(request, FrameStyleSwitcher.getFrame()));
+	}
+
+	private String urlEncode(String value) {
+		try {
+			return URLEncoder.encode(value, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new SystemRuntimeException(ExceptionType.WEB, "URL编码失败.", e);
+		}
 	}
 
 	/**
