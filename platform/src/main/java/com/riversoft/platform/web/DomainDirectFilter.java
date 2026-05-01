@@ -43,6 +43,7 @@ public class DomainDirectFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 		String url = request.getServletPath();
 		logger.debug("当前域路径:[" + url + "]");
+		request.setAttribute(Keys.ACTION_MODE.toString(), "xhtml");
 
 		String domainKey;
 		String menuKey;
@@ -56,7 +57,7 @@ public class DomainDirectFilter implements Filter {
 			menuKey = "";
 		}
 
-		request.getRequestDispatcher("/frame/FrameAction/domain.shtml?domain=" + domainKey + "&menu=" + menuKey + "&" + Keys.FULL_URL.toString() + "=" + URLEncoder.encode(Util.getFullURL(request)))
+		request.getRequestDispatcher("/frame/FrameAction/domain.shtml?domain=" + domainKey + "&menu=" + menuKey + "&_action_mode=xhtml&" + Keys.FULL_URL.toString() + "=" + URLEncoder.encode(Util.getFullURL(request)))
 				.forward(request,
 						response);
 	}

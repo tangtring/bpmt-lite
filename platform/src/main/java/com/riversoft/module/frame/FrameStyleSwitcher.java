@@ -8,6 +8,8 @@ package com.riversoft.module.frame;
 import org.apache.commons.lang3.StringUtils;
 
 import com.riversoft.core.Config;
+import com.riversoft.core.context.RequestContext;
+import com.riversoft.core.web.Actions;
 
 /**
  * 新旧模板切换开关
@@ -23,7 +25,12 @@ class FrameStyleSwitcher {
 	 * @return
 	 */
 	protected static boolean isNewFrame() {
-		return StringUtils.equals("true", Config.get("page.frame.new"));
+		return StringUtils.equals("true", Config.get("page.frame.new")) && !isH5();
+	}
+
+	private static boolean isH5() {
+		RequestContext context = RequestContext.getCurrent();
+		return context != null && "h5".equalsIgnoreCase(context.getString(Actions.Keys.ACTION_MODE.toString()));
 	}
 
 	/**

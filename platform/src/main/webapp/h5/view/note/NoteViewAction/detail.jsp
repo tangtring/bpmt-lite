@@ -46,7 +46,7 @@
 	<script type="text/javascript">
 		$(function() {
 			$("#${_zone}_btn_back").on('click', function(event) {
-				window.location.href = "${_acp}/index.shtml?_view_key=${param.viewKey}&_params=${wcm:urlEncode(param._params)}";
+				window.location.href = "${_acp}/index.shtml?_action_mode=h5&_view_key=${param.viewKey}&_params=${wcm:urlEncode(param._params)}";
 			});
 		});
 	</script>

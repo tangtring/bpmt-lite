@@ -229,6 +229,14 @@ Viewer 通过标准：
 - `OA-事项资料库` 当前验证：`/dyn/Akf3zTHgJL9XAction/list.shtml?_action_mode=h5` 页面中加号存在，链接到 `/dyn/Akf3zTHgJL9XAction/createZone.shtml?_action_mode=h5&_params=`。
 - 当前业务视图页面不再全局加载 `/h5/assets/bpmt-h5.css` 和 `/h5/assets/bpmt-h5.js`，业务 DOM 中不再出现 `bpmt-h5-*` 结构类。
 
+### 2026-05-01 保守修复补充记录
+
+- 公告详情返回链接已补 `_action_mode=h5`：从 `/view/note/NoteViewAction/detail.shtml?...&_action_mode=h5` 返回时仍进入 H5 公告列表。
+- 已扫描 H5 业务 JSP 中的 `window.location.href` 跳转：`dyn`、`flowbasic`、`rep_list` 原有返回/详情/表单跳转均已携带 `_action_mode=h5`。
+- H5 登录成功逻辑恢复为 `window.location.reload(true)`，用于登录态过期后回到原目标 URL。
+- `.xhtml` 域入口强制按桌面 `xhtml` 分流，`/J_DpS0eJL9X.xhtml?_action_mode=h5` 不再进入 H5 frame 兜底。
+- 删除上一轮新增的 `h5/frame_new/frame.jsp`、`h5/frame_new/menu.jsp`、`h5/frame_new/panel.jsp` 和未使用的 `h5/assets/bpmt-h5.*`。
+
 ### 2026-05-01 代表 URL 矩阵补充验证
 
 移动视口 `390x844`，完整库 `bpmt`，登录用户 `admin/admin`。

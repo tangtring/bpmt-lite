@@ -319,6 +319,9 @@ v1.2.0 文档见：
 - 已恢复 FontAwesome 字体资源，避免 AmazeUI 图标字体 404。
 - 已撤回业务视图 JSP 中主动新增的 `bpmt-h5-*` 结构类和全局 `bpmt-h5.css/js` 引用；保留必要的 `_action_mode=h5` 链路修复、`Wxui.showLoading()` 防御和 `flow/view/form.jsp` 变量误用修复。
 - 原 AmazeUI H5 动态表新增入口位于顶部左侧加号图标，受 `config.addBtn.pri` 权限控制；当前 `OA-事项资料库` 已验证该入口存在并指向 `createZone.shtml?_action_mode=h5`。
+- H5 登录页在登录成功后应 `window.location.reload(true)`，这样登录态过期后由受保护业务 URL forward 到登录页时，成功登录会回到原目标 URL；不要改成固定跳首页。
+- `.xhtml` 域入口是桌面入口，即使带 `_action_mode=h5` 也不做 H5 兜底；`DomainDirectFilter` 会强制按 `xhtml` 分流。H5 入口应使用 `/frame/FrameAction/domain.shtml?...&_action_mode=h5` 或业务 `.view`/Action H5 URL。
+- `h5/frame_new/frame.jsp`、`h5/frame_new/menu.jsp`、`h5/frame_new/panel.jsp` 已删除；H5 不再为 `page.frame.new=true` 生成 frame_new 兜底壳。
 - 已验证 `viewer` 按兼容降级处理：HTML/文本类返回 200，下载类保持下载响应，不改造成完整移动端组件。
 - 代表 URL 验收已覆盖 `dyn`、`flowbasic`、`rep_list`、`note`、`viewer`，详见 `docs/v1.3.0/h5-acceptance.md`。
 - 尚未完成真实写入闭环：动态表 CRUD 测试数据的新建/编辑/删除、工作流普通办理提交仍是后续 C 级冒烟项。
