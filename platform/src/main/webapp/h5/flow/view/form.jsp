@@ -264,7 +264,7 @@
 </header>
 
 <%--表单 --%>
-	<form id="${_zone}_form" class="am-form" action="${_acp}/submit.shtml">
+	<form id="${_zone}_form" method="post" class="am-form" action="${_acp}/submit.shtml">
 		<input type="hidden" name="_action_mode" value="h5" />
 	<textarea style="display: none;" name="_FO" id="${_zone}_fo">${wcm:json(fo)}</textarea>
 	<textarea style="display: none;" id="${_zone}_params" name="_params">${param._params}</textarea>

@@ -58,6 +58,9 @@ public final class ActionServlet extends HttpServlet {
 
 	public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+		request.setCharacterEncoding("UTF-8");
+		response.setCharacterEncoding("UTF-8");
+
 		// 保存web上下文
 		WebContext.init(request, response);
 
