@@ -21,7 +21,7 @@
 					<li class="bpmt-card">
 						<c:choose>
 							<c:when test="${menu.openType==1 && menu.action!=null && menu.action!=''}">
-								<c:url var="menuUrl" value="${_cp}${menu.action}">
+								<c:url var="menuUrl" value="${menu.action}">
 									<c:param name="_action_mode" value="h5" />
 									<c:param name="_frame_type" value="1" />
 									<c:if test="${menu.params!=null && menu.params!=''}">

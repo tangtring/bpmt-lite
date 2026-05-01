@@ -26,7 +26,7 @@
 					<li class="bpmt-card">
 						<c:choose>
 							<c:when test="${home.action!=null && home.action!=''}">
-								<c:url var="homeUrl" value="${_cp}${home.action}">
+								<c:url var="homeUrl" value="${home.action}">
 									<c:param name="_action_mode" value="h5" />
 									<c:param name="_frame_type" value="2" />
 									<c:if test="${home.params!=null && home.params!=''}">
