@@ -178,5 +178,21 @@ Viewer 通过标准：
 ### 待继续处理
 
 - 当前列表页仍以查询区优先展开，业务列表信息密度和移动端操作区仍需按计划继续重构。
-- 动态表 CRUD 写入闭环、工作流普通办理闭环尚未执行。
+- 动态表列表和新建表单已能打开，CRUD 写入闭环尚未执行。
+- 工作流列表和新建表单已能打开，普通办理闭环尚未执行。
 - `note`、`viewer`、完整 URL 矩阵尚未逐条完成。
+
+### 2026-05-01 JSP 结构修复记录
+
+| 视图 | URL | 当前结果 |
+| --- | --- | --- |
+| `dyn` 列表 | `/dyn/Akf3zTHgJL9XAction/list.shtml?_action_mode=h5` | 200，可见查询区、空列表、分页 |
+| `dyn` 新建 | `/dyn/Akf3zTHgJL9XAction/createZone.shtml?_action_mode=h5&_params=` | 200，可见“公司资料 [新增]”和保存按钮 |
+| `flowbasic` 列表 | `/flow/view/AQPyBgISJL9XAction/main.shtml?_action_mode=h5` | 200，可见查询区、空列表、分页 |
+| `flowbasic` 新建 | `/flow/view/AQPyBgISJL9XAction/form.shtml?_action_mode=h5&_params=&ordFlag=1` | 200，可见“收支登记[新建]”和提交按钮 |
+
+本轮修复内容：
+
+- 修正 `dyn/detail.jsp` 和 `flow/view/detail.jsp` 中提前闭合 `</main>` 导致的 DOM 结构错位。
+- 修正 `flow/view/form.jsp` 中 line 判断误用 `field` 变量的问题。
+- 为 `dyn`、`flowbasic` 的列表、详情、表单、操作区补充 `bpmt-h5-*` 结构类。

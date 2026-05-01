@@ -78,7 +78,8 @@
 </c:if>
 
 <%--列表内容--%>
-<div data-am-widget="list_news" class="am-list-news am-list-news-default">
+<main class="bpmt-page bpmt-h5-page">
+<div data-am-widget="list_news" class="am-list-news am-list-news-default bpmt-h5-list">
 	<textarea style="display: none;" name="_params" id="${_zone}_params">${param._params}</textarea>
 	<div class="am-list-news-bd">
 		<ul class="am-list">
@@ -96,7 +97,7 @@
 				<c:choose>
 					<%-- 图文模式 --%>
 					<c:when test="${config.table.weixin.listMode==1}">
-						<li class="am-g am-list-item-desced am-list-item-thumbed am-list-item-thumb-left">
+						<li class="am-g am-list-item-desced am-list-item-thumbed am-list-item-thumb-left bpmt-h5-card">
 							<div class="am-u-sm-3 am-list-thumb">
 									<a href="${_acp}/${clickUrl}.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}" class=""><wpf:image
 										value="${wpf:script(config.table.weixin.imgType,config.table.weixin.imgScript,context)}" /></a>
@@ -114,7 +115,7 @@
 					</c:when>
 					<%-- 纯文模式 --%>
 					<c:otherwise>
-							<li class="am-g am-list-item-dated"><a href="${_acp}/${clickUrl}.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"
+							<li class="am-g am-list-item-dated bpmt-h5-card"><a href="${_acp}/${clickUrl}.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"
 							class="am-list-item-hd"><wpf:script script="${config.table.weixin.titleScript}" type="${config.table.weixin.titleType}" context="${context}" /></a><span class="am-list-date"><wpf:script
 									script="${config.table.weixin.dateScript}" type="${config.table.weixin.dateType}" context="${context}" /></span>
 							<div class="am-list-item-text">
@@ -124,7 +125,7 @@
 				</c:choose>
 				</c:forEach>
 				<c:if test="${dp == null || dp.list == null || fn:length(dp.list) == 0}">
-					<li class="bpmt-card bpmt-empty">暂无数据</li>
+					<li class="bpmt-card bpmt-empty bpmt-h5-empty">暂无数据</li>
 				</c:if>
 			</ul>
 	</div>
@@ -132,6 +133,7 @@
 
 <%--分页 --%>
 <wcm:page dp="${dp}" actionMode="h5" form="${_zone}_query_form" defLimit="${pageLimit}" />
+</main>
 
 <footer data-am-widget="footer" class="am-footer am-footer-default"></footer>
 

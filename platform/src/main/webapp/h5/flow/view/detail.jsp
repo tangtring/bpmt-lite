@@ -100,7 +100,7 @@
 
 </header>
 
-	<main class="bpmt-page">
+<main class="bpmt-page bpmt-h5-page bpmt-h5-detail">
 	<div class="am-panel-group" id="${_zone}_accordion">
 	<c:forEach items="${columns}" var="line" varStatus="status">
 		<c:if test="${line.whole==null}">
@@ -122,17 +122,16 @@
 			</c:choose>
 
 			<c:if test="${lineCheckResult}">
-				<div class="am-panel am-panel-secondary">
+				<div class="am-panel am-panel-secondary bpmt-h5-card">
 					<div class="am-panel-hd" data-am-collapse="{target: '#${_zone}_accordion_p${status.index}'}">
 						<h4 class="am-panel-title">
 							${line.busiName}
 							<c:if test="${line.tipScript!=null&&line.tipScript!=''}">(${wpf:script(line.tipType,line.tipScript,context)})</c:if>
 						</h4>
-	</div>
-	</main>
+					</div>
 					<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 						<div class="am-panel-bd">
-							<dl>
+							<dl class="bpmt-h5-detail-list">
 								<c:forEach items="${columns}" var="field" varStatus="fieldStatus" begin="${line.detail_begin}" end="${line.detail_end}">
 									<c:set var="checkResult" value="${true}" />
 									<%--展示字段 --%>
@@ -183,6 +182,7 @@
 		</c:if>
 	</c:forEach>
 </div>
+</main>
 
 <footer data-am-widget="footer" class="am-footer am-footer-default"></footer>
 

@@ -264,8 +264,8 @@
 </header>
 
 <%--表单 --%>
-	<main class="bpmt-page">
-	<form id="${_zone}_form" class="am-form" action="${_acp}/submit.shtml">
+<main class="bpmt-page bpmt-h5-page">
+	<form id="${_zone}_form" class="am-form bpmt-h5-form" action="${_acp}/submit.shtml">
 		<input type="hidden" name="_action_mode" value="h5" />
 	<textarea style="display: none;" name="_FO" id="${_zone}_fo">${wcm:json(fo)}</textarea>
 	<textarea style="display: none;" id="${_zone}_params" name="_params">${param._params}</textarea>
@@ -286,16 +286,16 @@
 				<%--分割线 --%>
 				<c:choose>
 					<%-- 节点字段,采用decide决定结果 --%>
-					<c:when test="${field.decideScript!=null}">
-						<c:set var="lineDecideResult" value="${wpf:script(field.decideType,field.decideScript,context)}" />
+					<c:when test="${line.decideScript!=null}">
+						<c:set var="lineDecideResult" value="${wpf:script(line.decideType,line.decideScript,context)}" />
 					</c:when>
 					<%-- 继承字段,直接展示--%>
 					<c:otherwise>
 						<c:set var="lineDecideResult" value="${true}" />
 					</c:otherwise>
 				</c:choose>
-				<c:if test="${field.name==null&&lineDecideResult}">
-					<div class="am-panel am-panel-secondary">
+				<c:if test="${line.name==null&&lineDecideResult}">
+					<div class="am-panel am-panel-secondary bpmt-h5-card">
 						<div class="am-panel-hd" data-am-collapse="{target: '#${_zone}_accordion_p${status.index}'}">
 							<h4 class="am-panel-title">
 								${line.busiName}
@@ -304,7 +304,7 @@
 						</div>
 						<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 							<div class="am-panel-bd">
-								<dl>
+								<dl class="bpmt-h5-form-list">
 									<c:forEach items="${columns}" var="field" varStatus="fieldStatus" begin="${line.form_begin}" end="${line.form_end}">
 										<%-- 是否出现分割线 --%>
 										<c:set var="hrFlag" value="${false}" />
@@ -363,7 +363,7 @@
 	</div>
 
 	<%-- 按钮区域,左右结构 --%>
-	<div class="am-container am-margin-top am-margin-bottom am-cf" id="${_zone}_btn_zone">
+	<div class="am-container am-margin-top am-margin-bottom am-cf bpmt-h5-actions" id="${_zone}_btn_zone">
 
 		<%-- 固定功能性按钮暂时收进来 --%>
 		<div class="am-dropdown am-dropdown-up" data-am-dropdown>
