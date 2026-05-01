@@ -314,11 +314,11 @@ v1.2.0 文档见：
 
 2026-05-01 当前实现进度：
 
-- 已建立共享 `bpmt-h5` 轻量组件层：`platform/src/main/webapp/h5/assets/bpmt-h5.css`、`platform/src/main/webapp/h5/assets/bpmt-h5.js`。
+- 2026-05-01 用户重新确认策略：v1.3.0 先保守止血，只修复 H5 阻断 bug，不改变原有 AmazeUI 业务页面结构和交互。
 - 已修复并验证动态业务视图直连路由：`dyn`、`flowbasic`、`rep_list` 的 `A...Action` 直连 URL 不再因动态 Action 类未生成而 500。
 - 已恢复 FontAwesome 字体资源，避免 AmazeUI 图标字体 404。
-- 已修复 `dyn`、`flowbasic`、`rep_list` 详情页中提前闭合 `</main>` 的 DOM 结构错位。
-- 已为 `dyn`、`flowbasic`、`rep_list`、`note` 的列表、详情、表单/操作区补充 `bpmt-h5-*` 结构类。
+- 已撤回业务视图 JSP 中主动新增的 `bpmt-h5-*` 结构类和全局 `bpmt-h5.css/js` 引用；保留必要的 `_action_mode=h5` 链路修复、`Wxui.showLoading()` 防御和 `flow/view/form.jsp` 变量误用修复。
+- 原 AmazeUI H5 动态表新增入口位于顶部左侧加号图标，受 `config.addBtn.pri` 权限控制；当前 `OA-事项资料库` 已验证该入口存在并指向 `createZone.shtml?_action_mode=h5`。
 - 已验证 `viewer` 按兼容降级处理：HTML/文本类返回 200，下载类保持下载响应，不改造成完整移动端组件。
 - 代表 URL 验收已覆盖 `dyn`、`flowbasic`、`rep_list`、`note`、`viewer`，详见 `docs/v1.3.0/h5-acceptance.md`。
 - 尚未完成真实写入闭环：动态表 CRUD 测试数据的新建/编辑/删除、工作流普通办理提交仍是后续 C 级冒烟项。

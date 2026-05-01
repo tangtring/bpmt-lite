@@ -41,13 +41,12 @@
 	<h1 class="am-header-title">${title}[查看]</h1>
 </header>
 
-<main class="bpmt-page bpmt-h5-page bpmt-h5-detail">
 	<div class="am-panel-group" id="${_zone}_accordion">
 	<c:forEach items="${config.h5DetailList}" var="line" varStatus="status">
 		<c:if test="${line.whole==null}">
 			<%--分割线 --%>
 			<c:if test="${line.name==null&&wpf:checkExt(line.pri,context)}">
-				<div class="am-panel am-panel-secondary bpmt-h5-card">
+				<div class="am-panel am-panel-secondary">
 					<div class="am-panel-hd" data-am-collapse="{target: '#${_zone}_accordion_p${status.index}'}">
 						<h4 class="am-panel-title">
 							${line.busiName}
@@ -56,7 +55,7 @@
 					</div>
 					<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 						<div class="am-panel-bd">
-							<dl class="bpmt-h5-detail-list">
+							<dl>
 								<c:forEach items="${config.h5DetailList}" var="field" varStatus="fieldStatus" begin="${line.detail_begin}" end="${line.detail_end}">
 									<c:if test="${wpf:checkExt(field.pri,context)}">
 										<dt>${field.busiName}</dt>
@@ -76,7 +75,6 @@
 		</c:if>
 	</c:forEach>
 </div>
-</main>
 
 <footer data-am-widget="footer" class="am-footer am-footer-default"></footer>
 

@@ -29,7 +29,7 @@ v1.3.0 的移动端重点不是后台管理模块的“功能设置”域，而�
 | 项目 | 验收动作 | 预期 |
 | --- | --- | --- |
 | 登录页 | 打开 `/login.jsp?_action_mode=h5` | 返回 200，无阻断性 JS 错误 |
-| 静态资源 | 检查 `/css/amazeui.min.css`、`/js/amazeui.min.js`、`/h5/assets/bpmt-h5.css`、`/h5/assets/bpmt-h5.js` | 返回 200 |
+| 静态资源 | 检查 `/css/amazeui.min.css`、`/js/amazeui.min.js`、FontAwesome 字体 | 返回 200 |
 | 登录 | 使用 `admin/admin` 登录 | 返回成功并进入 H5 首页 |
 | 首页 | 打开 `/?_action_mode=h5` | 可见首页、菜单、首页面板 |
 | 菜单链接 | 从 H5 菜单点击业务视图入口 | 链接不出现 `http://frame`、`//frame/FrameAction` 等异常 URL |
@@ -177,7 +177,7 @@ Viewer 通过标准：
 
 ### 待继续处理
 
-- 当前列表页仍以查询区优先展开，业务列表信息密度和移动端操作区仍需按计划继续重构。
+- 2026-05-01 策略已收回到保守止血：不重构原 AmazeUI H5 业务页面结构，只修复阻断 bug 和 H5 链路兼容问题。
 - 动态表列表和新建表单已能打开，CRUD 写入闭环尚未执行。
 - 工作流列表和新建表单已能打开，普通办理闭环尚未执行。
 - `note`、完整 URL 矩阵尚未逐条完成。
@@ -193,9 +193,9 @@ Viewer 通过标准：
 
 本轮修复内容：
 
-- 修正 `dyn/detail.jsp` 和 `flow/view/detail.jsp` 中提前闭合 `</main>` 导致的 DOM 结构错位。
+- 撤回 `dyn`、`flowbasic` 页面中新加的 `bpmt-h5-*` 结构类和包装层，恢复原 AmazeUI H5 页面结构。
 - 修正 `flow/view/form.jsp` 中 line 判断误用 `field` 变量的问题。
-- 为 `dyn`、`flowbasic` 的列表、详情、表单、操作区补充 `bpmt-h5-*` 结构类。
+- 保留 `_action_mode=h5` 链路修复和 `Wxui.showLoading()` 防御，避免跳回桌面页或降级环境 JS 中断。
 
 ### 2026-05-01 Viewer 兼容验证记录
 
@@ -219,11 +219,15 @@ Viewer 通过标准：
 
 本轮修复内容：
 
-- 修正 `report/detail.jsp` 中提前闭合 `</main>` 导致的 DOM 结构错位。
-- 为 `report` 列表、详情、无权限页补充 `bpmt-h5-*` 结构类。
-- 为 `note` 列表、详情补充 `bpmt-h5-*` 结构类。
+- 撤回 `report`、`note` 页面中新加的 `bpmt-h5-*` 结构类和包装层，恢复原 AmazeUI H5 页面结构。
 - 公告详情链接补充 `_action_mode=h5`，避免从 H5 列表跳回桌面模式。
 - 公告页 `Wxui.showLoading()` 加防御判断，避免降级环境中 JS 中断。
+
+### 2026-05-01 保守策略确认记录
+
+- 原 AmazeUI H5 动态表列表具备新增能力，入口是顶部左侧 `am-icon-plus-circle` 加号图标，不是文字按钮。
+- `OA-事项资料库` 当前验证：`/dyn/Akf3zTHgJL9XAction/list.shtml?_action_mode=h5` 页面中加号存在，链接到 `/dyn/Akf3zTHgJL9XAction/createZone.shtml?_action_mode=h5&_params=`。
+- 当前业务视图页面不再全局加载 `/h5/assets/bpmt-h5.css` 和 `/h5/assets/bpmt-h5.js`，业务 DOM 中不再出现 `bpmt-h5-*` 结构类。
 
 ### 2026-05-01 代表 URL 矩阵补充验证
 

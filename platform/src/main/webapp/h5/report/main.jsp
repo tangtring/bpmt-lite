@@ -11,9 +11,8 @@
 
 <%@ include file="/include/h5_head.jsp"%>
 
-<main class="bpmt-page bpmt-h5-page">
 <div class="am-container am-margin-top">
-	<div class="am-alert am-alert-danger bpmt-h5-error">
+	<div class="am-alert am-alert-danger">
 		<h4>
 			<i class="am-icon-times-circle"></i> 系统提示
 		</h4>
@@ -22,6 +21,5 @@
 
 	<button type="button" class="am-btn am-btn-default am-radius am-btn-block" onclick="wx.closeWindow();">关闭</button>
 </div>
-</main>
 
 <%@ include file="/include/h5_bottom.jsp"%>

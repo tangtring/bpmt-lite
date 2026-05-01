@@ -121,8 +121,7 @@
 </header>
 
 <%--表单 --%>
-<main class="bpmt-page bpmt-h5-page">
-	<form id="${_zone}_form" method="post" class="am-form bpmt-h5-form" action="${_acp}/submit.shtml">
+	<form id="${_zone}_form" method="post" class="am-form" action="${_acp}/submit.shtml">
 		<input type="hidden" name="_action_mode" value="h5" />
 	<c:if test="${!isCreate}">
 		<textarea name="_key" style="display: none;" id="${_zone}_key">${wcm:jsonKey(vo,config.keysArray)}</textarea>
@@ -134,7 +133,7 @@
 			<c:if test="${line.whole==null}">
 				<%--分割线 --%>
 				<c:if test="${line.name==null&&wpf:checkExt(line.pri,context)}">
-					<div class="am-panel am-panel-secondary bpmt-h5-card">
+					<div class="am-panel am-panel-secondary">
 						<div class="am-panel-hd" data-am-collapse="{target: '#${_zone}_accordion_p${status.index}'}">
 							<h4 class="am-panel-title">
 								${line.busiName}
@@ -143,7 +142,7 @@
 						</div>
 						<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 							<div class="am-panel-bd">
-								<dl class="bpmt-h5-form-list">
+								<dl>
 									<c:forEach items="${config.h5FormList}" var="field" varStatus="fieldStatus" begin="${line.form_begin}" end="${line.form_end}">
 										<%-- 是否出现分割线 --%>
 										<c:set var="hrFlag" value="${false}" />
@@ -215,11 +214,10 @@
 		</c:forEach>
 	</div>
 
-	<div class="am-container am-margin-top am-margin-bottom bpmt-h5-actions">
+	<div class="am-container am-margin-top am-margin-bottom">
 		<button type="submit" class="am-btn am-btn-success am-radius am-btn-block">保存</button>
 	</div>
 	</form>
-	</main>
 
 <%-- 客户端脚本，必须写在form表单下面，否则widget不会初始化 --%>
 <wpf:javascript script="${config.table.formJsScript}" type="${config.table.formJsType}" context="${context}" form="${_zone}_form" actionMode="h5" />

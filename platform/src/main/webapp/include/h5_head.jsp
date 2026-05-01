@@ -21,10 +21,8 @@
 	</c:if>
 	<script src="${_cp}/js/jquery.form.min.js"></script>
 	<script src="${_cp}/js/ws-widget.js"></script>
-	<link rel="stylesheet" href="${_cp}/h5/assets/bpmt-h5.css" type="text/css">
-	<script src="${_cp}/h5/assets/bpmt-h5.js"></script>
 	<script src="${_cp}/js/ws-wxui.js"></script>
 
 	</head>
-	<body class="bpmt-h5">
+	<body>
 </c:if>

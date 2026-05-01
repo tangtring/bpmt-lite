@@ -20,8 +20,7 @@
 	</a>
 </div>
 
-<main class="bpmt-page bpmt-h5-page bpmt-h5-detail">
-<div class="am-container am-margin-top bpmt-h5-card">
+<div class="am-container am-margin-top">
 	<h2>
 		<c:if test="${vo.topFlag}">
 			<span class="am-badge am-badge-danger">置顶</span>
@@ -35,15 +34,15 @@
 
 <hr data-am-widget="divider" class="am-divider am-divider-default" />
 
-<div class="am-container bpmt-h5-card">${vo.CONTENT}</div>
+<div class="am-container">${vo.CONTENT}</div>
 
 <c:if test="${not empty vo.ATTACHMENT}">
-	<div class="am-container bpmt-h5-card">
+	<div class="am-container">
 		<wcm:widget name="attachments" cmd="multifilemanager" state="readonly" value="${vo.ATTACHMENT}" actionMode="h5" />
 	</div>
 </c:if>
 
-<div class="am-container am-margin-top am-margin-bottom bpmt-h5-actions">
+<div class="am-container am-margin-top am-margin-bottom">
 	<script type="text/javascript">
 		$(function() {
 			$("#${_zone}_btn_back").on('click', function(event) {
@@ -53,7 +52,6 @@
 	</script>
 	<button id="${_zone}_btn_back" type="button" class="am-btn am-btn-primary am-radius am-btn-block">返回</button>
 </div>
-</main>
 
 <footer data-am-widget="footer" class="am-footer am-footer-default"></footer>
 
