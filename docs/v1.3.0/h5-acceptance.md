@@ -224,3 +224,24 @@ Viewer 通过标准：
 - 为 `note` 列表、详情补充 `bpmt-h5-*` 结构类。
 - 公告详情链接补充 `_action_mode=h5`，避免从 H5 列表跳回桌面模式。
 - 公告页 `Wxui.showLoading()` 加防御判断，避免降级环境中 JS 中断。
+
+### 2026-05-01 代表 URL 矩阵补充验证
+
+移动视口 `390x844`，完整库 `bpmt`，登录用户 `admin/admin`。
+
+| 视图 | URL | 当前结果 |
+| --- | --- | --- |
+| `dyn` | `/dyn/AeIG7qChJL9XAction/list.shtml?_action_mode=h5` | 200，可见“系统公告”列表和详情链接 |
+| `dyn` | `/dyn/AqNgdqEeJL9XAction/list.shtml?_action_mode=h5` | 200，可见“员工档案”列表和多字段查询 |
+| `flowbasic` | `/flow/view/A8060m_rKL9XAction/main.shtml?_action_mode=h5` | 200，可见“费用报销”列表和待办/详情链接 |
+| `rep_list` | `/report/APdq87aCaM9XAction/list.shtml?_action_mode=h5` | 200，可见“考勤报表”查询区、空列表和分页 |
+
+浏览器控制台：本轮代表 URL 补充验证未发现 error/warn。
+
+### 2026-05-01 工程 gate
+
+- `scripts/verify-repo.sh`：通过。
+- `mvn -s settings.local.xml -DskipTests compile`：通过。
+- `docker compose config`：通过。
+- `scripts/build-image.sh`：通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.2.0`。
+- 临时完整库运行环境：`bpmt-h5-full`，`http://127.0.0.1:18080/` 返回 200。
