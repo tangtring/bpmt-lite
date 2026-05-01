@@ -274,6 +274,28 @@ v1.2.0 文档见：
 - `docs/v1.2.0/roadmap.md`
 - `docs/superpowers/plans/2026-04-28-bpmt-lite-v1.2.0.md`
 
+## 原始项目参考源
+
+当本仓出现历史源码缺失、H5 页面包含关系不清、旧模板路径不一致等问题时，可以参考稳定运行时目录和原始 BPMT 项目，但不能直接整包覆盖本仓：
+
+- 稳定运行时参考目录：`/Users/wenzhewang/workspace/bpmt_project/运行时参考/platform`
+- 本机原始项目路径：`/Users/wenzhewang/workspace/bpmt_project/bpmt`
+- GitHub：`https://github.com/wodenwang/bpmt`
+
+使用规则：
+
+- 先在本仓确认缺失或异常，再到稳定运行时参考目录中查对应文件、路径和当前可运行写法。
+- 原始项目用于补充历史源码对照；当稳定运行时参考目录与原始项目不一致时，优先以稳定运行时参考目录为准。
+- 原始项目只能作为对照和借鉴来源，不能恢复已在 `bpmt-lite` 中明确割舍的依赖、模块或私服配置。
+- 任何从原始项目借鉴的代码都必须符合本仓边界：Java 8、Maven 3、Tomcat 7、MariaDB，不升级技术栈，不增加无关功能。
+- H5 相关对照优先看：
+  - `platform/src/main/webapp/h5/**`
+  - `platform/src/main/webapp/include/**`
+  - `platform/src/main/java/com/riversoft/core/web/Actions.java`
+  - `platform/src/main/java/com/riversoft/module/frame/**`
+- 2026-05-01 已核对：原始项目中 `h5_head.jsp` 位于 `platform/src/main/webapp/h5/widget/h5_head.jsp`，并不存在 `platform/src/main/webapp/include/h5_head.jsp`；而 H5 JSP 多处 include `/include/h5_head.jsp`。v1.3.0 处理 H5 登录/首页问题时，应把 include 路径恢复或兼容作为显式任务，不能假设原始项目已有正确 include 文件。
+- 2026-05-01 已核对：稳定运行时参考目录中存在 `include/h5_head.jsp`，并且本地化了 AmazeUI 资源为 `/css/amazeui.min.css` 与 `/js/amazeui.min.js`。v1.3.0 恢复缺失 H5 文件时，应优先参考该运行时目录。
+
 ## 后续 agent 编辑规则
 
 - 保持 Java 8 兼容性。
