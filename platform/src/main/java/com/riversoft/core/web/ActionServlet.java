@@ -131,9 +131,12 @@ public final class ActionServlet extends HttpServlet {
 		request.setAttribute(Actions.Keys.NOW.toString(), new Date());
 
 		// 设置当前action url
-		request.setAttribute(Actions.Keys.ACTION.toString(), Actions.Util.getActionUrl(request));
+		String actionUrl = Actions.Util.getActionUrl(request);
+		request.setAttribute(Actions.Keys.ACTION.toString(), actionUrl);
 		request.setAttribute(Actions.Keys.CUR_URL.toString(), request.getServletPath());
-		request.setAttribute(Actions.Keys.ACP.toString(), request.getAttribute(Actions.Keys.CP.toString()).toString() + request.getAttribute(Actions.Keys.ACTION.toString()).toString());
+		if (actionUrl != null) {
+			request.setAttribute(Actions.Keys.ACP.toString(), request.getAttribute(Actions.Keys.CP.toString()).toString() + actionUrl);
+		}
 
 		// 当前网址
 		request.setAttribute(Actions.Keys.FULL_URL.toString(), Actions.Util.getFullURL(request));

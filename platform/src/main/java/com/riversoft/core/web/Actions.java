@@ -40,6 +40,7 @@ import com.riversoft.core.exception.SystemRuntimeException;
 import com.riversoft.core.web.annotation.ActionMode;
 import com.riversoft.core.web.annotation.ActionMode.Mode;
 import com.riversoft.util.PoiUtils;
+import com.riversoft.util.dynamicbean.DynamicClassLoader;
 import com.riversoft.util.jackson.JsonMapper;
 
 /**
@@ -469,7 +470,53 @@ public final class Actions {
 				Class<?> clazz = Class.forName(classname);
 				return clazz;
 			} catch (ClassNotFoundException e) {
+				Class<?> clazz = compileDynamicViewActionClass(classname);
+				if (clazz != null) {
+					return clazz;
+				}
 				logger.warn("类[" + classname + "]不存在.", e);
+				return null;
+			}
+		}
+
+		/**
+		 * 业务视图的运行期 Action 由视图入口懒加载生成。移动端和菜单中可能直接访问
+		 * /dyn/AxxxAction/list.shtml 这类业务 URL，此时需要按同一规则补生成 Action 类。
+		 */
+		@SuppressWarnings("unchecked")
+		private static Class<?> compileDynamicViewActionClass(String classname) {
+			String packageName = null;
+			String baseClassName = null;
+			if (classname.startsWith("com.riversoft.module.dyn.A")) {
+				packageName = "com.riversoft.module.dyn";
+				baseClassName = "BaseDynamicTableCRUDAction";
+			} else if (classname.startsWith("com.riversoft.module.flow.view.A")) {
+				packageName = "com.riversoft.module.flow.view";
+				baseClassName = "BaseFlowBasicAction";
+			} else if (classname.startsWith("com.riversoft.module.report.A")) {
+				packageName = "com.riversoft.module.report";
+				baseClassName = "BaseReportListAction";
+			}
+			if (packageName == null || !classname.endsWith("Action")) {
+				return null;
+			}
+			String actionName = classname.substring(packageName.length() + 1);
+			if (!actionName.startsWith("A") || !actionName.endsWith("Action") || actionName.length() <= "AAction".length()) {
+				return null;
+			}
+			String key = actionName.substring(1, actionName.length() - "Action".length()).replace("$", "-");
+			StringBuffer src = new StringBuffer();
+			src.append("package ").append(packageName).append(";\n");
+			src.append("public class ").append(actionName).append(" extends ").append(baseClassName).append(" {\n");
+			src.append("\tpublic ").append(actionName).append("() {\n");
+			src.append("\t\tsuper(\"").append(key).append("\");\n");
+			src.append("\t}\n");
+			src.append("}");
+			logger.debug("动态业务视图Action补生成:" + classname);
+			try {
+				return (Class<?>) DynamicClassLoader.getInstance().compileAndLoadClass(classname, src.toString());
+			} catch (ClassNotFoundException | NoClassDefFoundError e) {
+				logger.warn("动态业务视图Action补生成失败:" + classname, e);
 				return null;
 			}
 		}

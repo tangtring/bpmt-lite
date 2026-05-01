@@ -276,14 +276,41 @@ v1.2.0 文档见：
 
 ## v1.3.0 H5 状态
 
-截至 2026-05-01，v1.3.0 目标是恢复移动端 H5 可浏览能力：
+截至 2026-05-01，v1.3.0 目标已修正为恢复业务视图的移动端 H5 可浏览和可操作能力：
 
-- 先采用 A 方式止血：修复登录、首页、菜单、资源加载和 H5 路由。
-- 后续采用 B 方案完成版本主体：建立本地 `bpmt-h5` 轻量组件层，兼容遗留 AmazeUI H5 页面。
-- 必达范围是登录、首页、菜单、首页面板、流程/动态表/报表列表与详情。
-- C 级冒烟只选择一两项高频主路径，不要求本轮覆盖全部业务提交。
+- 已完成 A 方式止血：修复登录、首页、菜单、资源加载和 H5 路由。
+- v1.3.0 主体采用 B 方案：围绕 `com.riversoft.platform.web.view.annotation.View` 标注的业务视图重构移动端交互。
+- 必达范围是 `dyn`、`flowbasic`、`rep_list`、`note`，以及 `viewer` 兼容降级。
+- `dyn` 动态表要实现移动端列表、查询、详情、新建、编辑、删除闭环。
+- `flowbasic` 工作流要实现移动端入口、列表、详情、表单和普通办理主路径。
+- `rep_list` 报表要实现移动端列表、查询、详情和下载兼容。
+- `note` 公告要实现移动端列表和详情。
+- `viewer` 只做兼容降级：HTML/消息可读，下载类不破；不作为完整移动端页面框架重构对象。
+- 后台管理模块“功能设置”域不属于 v1.3.0 移动端适配范围。
+- 每一类视图必须列出具体业务 URL 逐条验收。
+- C 级冒烟只选择动态表 CRUD 和工作流普通办理两条高频主路径，不要求本轮覆盖全部业务提交。
 - 原始 BPMT 项目只作为路径和历史写法参考，不允许整包覆盖。
 - 缺失 H5 运行文件优先参考 `/Users/wenzhewang/workspace/bpmt_project/运行时参考/platform`。
+
+2026-05-01 使用完整 `bpmt` 数据库重新盘点业务视图：
+
+- `dyn`：52 个。
+- `flowbasic`：35 个。
+- `rep_list`：21 个。
+- `note`：1 个。
+- `viewer`：32 个。
+
+2026-05-01 已发现并修复一个业务视图入口阻断问题：
+
+- 直接访问 `/dyn/A...Action/list.shtml`、`/flow/view/A...Action/main.shtml`、`/report/A...Action/list.shtml` 时，如果运行期动态 Action 类尚未由 `.view` 入口生成，会在 `ActionServlet.initAttributes` 中触发空指针并返回 500。
+- 处理方式：`Actions.Util.getActionClass` 在类缺失且匹配动态业务视图 Action 命名时，按 `DynViewAction`、`FlowBasicViewAction`、`ReportListViewAction` 既有规则补生成运行期 Action 类；`ActionServlet` 对空 action URL 做防御，避免掩盖真实类缺失原因。
+- 还从稳定运行时参考目录恢复 `/fonts/fontawesome-webfont.{woff2,woff,ttf}`，避免 AmazeUI 图标字体在 H5 业务页持续 404。
+
+当前 v1.3.0 业务视图设计和验收文档：
+
+- `docs/superpowers/specs/2026-05-01-bpmt-lite-v1.3.0-h5-business-view-design.md`
+- `docs/superpowers/plans/2026-05-01-bpmt-lite-v1.3.0-h5-business-views.md`
+- `docs/v1.3.0/h5-acceptance.md`
 
 2026-05-01 本地 smoke 状态：
 
