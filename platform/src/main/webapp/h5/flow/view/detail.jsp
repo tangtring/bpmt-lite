@@ -20,14 +20,16 @@
 <script>
 	$(function() {
 
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 
-		$("#${_zone}_btn_home").on('click', function(event) {
-			window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
-		});
+			$("#${_zone}_btn_home").on('click', function(event) {
+				window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+			});
 
 		$("#${_zone}_flow_picture_btn").on('click', function() {
 			$("#${_zone}_flow_picture").modal();
@@ -49,7 +51,7 @@
 		</div>
 		<div class="am-modal-bd">
 			<figure data-am-widget="figure" class="am am-figure am-figure-default " data-am-figure="{pureview:true}">
-				<img src="${_acp}/picture.shtml?_PD_ID=${fo.pdId}&_TASK_ID=${fo.taskId}&_ORD_ID=${fo.ordId}&_ACTIVITY_ID=${fo.activityId}&imageType=png" alt="点击看大图" />
+					<img src="${_acp}/picture.shtml?_action_mode=h5&_PD_ID=${fo.pdId}&_TASK_ID=${fo.taskId}&_ORD_ID=${fo.ordId}&_ACTIVITY_ID=${fo.activityId}&imageType=png" alt="点击看大图" />
 			</figure>
 		</div>
 	</div>
@@ -73,7 +75,7 @@
 		<ul class="am-dropdown-content">
 			<c:if test="${wflow:checkTask(vo)}">
 				<li class="am-divider"></li>
-				<li><a href="${_acp}/form.shtml?ordFlag=${ordFlag?1:0}&_params=${wcm:urlEncode(param._params)}&_FO=${wcm:urlEncode(wcm:json(fo))}"><i class="am-icon-pencil am-icon-fw am-margin-right-xs"></i>处理</a></li>
+					<li><a href="${_acp}/form.shtml?_action_mode=h5&ordFlag=${ordFlag?1:0}&_params=${wcm:urlEncode(param._params)}&_FO=${wcm:urlEncode(wcm:json(fo))}"><i class="am-icon-pencil am-icon-fw am-margin-right-xs"></i>处理</a></li>
 			</c:if>
 
 			<c:forEach items="${subs}" var="sub" varStatus="status">
@@ -98,7 +100,8 @@
 
 </header>
 
-<div class="am-panel-group" id="${_zone}_accordion">
+	<main class="bpmt-page">
+	<div class="am-panel-group" id="${_zone}_accordion">
 	<c:forEach items="${columns}" var="line" varStatus="status">
 		<c:if test="${line.whole==null}">
 
@@ -125,7 +128,8 @@
 							${line.busiName}
 							<c:if test="${line.tipScript!=null&&line.tipScript!=''}">(${wpf:script(line.tipType,line.tipScript,context)})</c:if>
 						</h4>
-					</div>
+	</div>
+	</main>
 					<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 						<div class="am-panel-bd">
 							<dl>

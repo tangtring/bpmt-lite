@@ -6,10 +6,12 @@
 
 <script>
 	$(function() {
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 	});
 </script>
 
@@ -23,8 +25,9 @@
 
 <%--查询条件 --%>
 <div class="am-modal-actions" id="my-query">
-	<form action="${_acp}/list.shtml" method="get" class="am-form am-form-horizontal" id="${_zone}_query_form">
-		<textarea style="display: none;" name="_params">${param._params}</textarea>
+		<form action="${_acp}/list.shtml" method="get" class="am-form am-form-horizontal" id="${_zone}_query_form">
+			<input type="hidden" name="_action_mode" value="h5" />
+			<textarea style="display: none;" name="_params">${param._params}</textarea>
 		<div class="am-modal-actions-group">
 			<div class="am-panel am-panel-primary">
 				<div class="am-panel-hd">查询条件</div>
@@ -81,7 +84,7 @@
 				<c:set var="detailUrl" value="###" />
 				<c:if test="${config.showBtn!=null&&wpf:checkExt(config.showBtn.pri,context)}">
 					<c:if test="${config.table.pkScript!=null&&config.table.pkScript!=''}">
-						<c:set var="detailUrl" value="${_acp}/detail.shtml?_key=${wcm:urlEncode(wpf:script(config.table.pkType,config.table.pkScript,context))}&_params=${wcm:urlEncode(param._params)}" />
+							<c:set var="detailUrl" value="${_acp}/detail.shtml?_action_mode=h5&_key=${wcm:urlEncode(wpf:script(config.table.pkType,config.table.pkScript,context))}&_params=${wcm:urlEncode(param._params)}" />
 					</c:if>
 				</c:if>
 
@@ -111,8 +114,11 @@
 							</div></li>
 					</c:otherwise>
 				</c:choose>
-			</c:forEach>
-		</ul>
+				</c:forEach>
+				<c:if test="${dp == null || dp.list == null || fn:length(dp.list) == 0}">
+					<li class="bpmt-card bpmt-empty">暂无数据</li>
+				</c:if>
+			</ul>
 	</div>
 </div>
 

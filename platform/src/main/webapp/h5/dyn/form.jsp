@@ -23,15 +23,17 @@
 <script>
 	$(function() {
 
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 
-		//跳转
-		$("#${_zone}_btn_home").on('click', function(event) {
-			window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
-		});
+			//跳转
+			$("#${_zone}_btn_home").on('click', function(event) {
+				window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+			});
 
 		//表单验证
 		Wxui.validateForm($('#${_zone}_form'));
@@ -40,7 +42,7 @@
 		$("#${_zone}_form").on("submit", function(e) {
 			var successFn = function(pk) {
 				Wxui.alert("保存成功.", function() {
-					window.location.href = "${_acp}/detail.shtml?_key=" + encodeURIComponent(JSON.stringify(pk)) + "&_params=${wcm:urlEncode(param._params)}";
+						window.location.href = "${_acp}/detail.shtml?_action_mode=h5&_key=" + encodeURIComponent(JSON.stringify(pk)) + "&_params=${wcm:urlEncode(param._params)}";
 				});
 			};
 			Wxui.form($(this), successFn);
@@ -77,11 +79,11 @@
 				//删除
 				$("#${_zone}_delete_btn").on('click', function(event) {
 					Wxui.confirm('确认删除当前记录?', function() {
-						Wxui.json("${_acp}/delete.shtml?_keys=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}", function(json) {
-							Wxui.alert(json.msg, function() {
-								window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
+							Wxui.json("${_acp}/delete.shtml?_action_mode=h5&_keys=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}", function(json) {
+								Wxui.alert(json.msg, function() {
+									window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+								});
 							});
-						});
 					});
 				});
 			});
@@ -92,7 +94,7 @@
 
 				<c:if test="${wpf:checkExt(config.detailBtn.pri,context)}">
 					<li class="am-divider"></li>
-					<li><a href="${_acp}/detail.shtml?_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"><i
+						<li><a href="${_acp}/detail.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"><i
 							class="am-icon-file-text-o am-icon-fw am-margin-right-xs"></i>${config.detailBtn.busiName}</a></li>
 				</c:if>
 
@@ -108,7 +110,7 @@
 						<!-- 非操作日志子表,同时有权限 -->
 						<c:if test="${sub.$type$ != 'VwDynSubSys' && wpf:checkExt(sub.pri, context)}">
 							<li class="am-divider"></li>
-							<li><a href="${_cp}${sub.action}?_params=${wpf:script(sub.paramType,sub.paramScript,context)}"><i class="am-icon-chevron-circle-down am-icon-fw am-margin-right-xs"></i>${wpf:lan(sub.busiName)}</a></li>
+								<li><a href="${_cp}${sub.action}?_action_mode=h5&_params=${wpf:script(sub.paramType,sub.paramScript,context)}"><i class="am-icon-chevron-circle-down am-icon-fw am-margin-right-xs"></i>${wpf:lan(sub.busiName)}</a></li>
 						</c:if>
 					</c:forEach>
 				</c:if>
@@ -119,7 +121,9 @@
 </header>
 
 <%--表单 --%>
-<form id="${_zone}_form" method="post" class="am-form" action="${_acp}/submit.shtml">
+	<main class="bpmt-page">
+	<form id="${_zone}_form" method="post" class="am-form" action="${_acp}/submit.shtml">
+		<input type="hidden" name="_action_mode" value="h5" />
 	<c:if test="${!isCreate}">
 		<textarea name="_key" style="display: none;" id="${_zone}_key">${wcm:jsonKey(vo,config.keysArray)}</textarea>
 	</c:if>
@@ -214,7 +218,8 @@
 	<div class="am-container am-margin-top am-margin-bottom">
 		<button type="submit" class="am-btn am-btn-success am-radius am-btn-block">保存</button>
 	</div>
-</form>
+	</form>
+	</main>
 
 <%-- 客户端脚本，必须写在form表单下面，否则widget不会初始化 --%>
 <wpf:javascript script="${config.table.formJsScript}" type="${config.table.formJsType}" context="${context}" form="${_zone}_form" actionMode="h5" />

@@ -6,10 +6,12 @@
 
 <script>
 	$(function() {
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 	});
 </script>
 
@@ -17,7 +19,7 @@
 <header data-am-widget="header" class="am-header am-header-default">
 	<div class="am-header-left am-header-nav">
 		<c:if test="${wpf:check(config.addBtn.pri)}">
-			<a href="${_acp}/createZone.shtml?_params=${wcm:urlEncode(param._params)}" class="" id="${_zone}_btn_add"><i class="am-header-icon am-icon-plus-circle"></i></a>
+				<a href="${_acp}/createZone.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}" class="" id="${_zone}_btn_add"><i class="am-header-icon am-icon-plus-circle"></i></a>
 		</c:if>
 	</div>
 	<h1 class="am-header-title">${_title}</h1>
@@ -28,8 +30,9 @@
 
 <%--查询条件 --%>
 <div class="am-modal-actions" id="my-query">
-	<form action="${_acp}/list.shtml" method="get" class="am-form am-form-horizontal" id="${_zone}_query_form">
-		<textarea style="display: none;" name="_params">${param._params}</textarea>
+		<form action="${_acp}/list.shtml" method="get" class="am-form am-form-horizontal" id="${_zone}_query_form">
+			<input type="hidden" name="_action_mode" value="h5" />
+			<textarea style="display: none;" name="_params">${param._params}</textarea>
 		<div class="am-modal-actions-group">
 			<div class="am-panel am-panel-primary">
 				<div class="am-panel-hd">查询条件</div>
@@ -95,12 +98,12 @@
 					<c:when test="${config.table.weixin.listMode==1}">
 						<li class="am-g am-list-item-desced am-list-item-thumbed am-list-item-thumb-left">
 							<div class="am-u-sm-3 am-list-thumb">
-								<a href="${_acp}/${clickUrl}.shtml?_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}" class=""><wpf:image
+									<a href="${_acp}/${clickUrl}.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}" class=""><wpf:image
 										value="${wpf:script(config.table.weixin.imgType,config.table.weixin.imgScript,context)}" /></a>
 							</div>
 							<div class=" am-u-sm-9 am-list-main">
 								<h3 class="am-list-item-hd">
-									<a href="${_acp}/${clickUrl}.shtml?_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}" class=""><wpf:script
+										<a href="${_acp}/${clickUrl}.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}" class=""><wpf:script
 											script="${config.table.weixin.titleScript}" type="${config.table.weixin.titleType}" context="${context}" /></a>
 								</h3>
 								<div class="am-list-item-text">
@@ -111,7 +114,7 @@
 					</c:when>
 					<%-- 纯文模式 --%>
 					<c:otherwise>
-						<li class="am-g am-list-item-dated"><a href="${_acp}/${clickUrl}.shtml?_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"
+							<li class="am-g am-list-item-dated"><a href="${_acp}/${clickUrl}.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"
 							class="am-list-item-hd"><wpf:script script="${config.table.weixin.titleScript}" type="${config.table.weixin.titleType}" context="${context}" /></a><span class="am-list-date"><wpf:script
 									script="${config.table.weixin.dateScript}" type="${config.table.weixin.dateType}" context="${context}" /></span>
 							<div class="am-list-item-text">
@@ -119,8 +122,11 @@
 							</div></li>
 					</c:otherwise>
 				</c:choose>
-			</c:forEach>
-		</ul>
+				</c:forEach>
+				<c:if test="${dp == null || dp.list == null || fn:length(dp.list) == 0}">
+					<li class="bpmt-card bpmt-empty">暂无数据</li>
+				</c:if>
+			</ul>
 	</div>
 </div>
 

@@ -18,22 +18,24 @@
 <script>
 	$(function() {
 
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 
-		$("#${_zone}_btn_home").on('click', function(event) {
-			window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
-		});
+			$("#${_zone}_btn_home").on('click', function(event) {
+				window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+			});
 
 		$("#${_zone}_delete_btn").on('click', function(event) {
 			Wxui.confirm('确认删除当前记录?', function() {
-				Wxui.json("${_acp}/delete.shtml?_keys=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}", function(json) {
-					Wxui.alert(json.msg, function() {
-						window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
+					Wxui.json("${_acp}/delete.shtml?_action_mode=h5&_keys=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}", function(json) {
+						Wxui.alert(json.msg, function() {
+							window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+						});
 					});
-				});
 			});
 		});
 
@@ -61,7 +63,7 @@
 		<ul class="am-dropdown-content">
 			<c:if test="${wpf:checkExt(config.updateBtn.pri,context)}">
 				<li class="am-divider"></li>
-				<li><a href="${_acp}/updateZone.shtml?_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"><i
+					<li><a href="${_acp}/updateZone.shtml?_action_mode=h5&_key=${wcm:urlEncode(wcm:jsonKey(vo,config.keysArray))}&_params=${wcm:urlEncode(param._params)}"><i
 						class="am-icon-pencil am-icon-fw am-margin-right-xs"></i>${config.updateBtn.busiName}</a></li>
 			</c:if>
 
@@ -76,7 +78,7 @@
 					<!-- 非操作日志子表,同时有权限 -->
 					<c:if test="${sub.$type$ != 'VwDynSubSys' && wpf:checkExt(sub.pri, context)}">
 						<li class="am-divider"></li>
-						<li><a href="${_cp}${sub.action}?_params=${wpf:script(sub.paramType,sub.paramScript,context)}"><i class="am-icon-chevron-circle-down am-icon-fw am-margin-right-xs"></i>${wpf:lan(sub.busiName)}</a></li>
+							<li><a href="${_cp}${sub.action}?_action_mode=h5&_params=${wpf:script(sub.paramType,sub.paramScript,context)}"><i class="am-icon-chevron-circle-down am-icon-fw am-margin-right-xs"></i>${wpf:lan(sub.busiName)}</a></li>
 					</c:if>
 				</c:forEach>
 			</c:if>
@@ -84,7 +86,8 @@
 	</div>
 </header>
 
-<div class="am-panel-group" id="${_zone}_accordion">
+	<main class="bpmt-page">
+	<div class="am-panel-group" id="${_zone}_accordion">
 	<c:forEach items="${config.h5DetailList}" var="line" varStatus="status">
 		<c:if test="${line.whole==null}">
 			<%--分割线 --%>
@@ -95,7 +98,8 @@
 							${line.busiName}
 							<c:if test="${line.tipScript!=null&&line.tipScript!=''}">(${wpf:script(line.tipType,line.tipScript,context)})</c:if>
 						</h4>
-					</div>
+	</div>
+	</main>
 					<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 						<div class="am-panel-bd">
 							<dl>

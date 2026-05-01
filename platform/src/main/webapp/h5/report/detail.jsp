@@ -15,14 +15,16 @@
 <script>
 	$(function() {
 
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 
-		$("#${_zone}_btn_home").on('click', function(event) {
-			window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
-		});
+			$("#${_zone}_btn_home").on('click', function(event) {
+				window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+			});
 	});
 </script>
 
@@ -39,7 +41,8 @@
 	<h1 class="am-header-title">${title}[查看]</h1>
 </header>
 
-<div class="am-panel-group" id="${_zone}_accordion">
+	<main class="bpmt-page">
+	<div class="am-panel-group" id="${_zone}_accordion">
 	<c:forEach items="${config.h5DetailList}" var="line" varStatus="status">
 		<c:if test="${line.whole==null}">
 			<%--分割线 --%>
@@ -50,7 +53,8 @@
 							${line.busiName}
 							<c:if test="${line.tipScript!=null&&line.tipScript!=''}">(${wpf:script(line.tipType,line.tipScript,context)})</c:if>
 						</h4>
-					</div>
+	</div>
+	</main>
 					<div id="${_zone}_accordion_p${status.index}" class="am-panel-collapse am-collapse ${line.expandFlag==0?'':'am-in'}">
 						<div class="am-panel-bd">
 							<dl>

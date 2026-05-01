@@ -23,15 +23,17 @@
 <script>
 	$(function() {
 
-		//增加loading
-		window.onbeforeunload = function() {
-			Wxui.showLoading();
-		};
+			//增加loading
+			window.onbeforeunload = function() {
+				if (window.Wxui && typeof Wxui.showLoading === 'function') {
+					Wxui.showLoading();
+				}
+			};
 
-		//跳转
-		$("#${_zone}_btn_home").on('click', function(event) {
-			window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
-		});
+			//跳转
+			$("#${_zone}_btn_home").on('click', function(event) {
+				window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+			});
 
 		$("#${_zone}_flow_picture_btn").on('click', function() {
 			$("#${_zone}_flow_picture").modal();
@@ -40,11 +42,11 @@
 		//删除
 		$("#${_zone}_delete_btn").on('click', function(event) {
 			Wxui.confirm('确认删除订单[${vo.ORD_ID}]?', function() {
-				Wxui.json("${_acp}/removeOrder.shtml?_FO=${wcm:urlEncode(wcm:json(fo))}&_params=${wcm:urlEncode(param._params)}", function(json) {
-					Wxui.alert(json.msg, function() {
-						window.location.href = "${_acp}/list.shtml?_params=${wcm:urlEncode(param._params)}";
+					Wxui.json("${_acp}/removeOrder.shtml?_action_mode=h5&_FO=${wcm:urlEncode(wcm:json(fo))}&_params=${wcm:urlEncode(param._params)}", function(json) {
+						Wxui.alert(json.msg, function() {
+							window.location.href = "${_acp}/list.shtml?_action_mode=h5&_params=${wcm:urlEncode(param._params)}";
+						});
 					});
-				});
 			});
 		});
 
@@ -65,7 +67,7 @@
 		var submitForm = function() {
 			Wxui.form($form, function(json) {
 				Wxui.alert('订单保存成功.', function() {
-					window.location.href = "${_acp}/detail.shtml?ordFlag=${ordFlag?1:0}&_params=${wcm:urlEncode(param._params)}&_ORD_ID=" + json.ordId + "&_ACTIVITY_ID=" + json.activityId;
+						window.location.href = "${_acp}/detail.shtml?_action_mode=h5&ordFlag=${ordFlag?1:0}&_params=${wcm:urlEncode(param._params)}&_ORD_ID=" + json.ordId + "&_ACTIVITY_ID=" + json.activityId;
 				});
 			});
 		};
@@ -164,7 +166,7 @@
 		$('#${_zone}_btn_zone [name=claimTask]').click(function() {
 			var taskId = $(this).attr('taskId');
 			Wxui.confirm('是否领取群组任务?领取后该任务将成为您的个人任务,其他候选人将无法处理.', function() {
-				Wxui.json('${_acp}/claimTask.shtml?_TASK_ID=' + taskId, function(json) {
+					Wxui.json('${_acp}/claimTask.shtml?_action_mode=h5&_TASK_ID=' + taskId, function(json) {
 					Wxui.alert(json.msg, function() {
 						window.location.reload(true);
 					});
@@ -199,7 +201,7 @@
 		</div>
 		<div class="am-modal-bd">
 			<figure data-am-widget="figure" class="am am-figure am-figure-default " data-am-figure="{pureview: true}">
-				<img src="${_acp}/picture.shtml?_PD_ID=${fo.pdId}&_TASK_ID=${fo.taskId}&_ORD_ID=${fo.ordId}&_ACTIVITY_ID=${fo.activityId}&imageType=png" alt="点击看大图" />
+					<img src="${_acp}/picture.shtml?_action_mode=h5&_PD_ID=${fo.pdId}&_TASK_ID=${fo.taskId}&_ORD_ID=${fo.ordId}&_ACTIVITY_ID=${fo.activityId}&imageType=png" alt="点击看大图" />
 			</figure>
 		</div>
 	</div>
@@ -236,7 +238,7 @@
 			<a href="###" class="am-dropdown-toggle"><i class="am-header-icon am-icon-bars"></i></a>
 			<ul class="am-dropdown-content">
 				<li class="am-divider"></li>
-				<li><a href="${_acp}/detail.shtml?ordFlag=${ordFlag?1:0}&_params=${wcm:urlEncode(param._params)}&_FO=${wcm:urlEncode(wcm:json(fo))}"><i
+				<li><a href="${_acp}/detail.shtml?_action_mode=h5&ordFlag=${ordFlag?1:0}&_params=${wcm:urlEncode(param._params)}&_FO=${wcm:urlEncode(wcm:json(fo))}"><i
 						class="am-icon-file-text-o am-icon-fw am-margin-right-xs"></i>查看</a></li>
 
 				<c:forEach items="${subs}" var="sub" varStatus="status">
@@ -262,7 +264,9 @@
 </header>
 
 <%--表单 --%>
-<form id="${_zone}_form" class="am-form" action="${_acp}/submit.shtml">
+	<main class="bpmt-page">
+	<form id="${_zone}_form" class="am-form" action="${_acp}/submit.shtml">
+		<input type="hidden" name="_action_mode" value="h5" />
 	<textarea style="display: none;" name="_FO" id="${_zone}_fo">${wcm:json(fo)}</textarea>
 	<textarea style="display: none;" id="${_zone}_params" name="_params">${param._params}</textarea>
 
@@ -431,7 +435,8 @@
 			</c:choose>
 		</c:forEach>
 	</div>
-</form>
+	</form>
+	</main>
 
 <%-- 客户端脚本，必须写在form表单下面，否则widget不会初始化 --%>
 <wpf:javascript script="${config.table.formJsScript}" type="${config.table.formJsType}" context="${context}" form="${_zone}_form" actionMode="h5" />
