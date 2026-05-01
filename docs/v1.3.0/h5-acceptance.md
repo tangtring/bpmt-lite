@@ -180,7 +180,7 @@ Viewer 通过标准：
 - 当前列表页仍以查询区优先展开，业务列表信息密度和移动端操作区仍需按计划继续重构。
 - 动态表列表和新建表单已能打开，CRUD 写入闭环尚未执行。
 - 工作流列表和新建表单已能打开，普通办理闭环尚未执行。
-- `note`、`viewer`、完整 URL 矩阵尚未逐条完成。
+- `note`、完整 URL 矩阵尚未逐条完成。
 
 ### 2026-05-01 JSP 结构修复记录
 
@@ -196,3 +196,31 @@ Viewer 通过标准：
 - 修正 `dyn/detail.jsp` 和 `flow/view/detail.jsp` 中提前闭合 `</main>` 导致的 DOM 结构错位。
 - 修正 `flow/view/form.jsp` 中 line 判断误用 `field` 变量的问题。
 - 为 `dyn`、`flowbasic` 的列表、详情、表单、操作区补充 `bpmt-h5-*` 结构类。
+
+### 2026-05-01 Viewer 兼容验证记录
+
+| URL | 当前结果 |
+| --- | --- |
+| `/CX2ZbyIJM9X.view?_action_mode=h5` | 200，返回本月销售表 JSON/文本输出 |
+| `/Dsi9dkbLL9X.view?_action_mode=h5` | 200，返回工资发放趋势 JSON/文本输出 |
+| `/-fJjcg8OL9X.view?_action_mode=h5` | 200，返回本月现金流 JSON/文本输出 |
+| `/EacwCbS3N9X.view?_action_mode=h5` | 网络请求 200，浏览器导航表现为下载响应中止，符合下载类兼容预期 |
+
+结论：`ViewerViewAction` 当前不需要代码调整；本轮保持输出型视图兼容降级，不改造成完整移动端组件。
+
+### 2026-05-01 报表与公告结构修复记录
+
+| 视图 | URL | 当前结果 |
+| --- | --- | --- |
+| `rep_list` | `/report/AjgOEUDhJL9XAction/list.shtml?_action_mode=h5` | 200，可见“个人经办”查询区、空列表、分页 |
+| `rep_list` | `/report/Aw6$FtUgJL9XAction/list.shtml?_action_mode=h5` | 200，可见“员工通讯录”查询区和列表项 |
+| `note` | `/Fn7MNvjJL9X.view?_action_mode=h5` | 200，可见“系统公告”列表 |
+| `note` | `/view/note/NoteViewAction/detail.shtml?id=1&viewKey=Fn7MNvjJL9X&_params=&_action_mode=h5` | 200，可见“测试公告”详情和返回按钮 |
+
+本轮修复内容：
+
+- 修正 `report/detail.jsp` 中提前闭合 `</main>` 导致的 DOM 结构错位。
+- 为 `report` 列表、详情、无权限页补充 `bpmt-h5-*` 结构类。
+- 为 `note` 列表、详情补充 `bpmt-h5-*` 结构类。
+- 公告详情链接补充 `_action_mode=h5`，避免从 H5 列表跳回桌面模式。
+- 公告页 `Wxui.showLoading()` 加防御判断，避免降级环境中 JS 中断。
