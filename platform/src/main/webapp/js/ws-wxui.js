@@ -4,6 +4,23 @@
  * @author wodenwang
  */
 var Wxui = {
+	parseError : function(res) {
+		var json;
+		try {
+			json = JSON.parse(res.responseText);
+		} catch (e) {
+			json = {
+				msg : '系统出错.'
+			};
+		}
+		if (!json || !json.msg) {
+			json = {
+				msg : '系统出错.'
+			};
+		}
+		return json;
+	},
+
 	/**
 	 * 展示loading
 	 */
@@ -19,7 +36,11 @@ var Wxui = {
 				closeViaDimmer : false
 			});
 		} else {// weui
-			$.showLoading();
+			if ($.isFunction($.showLoading)) {
+				$.showLoading();
+			} else if (window.BpmtH5 && $.isFunction(window.BpmtH5.showLoading)) {
+				window.BpmtH5.showLoading();
+			}
 		}
 	},
 
@@ -34,7 +55,11 @@ var Wxui = {
 			} catch (e) {
 			}
 		} else {// weui
-			$.hideLoading();
+			if ($.isFunction($.hideLoading)) {
+				$.hideLoading();
+			} else if (window.BpmtH5 && $.isFunction(window.BpmtH5.hideLoading)) {
+				window.BpmtH5.hideLoading();
+			}
 		}
 	},
 
@@ -64,7 +89,12 @@ var Wxui = {
 				}
 			});
 		} else {// weui
-			$.alert(msg, '提示', fn);
+			if ($.isFunction($.alert)) {
+				$.alert(msg, '提示', fn);
+			} else {
+				window.alert(msg);
+				fn();
+			}
 		}
 	},
 
@@ -99,7 +129,13 @@ var Wxui = {
 				}
 			});
 		} else {// weui
-			$.confirm(msg, '消息确认', fn, cancelFn);
+			if ($.isFunction($.confirm)) {
+				$.confirm(msg, '消息确认', fn, cancelFn);
+			} else if (window.confirm(msg)) {
+				fn();
+			} else {
+				cancelFn();
+			}
 		}
 	},
 
@@ -135,7 +171,13 @@ var Wxui = {
 			} else if (style == 'warning') {
 				style = 'cancel';
 			}
-			$.toast(msg, style);
+			if ($.isFunction($.toast)) {
+				$.toast(msg, style);
+			} else if (window.BpmtH5 && $.isFunction(window.BpmtH5.toast)) {
+				window.BpmtH5.toast(msg);
+			} else {
+				window.alert(msg);
+			}
 		}
 	},
 
@@ -184,14 +226,7 @@ var Wxui = {
 		// 出错提示
 		if (errorFn == undefined || !$.isFunction(errorFn)) {
 			errorFn = function(res) {
-				var json;
-				try {
-					json = JSON.parse(res.responseText);
-				} catch (e) {
-					json = {
-						msg : '系统出错.'
-					};
-				}
+				var json = Wxui.parseError(res);
 				Wxui.toast(json.msg, 'error');
 			};
 		}
@@ -252,7 +287,7 @@ var Wxui = {
 		// 出错提示
 		if (errorFn == undefined || !$.isFunction(errorFn)) {
 			errorFn = function(res) {
-				var json = JSON.parse(res.responseText);
+				var json = Wxui.parseError(res);
 				Wxui.toast(json.msg, 'error');
 			};
 		}
@@ -297,7 +332,7 @@ var Wxui = {
 		// 出错提示
 		if (errorFn == undefined || !$.isFunction(errorFn)) {
 			errorFn = function(res) {
-				var json = JSON.parse(res.responseText);
+				var json = Wxui.parseError(res);
 				Wxui.toast(json.msg, 'error');
 			};
 		}
