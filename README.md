@@ -6,9 +6,9 @@
 
 ## 当前版本
 
-`v1.2.0` 已发布，修复了 `v1.1.0` 后发现的问题，并整理了初始化数据库、文档、品牌信息和 agent 交接方式。
+`v1.3.0` 已发布，按保守 H5 策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.2.0`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.3.0`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - Web 应用：Tomcat `ROOT`
 - 附带应用：`/ueditor`
@@ -24,7 +24,7 @@
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.3.0/scripts/run.sh -o run.sh
 sh run.sh min
 ```
 
@@ -55,19 +55,19 @@ http://127.0.0.1:8080/login.jsp?_action_mode=h5
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.3.0/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
 ## 完整库启动
 
-`v1.2.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
+`v1.3.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库启动命令：
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.2.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.3.0/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -147,7 +147,7 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.2.0` | Web 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.3.0` | Web 镜像 tag |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
@@ -192,6 +192,7 @@ scripts/build-image.sh
 - 初始化数据库设计：[docs/v1.2.0/database-init.md](docs/v1.2.0/database-init.md)
 - v1.2.0 规划：[docs/v1.2.0/roadmap.md](docs/v1.2.0/roadmap.md)
 - 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
+- v1.3.0 发布记录：[docs/release-v1.3.0.md](docs/release-v1.3.0.md)
 - v1.3.0 H5 验收清单：[docs/v1.3.0/h5-acceptance.md](docs/v1.3.0/h5-acceptance.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 

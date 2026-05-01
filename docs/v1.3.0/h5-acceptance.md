@@ -255,5 +255,6 @@ Viewer 通过标准：
 - `scripts/verify-repo.sh`：通过。
 - `mvn -s settings.local.xml -DskipTests compile`：通过。
 - `docker compose config`：通过。
-- `scripts/build-image.sh`：通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.2.0`。
+- `scripts/build-image.sh`：通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.3.0`。
 - 临时完整库运行环境：`bpmt-h5-full`，`http://127.0.0.1:18080/` 返回 200。
+- H5 工作流请假单 `HRLE2605001` 实测提交中文意见 `同意审批中文验证`，请求为 `POST /flow/view/AkzFiJIdJL9XAction/submit.shtml`，页面和 `HR_SAL_LEAVE_OP.OPINION` 均为正常 UTF-8。

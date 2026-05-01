@@ -112,7 +112,7 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-`v1.2.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库以 `database/bpmt.sql.gz` 压缩交付，默认 `admin` 密码为 `admin`。
+`v1.3.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果仍是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库以 `database/bpmt.sql.gz` 压缩交付，默认 `admin` 密码为 `admin`。
 
 检查 Web：
 
@@ -261,7 +261,7 @@ MariaDB 官方初始化机制只在数据目录为空时执行 `/docker-entrypoi
 
 ### 为什么 docker-compose.yml 只保留少量配置？
 
-`v1.1.0` 起，默认 compose 只保留快速启动需要的端口、镜像 tag 和数据库连接信息。原 properties 的低频参数仍由 `docker/docker-entrypoint.sh` 生成默认值。`v1.2.0` 中 `DB_NAME` 默认连接 `bpmt`，可通过 `DB_NAME=bpmt_min docker compose up -d web` 切换到最小库。
+`v1.1.0` 起，默认 compose 只保留快速启动需要的端口、镜像 tag 和数据库连接信息。原 properties 的低频参数仍由 `docker/docker-entrypoint.sh` 生成默认值。`v1.3.0` 中 `DB_NAME` 默认连接 `bpmt`，可通过 `DB_NAME=bpmt_min docker compose up -d web` 切换到最小库。
 
 需要调整高级配置时，在 `config/overrides/` 下创建同名 properties 文件，例如：
 

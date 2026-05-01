@@ -17,8 +17,8 @@
 
 - `v1.0.0` 是首个正式 Docker 化版本。
 - `v1.1.0` 是已发布的第二个 Docker 化版本。
-- `v1.2.0` 是当前发布版本。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.2.0`
+- `v1.3.0` 是当前发布版本。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.3.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - `ROOT` 应用对应 BPMT `platform`
@@ -36,7 +36,7 @@
 - 本项目沟通和文档统一使用简体中文。
 - 代码、命令、配置键名、Maven 坐标、镜像名等技术标识保持原样。
 - 如果后续 agent 更新运行说明、维护说明或交接说明，应与 README 的中文风格保持一致。
-- v1.2.0 期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/v1.2.0/*` -> `README.md` -> implementation。
+- v1.3.0 期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/v1.3.0/*` -> `docs/v1.2.0/*` -> `README.md` -> implementation。
 - 涉及 Docker、数据库、初始化脚本、发布验收、公开文档的变更，必须同步更新对应文档，不能只改代码。
 
 ## 已验证的本地编译基线
@@ -276,19 +276,19 @@ v1.2.0 文档见：
 
 ## v1.3.0 H5 状态
 
-截至 2026-05-01，v1.3.0 目标已修正为恢复业务视图的移动端 H5 可浏览和可操作能力：
+截至 2026-05-01，v1.3.0 已按保守 H5 策略收口，目标是恢复业务视图的移动端 H5 可浏览和主路径可操作能力：
 
 - 已完成 A 方式止血：修复登录、首页、菜单、资源加载和 H5 路由。
-- v1.3.0 主体采用 B 方案：围绕 `com.riversoft.platform.web.view.annotation.View` 标注的业务视图重构移动端交互。
+- v1.3.0 已放弃激进重构，采用保守止血：保留原 AmazeUI H5 页面结构，只修复阻断 bug、资源缺失、路由分流和 `_action_mode=h5` 链路。
 - 必达范围是 `dyn`、`flowbasic`、`rep_list`、`note`，以及 `viewer` 兼容降级。
-- `dyn` 动态表要实现移动端列表、查询、详情、新建、编辑、删除闭环。
-- `flowbasic` 工作流要实现移动端入口、列表、详情、表单和普通办理主路径。
-- `rep_list` 报表要实现移动端列表、查询、详情和下载兼容。
-- `note` 公告要实现移动端列表和详情。
+- `dyn` 动态表当前按原 AmazeUI H5 页面恢复列表、查询、详情和新增入口；完整 CRUD 自动化闭环留作后续版本。
+- `flowbasic` 工作流当前恢复入口、列表、详情、表单和普通办理主路径，并修复 H5 审批意见中文编码。
+- `rep_list` 报表当前恢复移动端列表、查询、详情和下载兼容。
+- `note` 公告当前恢复移动端列表、详情和返回 H5 链路。
 - `viewer` 只做兼容降级：HTML/消息可读，下载类不破；不作为完整移动端页面框架重构对象。
 - 后台管理模块“功能设置”域不属于 v1.3.0 移动端适配范围。
 - 每一类视图必须列出具体业务 URL 逐条验收。
-- C 级冒烟只选择动态表 CRUD 和工作流普通办理两条高频主路径，不要求本轮覆盖全部业务提交。
+- C 级冒烟选择动态表代表路径和工作流普通办理路径，不要求本轮覆盖全部业务提交。
 - 原始 BPMT 项目只作为路径和历史写法参考，不允许整包覆盖。
 - 缺失 H5 运行文件优先参考 `/Users/wenzhewang/workspace/bpmt_project/运行时参考/platform`。
 
@@ -324,15 +324,16 @@ v1.2.0 文档见：
 - `h5/frame_new/frame.jsp`、`h5/frame_new/menu.jsp`、`h5/frame_new/panel.jsp` 已删除；H5 不再为 `page.frame.new=true` 生成 frame_new 兜底壳。
 - 已验证 `viewer` 按兼容降级处理：HTML/文本类返回 200，下载类保持下载响应，不改造成完整移动端组件。
 - 代表 URL 验收已覆盖 `dyn`、`flowbasic`、`rep_list`、`note`、`viewer`，详见 `docs/v1.3.0/h5-acceptance.md`。
-- 尚未完成真实写入闭环：动态表 CRUD 测试数据的新建/编辑/删除、工作流普通办理提交仍是后续 C 级冒烟项。
+- 尚未完成真实写入闭环：动态表 CRUD 测试数据的新建/编辑/删除仍是后续 C 级冒烟项；工作流请假普通办理已验证 H5 中文审批意见可正常提交和显示。
 
 2026-05-01 本地 smoke 状态：
 
-- `scripts/build-image.sh` 已通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.2.0`。
+- `scripts/build-image.sh` 已通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.3.0`。
 - 临时 compose 项目 `bpmt-h5-smoke` 使用 `bpmt_min` 在 `http://127.0.0.1:18080/` 验证通过。
 - H5 登录页、核心本地 CSS/JS、`admin/admin` 登录、首页、菜单、首页面板已通过移动端浏览器验收。
 - 菜单页已验证不再生成 `http://frame`、`//frame/FrameAction` 等异常链接。
 - C 级已冒烟“数据字典”和“流程设置”两条高频路径，浏览器 console 无 error/warn。
+- 工作流请假单 `HRLE2605001` 已通过 H5 提交中文意见 `同意审批中文验证`，页面和数据库均显示 UTF-8 正常。
 - 本机默认 `8080` 环境存在旧 `db/data`，本轮未删除用户本地数据；需要完整复验时应另起临时 compose 或先备份再重建数据目录。
 
 ## 原始项目参考源
