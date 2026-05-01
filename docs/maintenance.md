@@ -123,6 +123,15 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 
 期望均返回 `HTTP/1.1 200 OK`。
 
+检查 H5 登录入口和本地资源：
+
+```bash
+curl -s -o /tmp/bpmt-h5-login.html -w '%{http_code}\n' 'http://127.0.0.1:8080/login.jsp?_action_mode=h5'
+rg -n 'apps.bdimg.com|cdn.bootcss.com|cdn.bootcdn.net|res.wx.qq.com' /tmp/bpmt-h5-login.html
+```
+
+期望状态码为 `200`，且不出现外部 CDN 主机名。发布验收时还应使用移动视口登录 `admin/admin`，确认首页、菜单、首页面板可浏览。
+
 检查日志目录：
 
 ```bash

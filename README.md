@@ -34,6 +34,14 @@ sh run.sh min
 http://127.0.0.1:8080/
 ```
 
+移动端 H5：
+
+```text
+http://127.0.0.1:8080/login.jsp?_action_mode=h5
+```
+
+`v1.3.0` 起，登录、首页、菜单、首页面板，以及流程、动态表、报表的核心浏览路径纳入移动端验收范围。
+
 登录：
 
 ```text
@@ -184,6 +192,7 @@ scripts/build-image.sh
 - 初始化数据库设计：[docs/v1.2.0/database-init.md](docs/v1.2.0/database-init.md)
 - v1.2.0 规划：[docs/v1.2.0/roadmap.md](docs/v1.2.0/roadmap.md)
 - 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
+- v1.3.0 H5 验收清单：[docs/v1.3.0/h5-acceptance.md](docs/v1.3.0/h5-acceptance.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者
