@@ -258,7 +258,7 @@ public class FrameAction {
 			o.put("parentId", null);
 			o.put("name", LanguageFitter.fit("#:zh[首页]:en[Home page]#"));
 			o.put("icon", cp + "/css/icon/house.png");
-			o.put("action", Actions.Util.getActionUrl(request) + "/panel.shtml?domain=" + domainKey);
+			o.put("action", "/" + Actions.Util.getActionUrl(request) + "/panel.shtml?domain=" + urlEncode(domainKey));
 			o.put("openType", 1);
 			menus.add(o);
 		}
