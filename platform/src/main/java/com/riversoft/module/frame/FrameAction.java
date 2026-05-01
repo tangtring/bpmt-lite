@@ -73,12 +73,18 @@ public class FrameAction {
 	 * @param response
 	 */
 	@SuppressWarnings("unchecked")
+	@ActionMode(Mode.FIT)
 	public void index(HttpServletRequest request, HttpServletResponse response) {
 		List<Map<String, Object>> list = ORMService.getInstance().query("CmDomain", new DataCondition().setOrderByAsc("sort").toEntity());
 		if (list != null) {
 			for (Map<String, Object> domain : list) {
 				if (SessionManager.check((CmPri) domain.get("pri"))) {
-					Actions.jump(request, response, "/" + (String) domain.get("domainKey") + ".xhtml");
+					String domainKey = (String) domain.get("domainKey");
+					if (Actions.Util.isMobile(request)) {
+						Actions.jump(request, response, "/frame/FrameAction/domain.shtml?domain=" + domainKey + "&_action_mode=h5");
+					} else {
+						Actions.jump(request, response, "/" + domainKey + ".xhtml");
+					}
 					return;
 				}
 			}
@@ -151,6 +157,7 @@ public class FrameAction {
 	 * @param response
 	 */
 	@SuppressWarnings("unchecked")
+	@ActionMode(Mode.FIT)
 	public void domain(HttpServletRequest request, HttpServletResponse response) {
 		String domainKey = RequestUtils.getStringValue(request, "domain");
 		List<Map<String, Object>> list = ORMService.getInstance().query("CmDomain", new DataCondition().setOrderByAsc("sort").toEntity());
@@ -221,6 +228,7 @@ public class FrameAction {
 	 * @param response
 	 */
 	@SuppressWarnings("unchecked")
+	@ActionMode(Mode.FIT)
 	public void menu(HttpServletRequest request, HttpServletResponse response) {
 
 		final String cp = Actions.Util.getContextPath(request);
@@ -420,6 +428,7 @@ public class FrameAction {
 	 * @param response
 	 */
 	@SuppressWarnings("unchecked")
+	@ActionMode(Mode.FIT)
 	public void panel(HttpServletRequest request, HttpServletResponse response) {
 		String domainKey = RequestUtils.getStringValue(request, "domain");
 

@@ -674,8 +674,13 @@ public final class Actions {
 			}
 
 			String userAgent = request.getHeader("user-agent");
-			return StringUtils.isNotEmpty(userAgent) && (userAgent.toLowerCase().matches(Config.get("mobile.useragent.reg", MOBILE_UA_REG))
-					|| userAgent.toLowerCase().substring(0, 4).matches(Config.get("mobile.useragent.reg.04", MOBILE_UA_FIRST4_REG)));
+			if (StringUtils.isEmpty(userAgent)) {
+				return false;
+			}
+			String ua = userAgent.toLowerCase();
+			String first4 = ua.length() >= 4 ? ua.substring(0, 4) : ua;
+			return ua.matches(Config.get("mobile.useragent.reg", MOBILE_UA_REG))
+					|| first4.matches(Config.get("mobile.useragent.reg.04", MOBILE_UA_FIRST4_REG));
 		}
 
 		/**

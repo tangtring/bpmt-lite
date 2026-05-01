@@ -22,3 +22,7 @@
 - HTTP 状态。
 - 浏览器控制台关键错误。
 - 移动视口截图或文字记录。
+
+## 自动化缺口
+
+- 当前仓库没有可直接复用的 servlet request mock 测试基线；`Actions.isMobile()` 的短 User-Agent 防御先通过代码审查和运行期 H5 smoke 覆盖。
