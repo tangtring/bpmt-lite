@@ -152,6 +152,34 @@ API 业务接口默认需要签名。维护者本地验收可执行：
 scripts/smoke-api.sh
 ```
 
+## API 使用
+
+`v1.4.0` 新增独立 API 服务，默认监听 `http://127.0.0.1:8081/api/`。首批 API 只管理动态表结构，不管理动态表业务数据，不提供删除动态表接口。
+
+API 文档有两种形态：
+
+| 入口 | 用途 |
+| --- | --- |
+| `http://127.0.0.1:8081/api/docs/` | Web 文档，适合人工阅读和调试 |
+| `http://127.0.0.1:8081/api/openapi.json` | OpenAPI JSON，适合 AI agent、N8N、飞书集成平台和后续 skill 封装 |
+| [docs/v1.4.0/api-reference.md](docs/v1.4.0/api-reference.md) | Markdown 归档版 API 文档 |
+| [docs/v1.4.0/openapi.json](docs/v1.4.0/openapi.json) | OpenAPI 归档快照 |
+
+首批接口：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `GET` | `/api/v1/dynamic-tables` | 查询动态表结构列表 |
+| `POST` | `/api/v1/dynamic-tables` | 创建动态表结构 |
+| `GET` | `/api/v1/dynamic-tables/{name}` | 查询单个动态表结构 |
+| `PUT` | `/api/v1/dynamic-tables/{name}` | 调整动态表结构 |
+| `POST` | `/api/v1/dynamic-tables/{name}/sync-ddl` | 同步动态表 DDL |
+| `GET` | `/api/v1/dynamic-table-templates` | 查询动态表模板列表 |
+
+业务 API 使用 HMAC-SHA256 签名，请求头为 `X-BPMT-App-Key`、`X-BPMT-Timestamp`、`X-BPMT-Nonce`、`X-BPMT-Signature`。签名 path 必须包含公开 context path，例如 `/api/v1/dynamic-tables`。本地默认 `appKey` 为 `bpmt-api`，默认 `appSecret` 为 `bpmt-api-secret`，正式部署必须覆盖。
+
+API 和 Web 各自内嵌 Hazelcast，并通过 compose 网络组成同一集群；缓存保持开启。动态表结构写接口会同时更新数据库 DDL 和 BPMT 元数据表，因此调用前应明确目标表结构。
+
 ## 常用配置
 
 默认 `docker-compose.yml` 只保留快速启动需要的常用项。
@@ -220,6 +248,8 @@ scripts/build-api-image.sh
 - v1.4.0 发布记录：[docs/release-v1.4.0.md](docs/release-v1.4.0.md)
 - v1.4.0 API 开发规范：[docs/v1.4.0/api-guidelines.md](docs/v1.4.0/api-guidelines.md)
 - v1.4.0 API 验收清单：[docs/v1.4.0/api-acceptance.md](docs/v1.4.0/api-acceptance.md)
+- v1.4.0 API Markdown 归档：[docs/v1.4.0/api-reference.md](docs/v1.4.0/api-reference.md)
+- v1.4.0 OpenAPI 归档：[docs/v1.4.0/openapi.json](docs/v1.4.0/openapi.json)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者

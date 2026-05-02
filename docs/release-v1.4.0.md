@@ -10,6 +10,8 @@
 - `web` 与 `api` 各自内嵌 Hazelcast member，通过 compose 网络组网，不新增 Hazelcast Server 容器。
 - 公开 API 文档：`http://127.0.0.1:8081/api/docs/`。
 - 公开 OpenAPI：`http://127.0.0.1:8081/api/openapi.json`。
+- Markdown 归档版 API 文档：[docs/v1.4.0/api-reference.md](v1.4.0/api-reference.md)。
+- OpenAPI 归档快照：[docs/v1.4.0/openapi.json](v1.4.0/openapi.json)。
 - 业务接口统一使用 HMAC-SHA256 签名认证。
 
 ## 首批 API

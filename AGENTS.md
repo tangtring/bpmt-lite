@@ -481,6 +481,8 @@ v1.4.0 API 设计文档：
 - `docs/superpowers/specs/2026-05-02-bpmt-lite-v1.4.0-api-design.md`
 - `docs/v1.4.0/api-guidelines.md`
 - `docs/v1.4.0/api-acceptance.md`
+- `docs/v1.4.0/api-reference.md`
+- `docs/v1.4.0/openapi.json`
 
 2026-05-02 当前发布状态：
 
@@ -488,6 +490,7 @@ v1.4.0 API 设计文档：
 - API 统一 JSON 响应、HMAC 认证、固定技术用户上下文和 admin 兜底已实现。
 - 已实现动态表结构接口：列表、详情、创建、更新、DDL 同步、模板列表。
 - 已发布公开 `openapi.json` 和 `/docs/` 静态 Web 文档。
+- 已归档 Markdown 版 API 文档 `docs/v1.4.0/api-reference.md` 和 OpenAPI 快照 `docs/v1.4.0/openapi.json`，后续给 AI agent、N8N、飞书集成平台封装时优先读取 OpenAPI 快照。
 - 已新增独立 API Dockerfile、`scripts/build-api-image.sh`、compose `api` 服务和 `scripts/smoke-api.sh`。
 - 本地已验证 `docker compose config`、Java 8 全仓编译、API 单测、`scripts/build-image.sh`、`scripts/build-api-image.sh` 和 `scripts/smoke-api.sh` 通过，生成 `ghcr.io/wodenwang/bpmt-lite:1.4.0` 与 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0`。
 - Maven 版本、compose 默认 Web/API 镜像 tag 和发布文档已切换到 `1.4.0`。
