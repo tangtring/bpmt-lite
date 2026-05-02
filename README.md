@@ -29,7 +29,7 @@
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
 sh run.sh min
 ```
 
@@ -62,7 +62,7 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -74,7 +74,7 @@ sh run.sh
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
