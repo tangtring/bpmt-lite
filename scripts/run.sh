@@ -63,5 +63,5 @@ fi
 DB_NAME="$db_name" docker compose up -d
 
 echo "bpmt-lite is starting with database: $db_name"
-echo "URL: http://127.0.0.1:${BPMT_HTTP_PORT:-8080}/"
+echo "URL: http://127.0.0.1:${BPMT_HTTP_PORT:-80}/"
 echo "Login: admin/admin"

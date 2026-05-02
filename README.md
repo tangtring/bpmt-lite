@@ -28,12 +28,10 @@
 如果只是快速体验，推荐先使用最小库启动：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
-sh run.sh min
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/install.sh | bash
 ```
 
-说明：`run.sh` 默认会拉取与脚本版本一致的 release 资源（当前默认 `v1.4.1`）。如需切换版本，可显式设置 `BPMT_REF`。
+说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.4.1`）。如需切换版本，可显式设置 `BPMT_REF`。
 
 访问：
 
@@ -61,9 +59,7 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 如果要使用完整业务库，执行：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
-sh run.sh
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/install.sh | bash -s -- full
 ```
 
 ## 完整库启动
@@ -73,9 +69,7 @@ sh run.sh
 完整库启动命令：
 
 ```bash
-mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
-sh run.sh
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/install.sh | bash -s -- full
 ```
 
 如果你本机已有可导入的完整 SQL，也可以直接放到：
@@ -142,8 +136,7 @@ docker compose up -d
 ```bash
 docker compose down
 rm -rf docker/nginx/nginx.conf
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
-sh run.sh
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/install.sh | bash -s -- full
 ```
 
 检查入口：
