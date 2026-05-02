@@ -189,6 +189,7 @@ scripts/build-image.sh
 
 ## 文档
 
+- 低代码操作文档：更详细的表单、流程、动态表和日常使用说明见 [bpmt-doc](https://github.com/wodenwang/bpmt-doc)
 - 初始化数据库设计：[docs/v1.2.0/database-init.md](docs/v1.2.0/database-init.md)
 - v1.2.0 规划：[docs/v1.2.0/roadmap.md](docs/v1.2.0/roadmap.md)
 - 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
