@@ -33,6 +33,8 @@ curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/
 sh run.sh min
 ```
 
+说明：`run.sh` 默认会拉取与脚本版本一致的 release 资源（当前默认 `v1.4.1`）。如需切换版本，可显式设置 `BPMT_REF`。
+
 访问：
 
 ```text
