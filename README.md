@@ -10,8 +10,8 @@
 
 `v1.3.0` 是上一版 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.1`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.1`
 - 默认访问地址：`http://127.0.0.1/`
 - API 文档地址：`http://127.0.0.1/api/docs/`
 - OpenAPI 地址：`http://127.0.0.1/api/openapi.json`
@@ -29,7 +29,7 @@
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/run.sh -o run.sh
 sh run.sh min
 ```
 
@@ -60,19 +60,19 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
 ## 完整库启动
 
-`v1.4.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
+`v1.4.1` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库启动命令：
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.1/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -194,8 +194,8 @@ API 和 Web 各自内嵌 Hazelcast，并通过 compose 网络组成同一集群�
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `80` | Nginx 对外访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.4.0` | Web 镜像 tag |
-| `BPMT_API_IMAGE_TAG` | `1.4.0` | API 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.4.1` | Web 镜像 tag |
+| `BPMT_API_IMAGE_TAG` | `1.4.1` | API 镜像 tag |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |

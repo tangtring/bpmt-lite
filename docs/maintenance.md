@@ -86,7 +86,7 @@ mvn -s settings.local.xml -pl platform -am -Pdocker-image verify -Ddocker.apt.mi
 
 ## API 镜像构建
 
-`v1.4.0` 起新增独立 API 镜像，构建入口为：
+`v1.4.1` 起使用独立 API 镜像，构建入口为：
 
 ```bash
 scripts/build-api-image.sh
