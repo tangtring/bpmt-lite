@@ -45,6 +45,17 @@
 - MariaDB 验证结果：物理表存在、物理列 `ADDED_STR` 存在、`tb_table` 元数据存在、`tb_column` 中 `ADDED_STR` 元数据存在。
 - API 容器 `platform.log` 显示 `TableService` 执行的是“使用安全模式改表”，没有再进入“粗暴模式改表”。
 
+2026-05-02 20:17:23 人工完整复测：
+
+- API 地址：`http://127.0.0.1:8081/api`
+- 测试表：`TMP_COWORK_V2`
+- 认证方式：HMAC-SHA256，`appKey=bpmt-api`
+- 结果汇总：总计 19 项，PASS 16 项，FAIL 0 项，SKIP 3 项。
+- 覆盖接口：`POST /v1/dynamic-tables`、`GET /v1/dynamic-tables`、`GET /v1/dynamic-tables/{name}`、`PUT /v1/dynamic-tables/{name}`、`POST /v1/dynamic-tables/{name}/sync-ddl`、`GET /v1/dynamic-table-templates`。
+- 通过项包括：重复创建 409、无主键拒绝、禁用前缀拒绝、分页查询、单表查询、不存在表 404、PUT 新增字段持久化、PUT 不存在表 404、DDL 同步、同步不存在表 404、仅修改描述、模板列表、最终结构校验。
+- 跳过项均为幂等场景：`TMP_COWORK_V2` 已存在、`DIAG_STR` 已存在、`DIAG2_STR` 已存在。
+- 最终结构校验确认 `EMAIL_STR`、`ACTIVE_FLAG_INT` 等字段存在。
+
 ## 明确不验收
 
 - 动态表业务数据 CRUD。
