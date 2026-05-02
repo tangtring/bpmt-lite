@@ -19,7 +19,7 @@ TIMESTAMP="$(date +%s)"
 NONCE="smoke-$$"
 BODY_HASH="$(printf '' | shasum -a 256 | awk '{print $1}')"
 CANONICAL="$(printf 'GET\n/api/v1/dynamic-tables\n\n%s\n%s\n%s' "$TIMESTAMP" "$NONCE" "$BODY_HASH")"
-SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $2}')"
+SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $NF}')"
 
 curl -fsS \
   -H "X-BPMT-App-Key: $APP_KEY" \
