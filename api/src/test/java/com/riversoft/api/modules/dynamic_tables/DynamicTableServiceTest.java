@@ -1,4 +1,4 @@
-package com.riversoft.api.dtable;
+package com.riversoft.api.modules.dynamic_tables;
 
 import com.riversoft.api.http.ApiException;
 import com.riversoft.core.db.DataPackage;

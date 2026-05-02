@@ -1,4 +1,4 @@
-package com.riversoft.api.dtable;
+package com.riversoft.api.modules.dynamic_tables;
 
 import java.util.ArrayList;
 import java.util.List;

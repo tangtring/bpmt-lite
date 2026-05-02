@@ -1,6 +1,7 @@
 package com.riversoft.api;
 
-import com.riversoft.api.dtable.DynamicTableController;
+import com.riversoft.api.modules.dynamic_tables.DynamicTableController;
+import com.riversoft.api.modules.database_operations.DatabaseOperationController;
 import com.riversoft.api.http.ApiError;
 import com.riversoft.api.http.ApiException;
 import com.riversoft.api.http.ApiJson;
@@ -22,13 +23,16 @@ public class ApiServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private final DynamicTableController dynamicTableController;
+    private final DatabaseOperationController databaseOperationController;
 
     public ApiServlet() {
-        this(new DynamicTableController());
+        this(new DynamicTableController(), new DatabaseOperationController());
     }
 
-    public ApiServlet(DynamicTableController dynamicTableController) {
+    public ApiServlet(DynamicTableController dynamicTableController,
+                      DatabaseOperationController databaseOperationController) {
         this.dynamicTableController = dynamicTableController;
+        this.databaseOperationController = databaseOperationController;
     }
 
     @Override
@@ -71,7 +75,7 @@ public class ApiServlet extends HttpServlet {
                 }
                 throw methodNotAllowed();
             }
-            if (parts.length == 2 && "sync-ddl".equals(parts[1])) {
+            if (parts.length == 2 && "ddl:sync".equals(parts[1])) {
                 if ("POST".equals(method)) {
                     return dynamicTableController.syncDdl(decode(parts[0]));
                 }
@@ -79,9 +83,55 @@ public class ApiServlet extends HttpServlet {
             }
         }
 
-        if ("/dynamic-table-templates".equals(path)) {
+        if ("/dynamic-tables/templates".equals(path)) {
             if ("GET".equals(method)) {
                 return dynamicTableController.templates();
+            }
+            throw methodNotAllowed();
+        }
+
+        if (path.startsWith("/dynamic-tables/templates/")) {
+            String tail = path.substring("/dynamic-tables/templates/".length());
+            if (StringUtils.isBlank(tail)) {
+                throw new ApiException(404, "API_ROUTE_NOT_FOUND", "API 路由不存在。");
+            }
+            if (tail.endsWith(":create-table")) {
+                if ("POST".equals(method)) {
+                    String templateCode = decode(tail.substring(0, tail.length() - ":create-table".length()));
+                    return dynamicTableController.createFromTemplate(templateCode, request);
+                }
+                throw methodNotAllowed();
+            }
+            if ("GET".equals(method)) {
+                return dynamicTableController.templateDetail(decode(tail));
+            }
+            throw methodNotAllowed();
+        }
+
+        if ("/database-operations/query".equals(path)) {
+            if ("POST".equals(method)) {
+                return databaseOperationController.query(request);
+            }
+            throw methodNotAllowed();
+        }
+
+        if ("/database-operations/find".equals(path)) {
+            if ("POST".equals(method)) {
+                return databaseOperationController.find(request);
+            }
+            throw methodNotAllowed();
+        }
+
+        if ("/database-operations/save".equals(path)) {
+            if ("POST".equals(method)) {
+                return databaseOperationController.save(request);
+            }
+            throw methodNotAllowed();
+        }
+
+        if ("/database-operations/exec".equals(path)) {
+            if ("POST".equals(method)) {
+                return databaseOperationController.exec(request);
             }
             throw methodNotAllowed();
         }

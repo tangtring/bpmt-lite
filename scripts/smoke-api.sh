@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-BASE_URL="${BPMT_API_BASE_URL:-http://127.0.0.1:8081/api}"
+BASE_URL="${BPMT_API_BASE_URL:-http://127.0.0.1/api}"
 APP_KEY="${BPMT_API_APP_KEY:-bpmt-api}"
 APP_SECRET="${BPMT_API_APP_SECRET:-bpmt-api-secret}"
 

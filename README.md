@@ -6,15 +6,15 @@
 
 ## 当前版本
 
-`v1.4.0` 已发布，新增独立 API 服务，首批开放动态表结构管理接口。API 文档公开发布，业务接口使用 HMAC-SHA256 签名认证。
+`v1.4.1` 为当前版本，新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口。
 
 `v1.3.0` 是上一版 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
 - 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`
 - 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`
-- 默认访问地址：`http://127.0.0.1:8080/`
-- API 文档地址：`http://127.0.0.1:8081/api/docs/`
-- OpenAPI 地址：`http://127.0.0.1:8081/api/openapi.json`
+- 默认访问地址：`http://127.0.0.1/`
+- API 文档地址：`http://127.0.0.1/api/docs/`
+- OpenAPI 地址：`http://127.0.0.1/api/openapi.json`
 - Web 应用：Tomcat `ROOT`
 - 附带应用：`/ueditor`
 - 默认数据库名：`bpmt`
@@ -36,13 +36,13 @@ sh run.sh min
 访问：
 
 ```text
-http://127.0.0.1:8080/
+http://127.0.0.1/
 ```
 
 移动端 H5：
 
 ```text
-http://127.0.0.1:8080/login.jsp?_action_mode=h5
+http://127.0.0.1/login.jsp?_action_mode=h5
 ```
 
 `v1.3.0` 起，登录、首页、菜单、首页面板，以及流程、动态表、报表的核心浏览路径纳入移动端验收范围。
@@ -138,10 +138,10 @@ docker compose up -d
 检查入口：
 
 ```bash
-curl -fsSI http://127.0.0.1:8080/
-curl -fsSI http://127.0.0.1:8080/ueditor/
-curl -fsSI http://127.0.0.1:8081/api/openapi.json
-curl -fsSI http://127.0.0.1:8081/api/docs/
+curl -fsSI http://127.0.0.1/
+curl -fsSI http://127.0.0.1/ueditor/
+curl -fsSI http://127.0.0.1/api/openapi.json
+curl -fsSI http://127.0.0.1/api/docs/
 ```
 
 期望返回 `HTTP/1.1 200`。
@@ -154,16 +154,16 @@ scripts/smoke-api.sh
 
 ## API 使用
 
-`v1.4.0` 新增独立 API 服务，默认监听 `http://127.0.0.1:8081/api/`。首批 API 只管理动态表结构，不管理动态表业务数据，不提供删除动态表接口。
+`v1.4.1` 使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。动态表模块只管理结构，不管理业务数据，不提供删除接口。
 
 API 文档有两种形态：
 
 | 入口 | 用途 |
 | --- | --- |
-| `http://127.0.0.1:8081/api/docs/` | Web 文档，适合人工阅读和调试 |
-| `http://127.0.0.1:8081/api/openapi.json` | OpenAPI JSON，适合 AI agent、N8N、飞书集成平台和后续 skill 封装 |
-| [docs/v1.4.0/api-reference.md](docs/v1.4.0/api-reference.md) | Markdown 归档版 API 文档 |
-| [docs/v1.4.0/openapi.json](docs/v1.4.0/openapi.json) | OpenAPI 归档快照 |
+| `http://127.0.0.1/api/docs/` | Web 文档，适合人工阅读和调试 |
+| `http://127.0.0.1/api/openapi.json` | OpenAPI JSON，适合 AI agent、N8N、飞书集成平台和后续 skill 封装 |
+| [docs/v1.4.1/api-reference.md](docs/v1.4.1/api-reference.md) | Markdown 归档版 API 文档 |
+| [docs/v1.4.1/openapi.json](docs/v1.4.1/openapi.json) | OpenAPI 归档快照 |
 
 首批接口：
 
@@ -173,8 +173,14 @@ API 文档有两种形态：
 | `POST` | `/api/v1/dynamic-tables` | 创建动态表结构 |
 | `GET` | `/api/v1/dynamic-tables/{name}` | 查询单个动态表结构 |
 | `PUT` | `/api/v1/dynamic-tables/{name}` | 调整动态表结构 |
-| `POST` | `/api/v1/dynamic-tables/{name}/sync-ddl` | 同步动态表 DDL |
-| `GET` | `/api/v1/dynamic-table-templates` | 查询动态表模板列表 |
+| `POST` | `/api/v1/dynamic-tables/{name}/ddl:sync` | 同步动态表 DDL |
+| `GET` | `/api/v1/dynamic-tables/templates` | 查询动态表模板列表 |
+| `GET` | `/api/v1/dynamic-tables/templates/{templateCode}` | 查询模板详情 |
+| `POST` | `/api/v1/dynamic-tables/templates/{templateCode}:create-table` | 按模板建表 |
+| `POST` | `/api/v1/database-operations/query` | SQL 查询（SELECT） |
+| `POST` | `/api/v1/database-operations/find` | SQL 单行查询（SELECT） |
+| `POST` | `/api/v1/database-operations/save` | SQL 保存（INSERT） |
+| `POST` | `/api/v1/database-operations/exec` | SQL 执行（UPDATE/DELETE） |
 
 业务 API 使用 HMAC-SHA256 签名，请求头为 `X-BPMT-App-Key`、`X-BPMT-Timestamp`、`X-BPMT-Nonce`、`X-BPMT-Signature`。签名 path 必须包含公开 context path，例如 `/api/v1/dynamic-tables`。本地默认 `appKey` 为 `bpmt-api`，默认 `appSecret` 为 `bpmt-api-secret`，正式部署必须覆盖。
 
@@ -186,8 +192,7 @@ API 和 Web 各自内嵌 Hazelcast，并通过 compose 网络组成同一集群�
 
 | 配置 | 默认值 | 说明 |
 | --- | --- | --- |
-| `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
-| `BPMT_API_HTTP_PORT` | `8081` | API 服务访问端口 |
+| `BPMT_HTTP_PORT` | `80` | Nginx 对外访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
 | `BPMT_IMAGE_TAG` | `1.4.0` | Web 镜像 tag |
 | `BPMT_API_IMAGE_TAG` | `1.4.0` | API 镜像 tag |
@@ -201,7 +206,7 @@ API 和 Web 各自内嵌 Hazelcast，并通过 compose 网络组成同一集群�
 | `BPMT_HAZELCAST_PASSWORD` | `bpmt` | Web/API 内嵌 Hazelcast 集群密码 |
 | `LOG_PATH` | `/usr/local/tomcat/webapps/logs` | 容器内 BPMT 业务日志目录 |
 
-示例：把 Web 端口改成 18080。
+示例：把统一入口端口改成 18080。
 
 ```bash
 BPMT_HTTP_PORT=18080 docker compose up -d
@@ -245,11 +250,10 @@ scripts/build-api-image.sh
 - 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
 - v1.3.0 发布记录：[docs/release-v1.3.0.md](docs/release-v1.3.0.md)
 - v1.3.0 H5 验收清单：[docs/v1.3.0/h5-acceptance.md](docs/v1.3.0/h5-acceptance.md)
-- v1.4.0 发布记录：[docs/release-v1.4.0.md](docs/release-v1.4.0.md)
-- v1.4.0 API 开发规范：[docs/v1.4.0/api-guidelines.md](docs/v1.4.0/api-guidelines.md)
-- v1.4.0 API 验收清单：[docs/v1.4.0/api-acceptance.md](docs/v1.4.0/api-acceptance.md)
-- v1.4.0 API Markdown 归档：[docs/v1.4.0/api-reference.md](docs/v1.4.0/api-reference.md)
-- v1.4.0 OpenAPI 归档：[docs/v1.4.0/openapi.json](docs/v1.4.0/openapi.json)
+- v1.4.1 API 开发规范：[docs/v1.4.0/api-guidelines.md](docs/v1.4.0/api-guidelines.md)
+- v1.4.1 API 验收清单：[docs/v1.4.1/api-acceptance.md](docs/v1.4.1/api-acceptance.md)
+- v1.4.1 API Markdown 归档：[docs/v1.4.1/api-reference.md](docs/v1.4.1/api-reference.md)
+- v1.4.1 OpenAPI 归档：[docs/v1.4.1/openapi.json](docs/v1.4.1/openapi.json)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者

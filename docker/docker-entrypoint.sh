@@ -80,7 +80,7 @@ EOF
 append_override page.properties
 
 cat > "$APP_CLASSES/safe.properties" <<EOF
-safe.role=${SAFE_ROLE:-LIGHT_WEIGHT}
+safe.role=${SAFE_ROLE:-DEV_SYS}
 safe.sync.threads=${SAFE_SYNC_THREADS:-10}
 safe.white.ip=${SAFE_WHITE_IP:-}
 safe.white.uid=${SAFE_WHITE_UID:-}

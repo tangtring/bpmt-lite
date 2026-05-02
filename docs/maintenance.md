@@ -135,8 +135,8 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
 检查 Web：
 
 ```bash
-curl -fsSI http://127.0.0.1:8080/
-curl -fsSI http://127.0.0.1:8080/ueditor/
+curl -fsSI http://127.0.0.1/
+curl -fsSI http://127.0.0.1/ueditor/
 ```
 
 期望均返回 `HTTP/1.1 200 OK`。
@@ -144,8 +144,8 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 检查 API 文档：
 
 ```bash
-curl -fsSI http://127.0.0.1:8081/api/openapi.json
-curl -fsSI http://127.0.0.1:8081/api/docs/
+curl -fsSI http://127.0.0.1/api/openapi.json
+curl -fsSI http://127.0.0.1/api/docs/
 ```
 
 检查 API 鉴权和动态表列表签名链路：

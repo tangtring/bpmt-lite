@@ -18,8 +18,12 @@ public class ApiDocsContractTest {
 
         assertTrue(root.path("paths").has("/v1/dynamic-tables"));
         assertTrue(root.path("paths").has("/v1/dynamic-tables/{name}"));
-        assertTrue(root.path("paths").has("/v1/dynamic-tables/{name}/sync-ddl"));
-        assertTrue(root.path("paths").has("/v1/dynamic-table-templates"));
+        assertTrue(root.path("paths").has("/v1/dynamic-tables/{name}/ddl:sync"));
+        assertTrue(root.path("paths").has("/v1/dynamic-tables/templates"));
+        assertTrue(root.path("paths").has("/v1/database-operations/query"));
+        assertTrue(root.path("paths").has("/v1/database-operations/find"));
+        assertTrue(root.path("paths").has("/v1/database-operations/save"));
+        assertTrue(root.path("paths").has("/v1/database-operations/exec"));
         assertTrue(root.path("components").path("securitySchemes").has("signatureHeader"));
         assertTrue(root.path("paths").path("/v1/dynamic-tables").path("post").has("x-bpmt-writes-metadata"));
         assertTrue(root.path("paths").path("/v1/dynamic-tables").path("post").has("x-bpmt-executes-ddl"));

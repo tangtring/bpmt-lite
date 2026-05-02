@@ -1,4 +1,18 @@
 services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: bpmt-lite-nginx
+    depends_on:
+      web:
+        condition: service_started
+      api:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - "${BPMT_HTTP_PORT:-80}:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
   web:
     image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-1.4.0}
     container_name: bpmt-lite-web
@@ -6,8 +20,6 @@ services:
       mariadb:
         condition: service_healthy
     restart: unless-stopped
-    ports:
-      - "${BPMT_HTTP_PORT:-8080}:8080"
     environment:
       TZ: Asia/Shanghai
       DB_HOST: ${DB_HOST:-mariadb}
@@ -35,8 +47,6 @@ services:
       mariadb:
         condition: service_healthy
     restart: unless-stopped
-    ports:
-      - "${BPMT_API_HTTP_PORT:-8081}:8080"
     environment:
       TZ: Asia/Shanghai
       DB_HOST: ${DB_HOST:-mariadb}

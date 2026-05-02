@@ -1,4 +1,4 @@
-package com.riversoft.api.dtable;
+package com.riversoft.api.modules.dynamic_tables;
 
 import com.riversoft.api.http.ApiException;
 import com.riversoft.api.http.ApiRequest;
@@ -68,6 +68,23 @@ public class DynamicTableController {
     public Map<String, Object> templates() {
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("items", templateService().listTemplates());
+        return result;
+    }
+
+    public Map<String, Object> templateDetail(String templateCode) {
+        templateService().assertTemplateExists(templateCode);
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("templateCode", StringUtils.trim(templateCode));
+        return result;
+    }
+
+    public Map<String, Object> createFromTemplate(String templateCode, ApiRequest request) {
+        templateService().assertTemplateExists(templateCode);
+        DynamicTableRequest payload = request.readJson(DynamicTableRequest.class);
+        DynamicTableResponse created = DynamicTableService.toResponse(tableService().create(payload));
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("templateCode", StringUtils.trim(templateCode));
+        result.put("table", created);
         return result;
     }
 
