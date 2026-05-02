@@ -17,11 +17,11 @@
 
 - `v1.0.0` 是首个正式 Docker 化版本。
 - `v1.1.0` 是已发布的第二个 Docker 化版本。
-- `v1.3.0` 是当前发布版本。
-- `v1.4.0` 是 API 层开发版本，新增独立 `api` 子项目和独立 API Docker 容器。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.3.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.3.0`；正式发布 v1.4.0 时切到 `1.4.0`
-- 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
+- `v1.3.0` 是 H5 修复发布版本。
+- `v1.4.0` 是当前发布版本，新增独立 `api` 子项目和独立 API Docker 容器。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`
+- 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - 默认 API 文档：`http://127.0.0.1:8081/api/docs/`
 - 默认 OpenAPI：`http://127.0.0.1:8081/api/openapi.json`
@@ -482,15 +482,17 @@ v1.4.0 API 设计文档：
 - `docs/v1.4.0/api-guidelines.md`
 - `docs/v1.4.0/api-acceptance.md`
 
-2026-05-02 当前实现状态：
+2026-05-02 当前发布状态：
 
 - `api` Maven 子模块已创建，产物为 `api.war`。
 - API 统一 JSON 响应、HMAC 认证、固定技术用户上下文和 admin 兜底已实现。
 - 已实现动态表结构接口：列表、详情、创建、更新、DDL 同步、模板列表。
 - 已发布公开 `openapi.json` 和 `/docs/` 静态 Web 文档。
 - 已新增独立 API Dockerfile、`scripts/build-api-image.sh`、compose `api` 服务和 `scripts/smoke-api.sh`。
-- 本地已验证 `docker compose config` 通过，`scripts/build-api-image.sh` 通过，生成 `ghcr.io/wodenwang/bpmt-lite-api:1.3.0`。
-- 当前 Maven 版本仍是 `1.3.0`；正式发布 v1.4.0 时再统一切换 Maven 版本、compose 默认 tag、GHCR tag 和 release 文档。
+- 本地已验证 `docker compose config`、Java 8 全仓编译、API 单测、`scripts/build-image.sh`、`scripts/build-api-image.sh` 和 `scripts/smoke-api.sh` 通过，生成 `ghcr.io/wodenwang/bpmt-lite:1.4.0` 与 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0`。
+- Maven 版本、compose 默认 Web/API 镜像 tag 和发布文档已切换到 `1.4.0`。
+- 2026-05-02 人工完整复测使用 `TMP_COWORK_V2`：总计 19 项，PASS 16 项，FAIL 0 项，SKIP 3 项。
+- 本地 Web/API Hazelcast 双 member 验证通过，日志显示 `Members [2]`。
 
 ## 原始项目参考源
 

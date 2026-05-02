@@ -191,13 +191,13 @@ API 容器对应日志分别落在 `runtime/api-platform-logs/` 和 `runtime/api
 
 1. 新建发布分支
 2. 修改 Maven 版本号
-3. 修改 `docker-compose.yml` 默认 `BPMT_IMAGE_TAG`
+3. 修改 `docker-compose.yml` 默认 `BPMT_IMAGE_TAG` 和 `BPMT_API_IMAGE_TAG`
 4. 更新 README 和 release 文档
 5. 运行 `scripts/verify-repo.sh`
 6. 使用 Java 8 编译
 7. 执行 `scripts/build-image.sh`
 8. 执行 `scripts/build-api-image.sh`
-9. 推送 Web 和 API GHCR 镜像
+9. 推送 Web 和 API GHCR 镜像，并同步 `latest`
 10. 匿名拉取镜像验证
 11. 基于 tag 或干净克隆运行 compose 验证
 12. 合并 PR 到 `main`
@@ -229,6 +229,7 @@ gh auth token | docker login ghcr.io -u wodenwang --password-stdin
 
 ```bash
 docker push ghcr.io/wodenwang/bpmt-lite:<tag>
+docker push ghcr.io/wodenwang/bpmt-lite-api:<tag>
 ```
 
 匿名拉取验证：
@@ -236,6 +237,7 @@ docker push ghcr.io/wodenwang/bpmt-lite:<tag>
 ```bash
 TMP_DOCKER_CONFIG=$(mktemp -d)
 DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull ghcr.io/wodenwang/bpmt-lite:<tag>
+DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker pull ghcr.io/wodenwang/bpmt-lite-api:<tag>
 rm -rf "$TMP_DOCKER_CONFIG"
 ```
 

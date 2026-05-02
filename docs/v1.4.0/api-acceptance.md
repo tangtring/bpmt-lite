@@ -10,7 +10,7 @@
 - 技术用户：`BPMT_API_ACT_AS`，缺省或不存在时兜底 `admin`
 - Web/API 缓存：两个容器各自内嵌 Hazelcast，通过 compose 网络组成同一集群
 
-当前实现分支的 Maven 版本仍是 `1.3.0`，本地构建镜像 tag 也会跟随为 `1.3.0`。正式发布 v1.4.0 时再统一切换 Maven 版本、`BPMT_IMAGE_TAG`、`BPMT_API_IMAGE_TAG` 和 GHCR tag。
+当前发布收口分支的 Maven 版本、`BPMT_IMAGE_TAG`、`BPMT_API_IMAGE_TAG` 均已切换为 `1.4.0`。
 
 ## 必过项
 
@@ -55,6 +55,18 @@
 - 通过项包括：重复创建 409、无主键拒绝、禁用前缀拒绝、分页查询、单表查询、不存在表 404、PUT 新增字段持久化、PUT 不存在表 404、DDL 同步、同步不存在表 404、仅修改描述、模板列表、最终结构校验。
 - 跳过项均为幂等场景：`TMP_COWORK_V2` 已存在、`DIAG_STR` 已存在、`DIAG2_STR` 已存在。
 - 最终结构校验确认 `EMAIL_STR`、`ACTIVE_FLAG_INT` 等字段存在。
+
+2026-05-02 20:28 本地发布 gate：
+
+- `scripts/verify-repo.sh` 通过。
+- `docker compose config` 通过，Web/API 默认镜像解析为 `1.4.0`。
+- `git diff --check` 通过。
+- Java 8 下 `mvn -s settings.local.xml -DskipTests compile` 通过，Reactor 版本为 `1.4.0`。
+- Java 8 下 API 单测通过：36 项，FAIL 0。
+- `scripts/build-image.sh` 通过，生成并验证 `ghcr.io/wodenwang/bpmt-lite:1.4.0`。
+- `scripts/build-api-image.sh` 通过，生成并验证 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0`。
+- 使用 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0` 替换本地 8081 API smoke 容器后，`scripts/smoke-api.sh` 通过。
+- API 与 Web 日志均确认 Hazelcast `Members [2]`，成员为 `web-api-smoke` 与 `api-cluster-smoke`。
 
 ## 明确不验收
 

@@ -6,12 +6,12 @@
 
 ## 当前版本
 
-`v1.3.0` 已发布，按保守 H5 策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
+`v1.4.0` 已发布，新增独立 API 服务，首批开放动态表结构管理接口。API 文档公开发布，业务接口使用 HMAC-SHA256 签名认证。
 
-`v1.4.0` 开发中，新增独立 API 服务，首批开放动态表结构管理接口。API 文档公开发布，业务接口使用 HMAC-SHA256 签名认证。
+`v1.3.0` 是上一版 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.3.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.3.0`（发布 v1.4.0 时切换到 `1.4.0`）
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`
 - 默认访问地址：`http://127.0.0.1:8080/`
 - API 文档地址：`http://127.0.0.1:8081/api/docs/`
 - OpenAPI 地址：`http://127.0.0.1:8081/api/openapi.json`
@@ -29,7 +29,7 @@
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.3.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.0/scripts/run.sh -o run.sh
 sh run.sh min
 ```
 
@@ -60,19 +60,19 @@ http://127.0.0.1:8080/login.jsp?_action_mode=h5
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.3.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.0/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
 ## 完整库启动
 
-`v1.3.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
+`v1.4.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库启动命令：
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.3.0/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.4.0/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -161,8 +161,8 @@ scripts/smoke-api.sh
 | `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
 | `BPMT_API_HTTP_PORT` | `8081` | API 服务访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.3.0` | Web 镜像 tag |
-| `BPMT_API_IMAGE_TAG` | `1.3.0` | API 镜像 tag，发布 v1.4.0 时切到 `1.4.0` |
+| `BPMT_IMAGE_TAG` | `1.4.0` | Web 镜像 tag |
+| `BPMT_API_IMAGE_TAG` | `1.4.0` | API 镜像 tag |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
@@ -217,6 +217,7 @@ scripts/build-api-image.sh
 - 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
 - v1.3.0 发布记录：[docs/release-v1.3.0.md](docs/release-v1.3.0.md)
 - v1.3.0 H5 验收清单：[docs/v1.3.0/h5-acceptance.md](docs/v1.3.0/h5-acceptance.md)
+- v1.4.0 发布记录：[docs/release-v1.4.0.md](docs/release-v1.4.0.md)
 - v1.4.0 API 开发规范：[docs/v1.4.0/api-guidelines.md](docs/v1.4.0/api-guidelines.md)
 - v1.4.0 API 验收清单：[docs/v1.4.0/api-acceptance.md](docs/v1.4.0/api-acceptance.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
