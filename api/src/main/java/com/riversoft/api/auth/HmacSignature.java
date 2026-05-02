@@ -1,6 +1,7 @@
 package com.riversoft.api.auth;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -87,6 +88,40 @@ public final class HmacSignature {
         return builder.toString();
     }
 
+    public static String normalizeRawQuery(String queryString) {
+        if (queryString == null || queryString.length() == 0) {
+            return "";
+        }
+
+        List<String[]> pairs = new ArrayList<String[]>();
+        String[] rawPairs = queryString.split("&", -1);
+        for (String rawPair : rawPairs) {
+            int separator = rawPair.indexOf('=');
+            String name = separator >= 0 ? rawPair.substring(0, separator) : rawPair;
+            String value = separator >= 0 ? rawPair.substring(separator + 1) : "";
+            pairs.add(new String[] { decode(name), decode(value) });
+        }
+
+        Collections.sort(pairs, new Comparator<String[]>() {
+            public int compare(String[] left, String[] right) {
+                int key = safe(left[0]).compareTo(safe(right[0]));
+                if (key != 0) {
+                    return key;
+                }
+                return safe(left[1]).compareTo(safe(right[1]));
+            }
+        });
+
+        StringBuilder builder = new StringBuilder();
+        for (String[] pair : pairs) {
+            if (builder.length() > 0) {
+                builder.append('&');
+            }
+            builder.append(encode(pair[0])).append('=').append(encode(pair[1]));
+        }
+        return builder.toString();
+    }
+
     public static boolean constantTimeEquals(String left, String right) {
         byte[] leftBytes = getBytes(left);
         byte[] rightBytes = getBytes(right);
@@ -113,6 +148,16 @@ public final class HmacSignature {
             return URLEncoder.encode(safe(value), UTF_8).replace("+", "%20");
         } catch (UnsupportedEncodingException e) {
             throw new ApiException(500, "SIGNATURE_FAILED", "签名计算失败。");
+        }
+    }
+
+    private static String decode(String value) {
+        try {
+            return URLDecoder.decode(safe(value), UTF_8);
+        } catch (UnsupportedEncodingException e) {
+            throw new ApiException(500, "QUERY_NORMALIZE_FAILED", "请求 query 规范化失败。");
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(400, "INVALID_QUERY", "请求 query 无法解析。");
         }
     }
 

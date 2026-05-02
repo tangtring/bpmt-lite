@@ -12,7 +12,6 @@ import java.util.UUID;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -30,6 +29,7 @@ import com.riversoft.api.http.ApiResponse;
 public class ApiAuthFilter implements Filter {
 
     static final long ALLOWED_CLOCK_SKEW_SECONDS = 300L;
+    static final int MAX_BODY_BYTES = 1024 * 1024;
 
     public void init(FilterConfig filterConfig) throws ServletException {
     }
@@ -47,6 +47,8 @@ public class ApiAuthFilter implements Filter {
             chain.doFilter(cached, response);
         } catch (ApiException e) {
             writeError(httpResponse, e, requestId);
+        } catch (Exception e) {
+            writeError(httpResponse, new ApiException(500, "INTERNAL_ERROR", "API 请求处理失败。"), requestId);
         }
     }
 
@@ -69,7 +71,7 @@ public class ApiAuthFilter implements Filter {
         }
 
         String path = signaturePath(request);
-        String query = HmacSignature.normalizeQuery(request.getParameterMap());
+        String query = HmacSignature.normalizeRawQuery(request.getQueryString());
         String bodyHash = HmacSignature.sha256Hex(body);
         String canonical = HmacSignature.canonical(request.getMethod(), path, query, timestamp, nonce, bodyHash);
         String expected = HmacSignature.sign(credential.getAppSecret(), canonical);
@@ -151,11 +153,18 @@ public class ApiAuthFilter implements Filter {
 
         private byte[] readBody(HttpServletRequest request) {
             try {
+                int contentLength = request.getContentLength();
+                if (contentLength > MAX_BODY_BYTES) {
+                    throw new ApiException(413, "REQUEST_BODY_TOO_LARGE", "请求 body 超过 API 限制。");
+                }
                 ServletInputStream input = request.getInputStream();
                 ByteArrayOutputStream output = new ByteArrayOutputStream();
                 byte[] buffer = new byte[4096];
                 int length;
                 while ((length = input.read(buffer)) != -1) {
+                    if (output.size() + length > MAX_BODY_BYTES) {
+                        throw new ApiException(413, "REQUEST_BODY_TOO_LARGE", "请求 body 超过 API 限制。");
+                    }
                     output.write(buffer, 0, length);
                 }
                 return output.toByteArray();
@@ -176,32 +185,6 @@ public class ApiAuthFilter implements Filter {
         @Override
         public int read() throws IOException {
             return input.read();
-        }
-
-        @Override
-        public boolean isFinished() {
-            return input.available() == 0;
-        }
-
-        @Override
-        public boolean isReady() {
-            return true;
-        }
-
-        @Override
-        public void setReadListener(ReadListener readListener) {
-            if (readListener == null) {
-                return;
-            }
-            try {
-                if (isFinished()) {
-                    readListener.onAllDataRead();
-                } else {
-                    readListener.onDataAvailable();
-                }
-            } catch (IOException e) {
-                readListener.onError(e);
-            }
         }
     }
 }

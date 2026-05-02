@@ -64,4 +64,20 @@ public class HmacSignatureTest {
 
         assertEquals("b=2", HmacSignature.normalizeQuery(query));
     }
+
+    @Test
+    public void normalizeRawQuerySortsByNameAndValue() {
+        assertEquals("a=1&b=2", HmacSignature.normalizeRawQuery("b=2&a=1"));
+    }
+
+    @Test
+    public void normalizeRawQuerySortsRepeatedKeys() {
+        assertEquals("tag=a&tag=b", HmacSignature.normalizeRawQuery("tag=b&tag=a"));
+    }
+
+    @Test
+    public void normalizeRawQueryEncodesUtf8AndSpaces() {
+        assertEquals("q=hello%20world&title=%E4%B8%AD%E6%96%87",
+                HmacSignature.normalizeRawQuery("title=中文&q=hello+world"));
+    }
 }
