@@ -37,6 +37,7 @@
 - 代码、命令、配置键名、Maven 坐标、镜像名等技术标识保持原样。
 - 如果后续 agent 更新运行说明、维护说明或交接说明，应与 README 的中文风格保持一致。
 - v1.3.0 期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/v1.3.0/*` -> `docs/v1.2.0/*` -> `README.md` -> implementation。
+- v1.4.0 API 规划和开发期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-02-bpmt-lite-v1.4.0-api-design.md` -> `docs/v1.4.0/*` -> `README.md` -> implementation。
 - 涉及 Docker、数据库、初始化脚本、发布验收、公开文档的变更，必须同步更新对应文档，不能只改代码。
 
 ## 已验证的本地编译基线
@@ -335,6 +336,112 @@ v1.2.0 文档见：
 - C 级已冒烟“数据字典”和“流程设置”两条高频路径，浏览器 console 无 error/warn。
 - 工作流请假单 `HRLE2605001` 已通过 H5 提交中文意见 `同意审批中文验证`，页面和数据库均显示 UTF-8 正常。
 - 本机默认 `8080` 环境存在旧 `db/data`，本轮未删除用户本地数据；需要完整复验时应另起临时 compose 或先备份再重建数据目录。
+
+## v1.4.0 API 规划状态
+
+截至 2026-05-02，v1.4.0 已确认规划方向：新增一套面向 BPMT 的 API 接口层，优先服务 AI agent、飞书集成平台、N8N 等外部系统。
+
+v1.4.0 API 总体方案：
+
+- 新增独立 Maven 子模块 `api`，依赖 `platform`、`util`、`dbtools` 等现有模块。
+- `api` 产出 `api.war`，运行在独立 Docker 服务中，默认访问路径为 `http://127.0.0.1:8081/api/`。
+- `web` 继续作为现有 BPMT Web UI 服务，默认访问路径为 `http://127.0.0.1:8080/`。
+- `web` 和 `api` 共用 MariaDB。
+- `web` 和 `api` 都不能关闭 Hibernate cache。
+- `web` 和 `api` 两个容器各自内嵌 Hazelcast member，通过 Docker Compose 网络启用 TCP/IP 组网。
+- v1.4.0 不新增独立 Hazelcast Server 容器。
+- API 文档公开发布，业务 API 使用 HMAC-SHA256 签名认证。
+
+v1.4.0 首批 API 范围：
+
+- 只开放动态表结构管理能力。
+- 可以开放动态表列表、详情、创建、字段调整、DDL 同步、索引读取、索引调整、模板列表、模板预览、按模板建表。
+- 不开放动态表删除接口。
+- 不开放动态表业务数据 CRUD。
+- 不开放批量业务数据导入、导出接口。
+- 动态表结构写接口必须复用 `TableService`、`TbTable`、`TbColumn`、`TbIndex` 等现有对象，不能绕过平台服务直接写 `TB_TABLE`、`TB_COLUMN`、`TB_INDEX`、`TB_INDEX_COLUMN`。
+
+统一 API 认证规范：
+
+- 认证配置通过 Docker Compose 环境变量注入：
+  - `BPMT_API_APP_KEY`
+  - `BPMT_API_APP_SECRET`
+  - `BPMT_API_ACT_AS`
+- `BPMT_API_ACT_AS` 缺失或用户不存在时，兜底使用 `admin`。
+- 业务 API 请求 Header 使用：
+  - `X-BPMT-App-Key`
+  - `X-BPMT-Timestamp`
+  - `X-BPMT-Nonce`
+  - `X-BPMT-Signature`
+- 签名算法为 HMAC-SHA256。
+- 签名字符串固定为：
+
+```text
+METHOD
+PATH
+QUERY
+TIMESTAMP
+NONCE
+SHA256_HEX(BODY)
+```
+
+- `appSecret` 不允许明文出现在请求 body 或 query 中。
+- 文档端点不需要 HMAC 认证，业务 API 必须认证。
+
+统一 API 技术用户规范：
+
+- API 认证通过后，必须在当前请求线程初始化 `RequestContext`、`SessionContext`、`VariableContext`。
+- 技术用户上下文必须按 BPMT 现有 `SessionManager` 语义填充 `USER`、`GROUP`、`ROLE`、`RELATION_SHIP`、`PRI_GROUP`、`PRI_POINT_LIST`、`SUPER_PRI_FLAG`、`DATE`、`IP`、`LOG`。
+- 这样可以保证 `TableService.executeCreateTable()` 等现有逻辑中的 `SessionManager.getUser().getUid()` 正常工作。
+
+统一 API 错误模型：
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "DYNAMIC_TABLE_ALREADY_EXISTS",
+    "message": "表[XXX]已存在。",
+    "details": {},
+    "requestId": "..."
+  }
+}
+```
+
+HTTP 状态约定：
+
+- `400`：请求 JSON、字段类型或必填参数错误。
+- `401`：缺少认证信息、appKey 不存在或签名错误。
+- `403`：认证通过但技术用户不可用或权限不足。
+- `404`：动态表或模板不存在。
+- `409`：表已存在、字段冲突、索引冲突。
+- `422`：动态表规则校验或 DDL 执行失败。
+- `500`：未预期系统异常。
+
+统一 API 文档规范：
+
+- 公开 `GET /api/openapi.json`，用于 AI agent、N8N、飞书集成平台和后续 skill 生成。
+- 公开 `GET /api/docs/`，用于 Swagger UI 人工阅读和调试。
+- 每个对外接口必须包含 `summary`、`description`、请求 JSON Schema、响应 JSON Schema、错误码列表、HMAC 签名说明和 `curl` 示例。
+- 每个对外接口必须标注：
+  - `x-bpmt-writes-metadata`
+  - `x-bpmt-executes-ddl`
+  - `x-bpmt-risk-level`
+- 文档中必须明确说明动态表结构写接口会修改数据库结构和 BPMT 元数据表。
+- 文档中必须明确说明 v1.4.0 不支持删除表，不支持动态表业务数据 CRUD。
+
+统一 API 测试和验收规范：
+
+- 每个对外发布接口都必须完成单测。
+- 单测至少覆盖路由、JSON 解析、认证失败、错误响应结构、字段校验、索引规则、技术用户兜底和错误码映射。
+- 集成验收必须覆盖 `web + api + mariadb` compose 启动。
+- 集成验收必须先从 `web` 读取目标动态表结构，再通过 `api` 创建或调整动态表，最后在不重启 `web` 的情况下确认 Web 侧读到最新结构。
+- 集成验收必须确认 `web` 和 `api` 日志中 Hazelcast 已加入同一集群。
+- 如果 Hazelcast 双 member 验证失败，fallback 是收缩写接口发布范围，而不是关闭缓存。
+
+v1.4.0 API 设计文档：
+
+- `docs/superpowers/specs/2026-05-02-bpmt-lite-v1.4.0-api-design.md`
 
 ## 原始项目参考源
 
