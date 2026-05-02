@@ -24,6 +24,8 @@ public class ApiDocsContractTest {
         assertTrue(root.path("paths").path("/v1/dynamic-tables").path("post").has("x-bpmt-writes-metadata"));
         assertTrue(root.path("paths").path("/v1/dynamic-tables").path("post").has("x-bpmt-executes-ddl"));
         assertTrue(root.path("paths").path("/v1/dynamic-tables").path("post").has("x-bpmt-risk-level"));
+        assertTrue(root.path("paths").path("/v1/dynamic-tables").path("get").path("parameters").toString().contains("\"sort\""));
+        assertTrue(root.path("paths").path("/v1/dynamic-tables").path("get").path("parameters").toString().contains("\"order\""));
     }
 
     @Test

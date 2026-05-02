@@ -15,19 +15,59 @@ if [ "$STATUS" != "401" ]; then
   exit 1
 fi
 
-TIMESTAMP="$(date +%s)"
-NONCE="smoke-$$"
-BODY_HASH="$(printf '' | shasum -a 256 | awk '{print $1}')"
-CANONICAL="$(printf 'GET\n/api/v1/dynamic-tables\n\n%s\n%s\n%s' "$TIMESTAMP" "$NONCE" "$BODY_HASH")"
-SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $NF}')"
+signed_request() {
+  METHOD="$1"
+  PUBLIC_PATH="$2"
+  QUERY="$3"
+  BODY="$4"
+  OUT="$5"
+  EXPECTED_STATUS="$6"
 
-curl -fsS \
-  -H "X-BPMT-App-Key: $APP_KEY" \
-  -H "X-BPMT-Timestamp: $TIMESTAMP" \
-  -H "X-BPMT-Nonce: $NONCE" \
-  -H "X-BPMT-Signature: $SIGNATURE" \
-  "$BASE_URL/v1/dynamic-tables" >/tmp/bpmt-api-dynamic-tables.json
+  TIMESTAMP="$(date +%s)"
+  NONCE="smoke-$$-$TIMESTAMP"
+  BODY_HASH="$(printf '%s' "$BODY" | shasum -a 256 | awk '{print $1}')"
+  CANONICAL="$(printf '%s\n%s\n%s\n%s\n%s\n%s' "$METHOD" "$PUBLIC_PATH" "$QUERY" "$TIMESTAMP" "$NONCE" "$BODY_HASH")"
+  SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $NF}')"
+  URL="$BASE_URL$(printf '%s' "$PUBLIC_PATH" | sed 's#^/api##')"
+  if [ -n "$QUERY" ]; then
+    URL="$URL?$QUERY"
+  fi
+
+  if [ -n "$BODY" ]; then
+    STATUS="$(printf '%s' "$BODY" | curl -sS -o "$OUT" -w '%{http_code}' \
+      -X "$METHOD" \
+      -H "Content-Type: application/json" \
+      -H "X-BPMT-App-Key: $APP_KEY" \
+      -H "X-BPMT-Timestamp: $TIMESTAMP" \
+      -H "X-BPMT-Nonce: $NONCE" \
+      -H "X-BPMT-Signature: $SIGNATURE" \
+      --data-binary @- \
+      "$URL")"
+  else
+    STATUS="$(curl -sS -o "$OUT" -w '%{http_code}' \
+      -X "$METHOD" \
+      -H "X-BPMT-App-Key: $APP_KEY" \
+      -H "X-BPMT-Timestamp: $TIMESTAMP" \
+      -H "X-BPMT-Nonce: $NONCE" \
+      -H "X-BPMT-Signature: $SIGNATURE" \
+      "$URL")"
+  fi
+
+  if [ "$STATUS" != "$EXPECTED_STATUS" ]; then
+    printf '%s\n' "Expected $EXPECTED_STATUS for $METHOD $PUBLIC_PATH, got $STATUS"
+    cat "$OUT"
+    exit 1
+  fi
+}
+
+signed_request GET /api/v1/dynamic-tables 'order=desc&sort=createDate' '' /tmp/bpmt-api-dynamic-tables.json 200
 
 grep -q '"success":true' /tmp/bpmt-api-dynamic-tables.json
+grep -q '"sort":"createDate"' /tmp/bpmt-api-dynamic-tables.json
+grep -q '"order":"desc"' /tmp/bpmt-api-dynamic-tables.json
+
+MISSING_BODY='{"name":"RV_API_MISSING","columns":[{"name":"ID","type":"String","totalSize":64,"primaryKey":true,"required":true}]}'
+signed_request PUT /api/v1/dynamic-tables/RV_API_MISSING '' "$MISSING_BODY" /tmp/bpmt-api-missing-table.json 404
+grep -q '"code":"DYNAMIC_TABLE_NOT_FOUND"' /tmp/bpmt-api-missing-table.json
 
 printf '%s\n' "API smoke passed: $BASE_URL"

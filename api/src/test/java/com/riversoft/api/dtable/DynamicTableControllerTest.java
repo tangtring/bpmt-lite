@@ -36,6 +36,37 @@ public class DynamicTableControllerTest {
     }
 
     @Test
+    public void listPassesSortAndOrderParameters() {
+        StubTableService tableService = new StubTableService();
+        DynamicTableController controller = new DynamicTableController(tableService, new StubTemplateService());
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/dynamic-tables");
+        request.addParameter("sort", "createDate");
+        request.addParameter("order", "desc");
+
+        Map<String, Object> response = controller.list(new ApiRequest(request));
+
+        assertEquals("createDate", tableService.sort);
+        assertEquals("desc", tableService.order);
+        assertEquals("createDate", response.get("sort"));
+        assertEquals("desc", response.get("order"));
+    }
+
+    @Test
+    public void listRejectsUnsupportedSortParameter() {
+        DynamicTableController controller = new DynamicTableController(new StubTableService(), new StubTemplateService());
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/dynamic-tables");
+        request.addParameter("sort", "name;drop table tb_table");
+
+        try {
+            controller.list(new ApiRequest(request));
+        } catch (ApiException e) {
+            assertEquals("API_INVALID_PARAMETER", e.getCode());
+            return;
+        }
+        throw new AssertionError("Expected invalid sort rejection");
+    }
+
+    @Test
     public void createReadsJsonPayload() throws UnsupportedEncodingException {
         StubTableService tableService = new StubTableService();
         DynamicTableController controller = new DynamicTableController(tableService, new StubTemplateService());
@@ -93,6 +124,8 @@ public class DynamicTableControllerTest {
     private static class StubTableService extends DynamicTableService {
         private Integer start;
         private Integer limit;
+        private String sort;
+        private String order;
         private DynamicTableRequest created;
 
         StubTableService() {
@@ -101,8 +134,15 @@ public class DynamicTableControllerTest {
 
         @Override
         public DataPackage list(int start, int limit) {
+            return list(start, limit, null, null);
+        }
+
+        @Override
+        public DataPackage list(int start, int limit, String sort, String order) {
             this.start = start;
             this.limit = limit;
+            this.sort = sort;
+            this.order = order;
             DataPackage dataPackage = new DataPackage();
             dataPackage.setStart(start);
             dataPackage.setLimit(limit);

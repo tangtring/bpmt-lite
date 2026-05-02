@@ -30,10 +30,14 @@ public class DynamicTableController {
     public Map<String, Object> list(ApiRequest request) {
         int start = parseStart(request.getParameter("start"));
         int limit = parseLimit(request.getParameter("limit"));
-        DataPackage dataPackage = tableService().list(start, limit);
+        String sort = DynamicTableService.normalizeSort(request.getParameter("sort"));
+        String order = DynamicTableService.normalizeOrder(sort, request.getParameter("order"));
+        DataPackage dataPackage = tableService().list(start, limit, sort, order);
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("start", dataPackage.getStart());
         result.put("limit", dataPackage.getLimit());
+        result.put("sort", sort);
+        result.put("order", order);
         result.put("totalRecord", dataPackage.getTotalRecord());
         result.put("items", toResponses(dataPackage.getList()));
         return result;

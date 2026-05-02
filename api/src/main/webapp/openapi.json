@@ -49,6 +49,37 @@
               "maximum": 100,
               "default": 20
             }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "排序字段。默认 createDate，让新创建的动态表优先出现在列表前部。",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "createDate",
+                "updateDate",
+                "cacheFlag"
+              ],
+              "default": "createDate"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "description": "排序方向。未传时，createDate 默认 desc，其它排序字段默认 asc。",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
           }
         ],
         "responses": {
@@ -168,7 +199,7 @@
       },
       "put": {
         "summary": "Update a dynamic table structure",
-        "description": "Updates metadata and runs table alter DDL through the existing TableService. The path name is authoritative.",
+        "description": "Updates metadata and runs table alter DDL through the existing TableService safe DDL path. The path name is authoritative. Missing metadata returns 404 before any DDL execution.",
         "operationId": "updateDynamicTable",
         "x-bpmt-writes-metadata": true,
         "x-bpmt-executes-ddl": true,
@@ -462,6 +493,14 @@
               },
               "limit": {
                 "type": "integer"
+              },
+              "sort": {
+                "type": "string",
+                "example": "createDate"
+              },
+              "order": {
+                "type": "string",
+                "example": "desc"
               },
               "totalRecord": {
                 "type": "integer",

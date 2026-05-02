@@ -4,7 +4,6 @@ import com.riversoft.api.http.ApiException;
 import com.riversoft.core.BeanFactory;
 import com.riversoft.core.db.DataCondition;
 import com.riversoft.core.db.DataPackage;
-import com.riversoft.core.db.JdbcService;
 import com.riversoft.platform.db.Types;
 import com.riversoft.platform.po.TbColumn;
 import com.riversoft.platform.po.TbIndex;
@@ -16,9 +15,13 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class DynamicTableService {
+    private static final String DEFAULT_SORT = "createDate";
+    private static final String DEFAULT_ORDER = "desc";
+
     private final TableService tableService;
 
     public DynamicTableService() {
@@ -30,13 +33,20 @@ public class DynamicTableService {
     }
 
     public DataPackage list(int start, int limit) {
-        return tableService.queryPackage(TbTable.class.getName(), start, limit, new DataCondition().toEntity());
+        return list(start, limit, null, null);
+    }
+
+    public DataPackage list(int start, int limit, String sort, String order) {
+        String normalizedSort = normalizeSort(sort);
+        String normalizedOrder = normalizeOrder(normalizedSort, order);
+        DataCondition condition = new DataCondition().setOrderBy(normalizedSort, normalizedOrder);
+        return queryTables(start, limit, condition.toEntity());
     }
 
     public TbTable detail(String name) {
         DynamicTableValidator.validateName(name);
         String tableName = StringUtils.trim(name);
-        TbTable table = (TbTable) tableService.findByPk(TbTable.class.getName(), tableName);
+        TbTable table = findDynamicTable(tableName);
         if (table == null) {
             throw new ApiException(404, "DYNAMIC_TABLE_NOT_FOUND", "动态表不存在。");
         }
@@ -46,11 +56,11 @@ public class DynamicTableService {
     public TbTable create(DynamicTableRequest request) {
         DynamicTableValidator.validateForCreate(request);
         String tableName = StringUtils.trim(request.getName());
-        if (tableService.checkTableExists(tableName)) {
+        if (physicalTableExists(tableName)) {
             throw new ApiException(409, "DYNAMIC_TABLE_ALREADY_EXISTS", "表[" + tableName + "]已存在。");
         }
         TbTable table = toTbTable(request);
-        tableService.executeCreateTable(table);
+        executeCreateTable(table);
         return detail(tableName);
     }
 
@@ -59,18 +69,66 @@ public class DynamicTableService {
             throw new ApiException(400, "DYNAMIC_TABLE_NAME_REQUIRED", "表名不能为空。");
         }
         String tableName = StringUtils.trim(name);
+        detail(tableName);
         request.setName(tableName);
         DynamicTableValidator.validateForCreate(request);
         TbTable table = toTbTable(request);
-        Number count = (Number) JdbcService.getInstance().findSQL("select count(1) T from " + table.getName()).get("T");
-        boolean isSafe = count == null || count.intValue() < 1;
-        tableService.executeUpdateTable(table, isSafe);
+        executeUpdateTable(table, false);
         return detail(tableName);
     }
 
     public void syncDdl(String name) {
-        detail(name);
-        tableService.executeSyncTable(StringUtils.trim(name), true);
+        String tableName = StringUtils.trim(name);
+        detail(tableName);
+        executeSyncTable(tableName, false);
+    }
+
+    public static String normalizeSort(String sort) {
+        String value = StringUtils.defaultIfBlank(sort, DEFAULT_SORT);
+        value = StringUtils.trim(value);
+        if ("name".equals(value)
+                || "description".equals(value)
+                || "createDate".equals(value)
+                || "updateDate".equals(value)
+                || "cacheFlag".equals(value)) {
+            return value;
+        }
+        throw new ApiException(400, "API_INVALID_PARAMETER", "排序字段不支持。");
+    }
+
+    public static String normalizeOrder(String sort, String order) {
+        if (StringUtils.isBlank(order)) {
+            return DEFAULT_SORT.equals(sort) ? DEFAULT_ORDER : "asc";
+        }
+        String value = StringUtils.trim(order).toLowerCase();
+        if ("asc".equals(value) || "desc".equals(value)) {
+            return value;
+        }
+        throw new ApiException(400, "API_INVALID_PARAMETER", "排序方向仅支持 asc 或 desc。");
+    }
+
+    protected DataPackage queryTables(int start, int limit, Map<String, ?> queryMap) {
+        return tableService.queryPackage(TbTable.class.getName(), start, limit, queryMap);
+    }
+
+    protected TbTable findDynamicTable(String tableName) {
+        return (TbTable) tableService.findByPk(TbTable.class.getName(), tableName);
+    }
+
+    protected boolean physicalTableExists(String tableName) {
+        return tableService.checkTableExists(tableName);
+    }
+
+    protected void executeCreateTable(TbTable table) {
+        tableService.executeCreateTable(table);
+    }
+
+    protected void executeUpdateTable(TbTable table, boolean unsafeMode) {
+        tableService.executeUpdateTable(table, unsafeMode);
+    }
+
+    protected void executeSyncTable(String tableName, boolean unsafeMode) {
+        tableService.executeSyncTable(tableName, unsafeMode);
     }
 
     public static TbTable toTbTable(DynamicTableRequest request) {
