@@ -29,7 +29,7 @@
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
 sh run.sh min
 ```
 
@@ -62,7 +62,7 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -74,7 +74,7 @@ sh run.sh
 
 ```bash
 mkdir -p bpmt-lite && cd bpmt-lite
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
@@ -142,7 +142,7 @@ docker compose up -d
 ```bash
 docker compose down
 rm -rf docker/nginx/nginx.conf
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
+curl -fsSL https://raw.githubusercontent.com/wodenwang/bpmt-lite/8842fbef5ea02d5809213b66c80f447cd24091b5/scripts/run.sh -o run.sh
 sh run.sh
 ```
 
