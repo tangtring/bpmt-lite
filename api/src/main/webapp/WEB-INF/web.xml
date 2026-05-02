@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+  <display-name>bpmt-api</display-name>
+
+  <servlet>
+    <servlet-name>InitServlet</servlet-name>
+    <servlet-class>com.riversoft.platform.web.InitServlet</servlet-class>
+    <load-on-startup>0</load-on-startup>
+  </servlet>
+
+  <filter>
+    <filter-name>ApiAuthFilter</filter-name>
+    <filter-class>com.riversoft.api.auth.ApiAuthFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>ApiAuthFilter</filter-name>
+    <url-pattern>/v1/*</url-pattern>
+  </filter-mapping>
+
+  <servlet>
+    <servlet-name>ApiServlet</servlet-name>
+    <servlet-class>com.riversoft.api.ApiServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ApiServlet</servlet-name>
+    <url-pattern>/v1/*</url-pattern>
+  </servlet-mapping>
+</web-app>
