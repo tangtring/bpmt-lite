@@ -17,6 +17,14 @@ public class HmacSignatureTest {
     }
 
     @Test
+    public void sha256HexReturnsNonEmptyBodyHash() throws Exception {
+        byte[] body = "{\"name\":\"RV_TEST\"}".getBytes("UTF-8");
+
+        assertEquals("cbba6e371168b2c0808a8485a3bdb877057d3ff1a8afdf848cc7cd0bdecdc6c5",
+                HmacSignature.sha256Hex(body));
+    }
+
+    @Test
     public void canonicalReturnsSixLineString() {
         String canonical = HmacSignature.canonical(
                 "GET",
