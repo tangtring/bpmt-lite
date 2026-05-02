@@ -1,0 +1,543 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BPMT Lite API",
+    "version": "1.4.0",
+    "description": "BPMT Lite v1.4.0 API. This version exposes structure-only dynamic table management. Table delete and other destructive operations are intentionally not exposed. Auth uses appKey/appSecret based HMAC headers from container environment variables. Signature canonical string is METHOD, PATH, NORMALIZED_QUERY, TIMESTAMP, NONCE, SHA256_HEX(BODY), joined by newline. PATH must be the public request URI such as /api/v1/dynamic-tables. NORMALIZED_QUERY sorts decoded query pairs by name and value, then URL-encodes them with spaces as %20."
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "API context path in the Docker compose deployment"
+    }
+  ],
+  "security": [
+    {
+      "appKeyHeader": [],
+      "timestampHeader": [],
+      "nonceHeader": [],
+      "signatureHeader": []
+    }
+  ],
+  "paths": {
+    "/v1/dynamic-tables": {
+      "get": {
+        "summary": "List dynamic table structures",
+        "description": "Returns dynamic table metadata from tb_table/tb_column. Business rows inside dynamic tables are outside this API scope.",
+        "operationId": "listDynamicTables",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dynamic table list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicTableListEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a dynamic table structure",
+        "description": "Creates physical DDL and corresponding tb_table/tb_column metadata. The request must include at least one primary key column.",
+        "operationId": "createDynamicTable",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DynamicTableRequest"
+              },
+              "example": {
+                "name": "RV_API_CUSTOMER",
+                "description": "API customer structure",
+                "cacheFlag": 0,
+                "columns": [
+                  {
+                    "name": "ID",
+                    "description": "Primary key",
+                    "type": "String",
+                    "totalSize": 64,
+                    "primaryKey": true,
+                    "required": true
+                  },
+                  {
+                    "name": "NAME",
+                    "description": "Name",
+                    "type": "String",
+                    "totalSize": 128,
+                    "required": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created dynamic table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicTableEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/v1/dynamic-tables/{name}": {
+      "get": {
+        "summary": "Get a dynamic table structure",
+        "operationId": "getDynamicTable",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DynamicTableName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dynamic table detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicTableEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a dynamic table structure",
+        "description": "Updates metadata and runs table alter DDL through the existing TableService. The path name is authoritative.",
+        "operationId": "updateDynamicTable",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DynamicTableName"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DynamicTableRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated dynamic table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicTableEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/v1/dynamic-tables/{name}/sync-ddl": {
+      "post": {
+        "summary": "Synchronize dynamic table DDL",
+        "description": "Runs the existing DDL synchronization for a dynamic table after confirming the metadata exists.",
+        "operationId": "syncDynamicTableDdl",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DynamicTableName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DDL sync result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncDdlEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/v1/dynamic-table-templates": {
+      "get": {
+        "summary": "List dynamic table templates",
+        "operationId": "listDynamicTableTemplates",
+        "responses": {
+          "200": {
+            "description": "Template names",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateListEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "appKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-BPMT-App-Key",
+        "description": "Configured appKey."
+      },
+      "timestampHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-BPMT-Timestamp",
+        "description": "Unix timestamp in seconds. The server allows 300 seconds of clock skew."
+      },
+      "nonceHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-BPMT-Nonce",
+        "description": "Per-request nonce supplied by the caller."
+      },
+      "signatureHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-BPMT-Signature",
+        "description": "Lowercase hex HMAC-SHA256 signature using appSecret."
+      }
+    },
+    "parameters": {
+      "DynamicTableName": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "description": "Dynamic table name. System prefixes CM_, DEV_, VW_, WDG_, ACT_GE_, ACT_RE_, US_, WF_, TB_, TPL_, WX_ are rejected for write operations."
+      }
+    },
+    "responses": {
+      "ErrorResponse": {
+        "description": "Stable JSON error envelope",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "DynamicTableRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "columns"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cacheFlag": {
+            "type": "integer",
+            "description": "0 disables table metadata cache for this structure; 1 enables it when the platform supports it."
+          },
+          "columns": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/DynamicTableColumn"
+            }
+          },
+          "indexes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DynamicTableIndex"
+            }
+          }
+        }
+      },
+      "DynamicTableColumn": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": "String",
+            "enum": [
+              "String",
+              "Integer",
+              "BigDecimal",
+              "Date",
+              "Long",
+              "Clob",
+              "Blob"
+            ]
+          },
+          "totalSize": {
+            "type": "integer",
+            "default": 100
+          },
+          "scale": {
+            "type": "integer",
+            "default": 0
+          },
+          "primaryKey": {
+            "type": "boolean",
+            "default": false
+          },
+          "autoIncrement": {
+            "type": "boolean",
+            "default": false
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "defaultValue": {
+            "type": "string"
+          },
+          "memo": {
+            "type": "string"
+          }
+        }
+      },
+      "DynamicTableIndex": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DynamicTableResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DynamicTableRequest"
+          }
+        ]
+      },
+      "DynamicTableEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/DynamicTableResponse"
+          },
+          "error": {
+            "nullable": true
+          }
+        }
+      },
+      "DynamicTableListEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "totalRecord": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DynamicTableResponse"
+                }
+              }
+            }
+          },
+          "error": {
+            "nullable": true
+          }
+        }
+      },
+      "SyncDdlEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "synced": {
+                "type": "boolean"
+              }
+            }
+          },
+          "error": {
+            "nullable": true
+          }
+        }
+      },
+      "TemplateListEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "error": {
+            "nullable": true
+          }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "data": {
+            "nullable": true
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "INVALID_SIGNATURE"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              },
+              "requestId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

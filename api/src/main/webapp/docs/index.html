@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BPMT Lite API Docs</title>
+  <style>
+    body {
+      margin: 0;
+      color: #1f2933;
+      background: #f7f9fb;
+      font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #d9e2ec;
+      padding: 24px max(20px, calc((100vw - 1080px) / 2));
+    }
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      color: #102a43;
+      letter-spacing: 0;
+    }
+    h1 {
+      font-size: 28px;
+      line-height: 1.25;
+    }
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+    h3 {
+      font-size: 16px;
+    }
+    p {
+      margin: 8px 0 0;
+    }
+    a {
+      color: #0b69a3;
+    }
+    .panel {
+      background: #ffffff;
+      border: 1px solid #d9e2ec;
+      border-radius: 6px;
+      padding: 18px;
+      margin-top: 16px;
+    }
+    .endpoint {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 12px;
+      align-items: start;
+      border-top: 1px solid #edf2f7;
+      padding: 14px 0;
+    }
+    .endpoint:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .method {
+      display: inline-block;
+      width: 74px;
+      border-radius: 4px;
+      padding: 3px 8px;
+      color: #ffffff;
+      background: #2f855a;
+      font-weight: 700;
+      text-align: center;
+      font-size: 12px;
+    }
+    .method.post {
+      background: #0b69a3;
+    }
+    .method.put {
+      background: #b7791f;
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    code {
+      color: #243b53;
+      background: #edf2f7;
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #102a43;
+      color: #f0f4f8;
+      border-radius: 6px;
+      padding: 14px;
+      overflow: auto;
+    }
+    .muted {
+      color: #52606d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BPMT Lite API Docs</h1>
+    <p class="muted">v1.4.0 动态表结构 API。文档公开访问，业务接口需要 HMAC 请求头。</p>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>入口</h2>
+      <p>OpenAPI JSON：<a href="../openapi.json">/api/openapi.json</a></p>
+      <p>业务前缀：<code>/api/v1</code></p>
+    </section>
+
+    <section class="panel">
+      <h2>签名</h2>
+      <p>请求头：<code>X-BPMT-App-Key</code>、<code>X-BPMT-Timestamp</code>、<code>X-BPMT-Nonce</code>、<code>X-BPMT-Signature</code>。</p>
+      <pre>canonical = METHOD + "\n"
+  + PATH + "\n"
+  + NORMALIZED_QUERY + "\n"
+  + TIMESTAMP + "\n"
+  + NONCE + "\n"
+  + SHA256_HEX(BODY)
+
+signature = HEX(HMAC_SHA256(APP_SECRET, canonical))</pre>
+      <p class="muted">PATH 使用公开请求 URI，例如 <code>/api/v1/dynamic-tables</code>。NORMALIZED_QUERY 按解码后的参数名和值排序后再编码。</p>
+    </section>
+
+    <section class="panel">
+      <h2>接口</h2>
+      <div id="endpoints" class="muted">正在读取 OpenAPI...</div>
+    </section>
+  </main>
+  <script>
+    fetch("../openapi.json")
+      .then(function (response) { return response.json(); })
+      .then(function (api) {
+        var container = document.getElementById("endpoints");
+        var html = [];
+        Object.keys(api.paths).forEach(function (path) {
+          var methods = api.paths[path];
+          Object.keys(methods).forEach(function (method) {
+            var item = methods[method];
+            html.push(
+              '<div class="endpoint">' +
+              '<div><span class="method ' + method + '">' + method.toUpperCase() + '</span></div>' +
+              '<div><h3><code>' + path + '</code></h3><p>' + (item.summary || "") + '</p></div>' +
+              '</div>'
+            );
+          });
+        });
+        container.className = "";
+        container.innerHTML = html.join("");
+      })
+      .catch(function () {
+        document.getElementById("endpoints").textContent = "OpenAPI JSON 读取失败，请直接访问 /api/openapi.json。";
+      });
+  </script>
+</body>
+</html>
