@@ -67,6 +67,7 @@
 - `scripts/build-api-image.sh` 通过，生成并验证 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0`。
 - 使用 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0` 替换本地 8081 API smoke 容器后，`scripts/smoke-api.sh` 通过。
 - API 与 Web 日志均确认 Hazelcast `Members [2]`，成员为 `web-api-smoke` 与 `api-cluster-smoke`。
+- GHCR 推送和匿名拉取验证通过：Web digest `sha256:d987bec603dbce23c5b3b1f5fdba787a79e7384a9efb93ae64453011298e2601`，API digest `sha256:99bc848789baf9fc05cd6382994512e88c803769604d1cabd6d3434348037337`。
 
 ## 明确不验收
 

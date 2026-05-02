@@ -43,6 +43,7 @@
 ## 发布信息
 
 - Git tag：`v1.4.0`
-- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`
-- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`
+- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`，digest `sha256:d987bec603dbce23c5b3b1f5fdba787a79e7384a9efb93ae64453011298e2601`
+- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`，digest `sha256:99bc848789baf9fc05cd6382994512e88c803769604d1cabd6d3434348037337`
 - 同步镜像：`ghcr.io/wodenwang/bpmt-lite:latest`、`ghcr.io/wodenwang/bpmt-lite-api:latest`
+- 匿名拉取验证：`1.4.0` 与 `latest` 均通过。

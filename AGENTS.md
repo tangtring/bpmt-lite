@@ -493,6 +493,7 @@ v1.4.0 API 设计文档：
 - Maven 版本、compose 默认 Web/API 镜像 tag 和发布文档已切换到 `1.4.0`。
 - 2026-05-02 人工完整复测使用 `TMP_COWORK_V2`：总计 19 项，PASS 16 项，FAIL 0 项，SKIP 3 项。
 - 本地 Web/API Hazelcast 双 member 验证通过，日志显示 `Members [2]`。
+- `ghcr.io/wodenwang/bpmt-lite:1.4.0` 与 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0` 已推送，匿名拉取验证通过；两个 `latest` tag 已同步到对应 digest。
 
 ## 原始项目参考源
 
