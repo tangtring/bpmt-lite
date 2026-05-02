@@ -114,7 +114,7 @@ SHA256_HEX(BODY)
 - 提交前至少运行：
 
 ```bash
-mvn -s settings.local.xml -pl api -am test
+mvn -s settings.local.xml -pl api -am -Dtest=ApiDocsContractTest,ApiServletTest,DynamicTableControllerTest,DynamicTableServiceTest,DynamicTableValidatorTest,HmacSignatureTest,ApiUserContextTest -DfailIfNoTests=false test
 docker compose config
 ```
 

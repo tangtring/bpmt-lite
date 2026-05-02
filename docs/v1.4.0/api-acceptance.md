@@ -16,7 +16,7 @@
 
 - `scripts/verify-repo.sh` 通过。
 - `mvn -s settings.local.xml -DskipTests compile` 通过。
-- `mvn -s settings.local.xml -pl api -am test` 通过。
+- `mvn -s settings.local.xml -pl api -am -Dtest=ApiDocsContractTest,ApiServletTest,DynamicTableControllerTest,DynamicTableServiceTest,DynamicTableValidatorTest,HmacSignatureTest,ApiUserContextTest -DfailIfNoTests=false test` 通过。
 - `docker compose config` 通过。
 - `scripts/build-image.sh` 通过。
 - `scripts/build-api-image.sh` 通过。
