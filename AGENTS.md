@@ -494,6 +494,7 @@ v1.4.0 API 设计文档：
 - 2026-05-02 人工完整复测使用 `TMP_COWORK_V2`：总计 19 项，PASS 16 项，FAIL 0 项，SKIP 3 项。
 - 本地 Web/API Hazelcast 双 member 验证通过，日志显示 `Members [2]`。
 - `ghcr.io/wodenwang/bpmt-lite:1.4.0` 与 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0` 已推送，匿名拉取验证通过；两个 `latest` tag 已同步到对应 digest。
+- 发布后已用 `v1.4.0` raw `scripts/run.sh`、最小库 `bpmt_min` 和发布镜像做独立临时 compose 验证；`/`、`/ueditor/`、API 文档、API smoke 和 Hazelcast 双 member 均通过。
 
 ## 原始项目参考源
 

@@ -47,3 +47,4 @@
 - API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`，digest `sha256:99bc848789baf9fc05cd6382994512e88c803769604d1cabd6d3434348037337`
 - 同步镜像：`ghcr.io/wodenwang/bpmt-lite:latest`、`ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 匿名拉取验证：`1.4.0` 与 `latest` 均通过。
+- 发布后独立临时 compose 验证：使用 `v1.4.0` raw `scripts/run.sh`、最小库 `bpmt_min`、发布后的 Web/API 镜像，在端口 `19080/19081` 验证 `/`、`/ueditor/`、`/api/openapi.json`、`/api/docs/` 和 `scripts/smoke-api.sh` 均通过；Web/API 日志确认 Hazelcast `Members [2]`。
