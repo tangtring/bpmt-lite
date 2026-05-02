@@ -1,5 +1,6 @@
 package com.riversoft.api.http;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,9 +25,21 @@ public class ApiRequest {
         return body.clone();
     }
 
+    public String getMethod() {
+        return request.getMethod();
+    }
+
     public String getPathInfo() {
         String pathInfo = request.getPathInfo();
         return pathInfo == null ? "" : pathInfo;
+    }
+
+    public String getParameter(String name) {
+        return request.getParameter(name);
+    }
+
+    public <T> T readJson(Class<T> type) {
+        return ApiJson.fromJson(new ByteArrayInputStream(body), type);
     }
 
     private static byte[] readBody(HttpServletRequest request) {

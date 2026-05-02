@@ -1,0 +1,130 @@
+package com.riversoft.api;
+
+import com.riversoft.api.dtable.DynamicTableController;
+import com.riversoft.api.http.ApiError;
+import com.riversoft.api.http.ApiException;
+import com.riversoft.api.http.ApiJson;
+import com.riversoft.api.http.ApiRequest;
+import com.riversoft.api.http.ApiResponse;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Collections;
+import java.util.UUID;
+
+public class ApiServlet extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
+
+    private final DynamicTableController dynamicTableController;
+
+    public ApiServlet() {
+        this(new DynamicTableController());
+    }
+
+    public ApiServlet(DynamicTableController dynamicTableController) {
+        this.dynamicTableController = dynamicTableController;
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String requestId = UUID.randomUUID().toString();
+        try {
+            Object data = dispatch(new ApiRequest(request));
+            writeJson(response, HttpServletResponse.SC_OK, ApiResponse.success(data));
+        } catch (ApiException e) {
+            writeError(response, e, requestId);
+        } catch (Exception e) {
+            writeError(response, new ApiException(500, "INTERNAL_ERROR", "API 请求处理失败。"), requestId);
+        }
+    }
+
+    private Object dispatch(ApiRequest request) {
+        String method = StringUtils.upperCase(request.getMethod());
+        String path = normalizePath(request.getPathInfo());
+
+        if ("/dynamic-tables".equals(path)) {
+            if ("GET".equals(method)) {
+                return dynamicTableController.list(request);
+            }
+            if ("POST".equals(method)) {
+                return dynamicTableController.create(request);
+            }
+            throw methodNotAllowed();
+        }
+
+        if (path.startsWith("/dynamic-tables/")) {
+            String tail = path.substring("/dynamic-tables/".length());
+            String[] parts = tail.split("/");
+            if (parts.length == 1) {
+                String name = decode(parts[0]);
+                if ("GET".equals(method)) {
+                    return dynamicTableController.detail(name);
+                }
+                if ("PUT".equals(method)) {
+                    return dynamicTableController.update(name, request);
+                }
+                throw methodNotAllowed();
+            }
+            if (parts.length == 2 && "sync-ddl".equals(parts[1])) {
+                if ("POST".equals(method)) {
+                    return dynamicTableController.syncDdl(decode(parts[0]));
+                }
+                throw methodNotAllowed();
+            }
+        }
+
+        if ("/dynamic-table-templates".equals(path)) {
+            if ("GET".equals(method)) {
+                return dynamicTableController.templates();
+            }
+            throw methodNotAllowed();
+        }
+
+        throw new ApiException(404, "API_ROUTE_NOT_FOUND", "API 路由不存在。");
+    }
+
+    private String normalizePath(String pathInfo) {
+        if (StringUtils.isBlank(pathInfo) || "/".equals(pathInfo)) {
+            return "/";
+        }
+        String path = pathInfo.trim();
+        while (path.length() > 1 && path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return path;
+    }
+
+    private String decode(String value) {
+        try {
+            return URLDecoder.decode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new ApiException(400, "API_INVALID_PATH", "API 路径无法解析。");
+        }
+    }
+
+    private ApiException methodNotAllowed() {
+        return new ApiException(405, "API_METHOD_NOT_ALLOWED", "当前 API 路由不支持该 HTTP 方法。");
+    }
+
+    private void writeError(HttpServletResponse response, ApiException exception, String requestId) throws IOException {
+        ApiError error = new ApiError(
+                exception.getCode(),
+                exception.getMessage(),
+                exception.getDetails() == null ? Collections.<String, Object>emptyMap() : exception.getDetails(),
+                requestId);
+        writeJson(response, exception.getStatus(), ApiResponse.error(error));
+    }
+
+    private void writeJson(HttpServletResponse response, int status, ApiResponse payload) throws IOException {
+        response.setStatus(status);
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(ApiJson.toJson(payload));
+    }
+}
