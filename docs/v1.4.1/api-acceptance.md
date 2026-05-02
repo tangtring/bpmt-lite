@@ -6,6 +6,7 @@
 - API 动态表模块路径重整
 - 数据库操作模块：`query`、`find`、`save`、`exec`
 - issue #9：默认 `SAFE_ROLE` 不再阻断快照能力
+- issue #10：`/flow/CommonFlowAction/taskList.shtml` 点击查看/处理可正常打开任务页面
 
 ## 命令清单
 
@@ -42,3 +43,4 @@ scripts/smoke-api.sh
 - 动态表路径为 `/api/v1/dynamic-tables/*` 新基线。
 - 数据库操作模块 4 个接口可用，且写操作默认受配置开关保护。
 - 默认 `safe.role=DEV_SYS` 已写入运行时配置生成逻辑。
+- issue #10 复现场景回归通过，不再出现异常 `.view` 跳转链接。

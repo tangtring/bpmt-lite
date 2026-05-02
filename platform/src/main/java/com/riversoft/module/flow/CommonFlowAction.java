@@ -433,6 +433,7 @@ public class CommonFlowAction {
 		String taskId;
 		String pdId;
 		String pdKey;
+		String ordId;
 
 		if (StringUtils.isNotEmpty(fo.getTaskId())) {// 任务入参
 			Task task = FlowFactory.getTaskService().createTaskQuery().taskId(fo.getTaskId()).singleResult();
@@ -443,8 +444,10 @@ public class CommonFlowAction {
 			pdId = pi.getProcessDefinitionId();
 			taskId = task.getId();
 			pdKey = "";
+			ordId = pi.getBusinessKey();
 		} else if (StringUtils.isNotEmpty(fo.getOrdId()) && StringUtils.isNotEmpty(fo.getPdId())) {// 订单号+流程ID入参
 			pdId = fo.getPdId();
+			ordId = fo.getOrdId();
 			// 若是订单号则获取第一个任务
 			List<Task> tasks = FlowFactory.getTaskService().createTaskQuery().processDefinitionId(pdId).processInstanceBusinessKey(fo.getOrdId()).orderByTaskCreateTime().asc().list();
 			taskId = null;
@@ -471,6 +474,7 @@ public class CommonFlowAction {
 			}
 			pdKey = fo.getPdKey();
 			pdId = pd.getId();
+			ordId = fo.getOrdId();
 
 		} else {
 			throw new SystemRuntimeException(ExceptionType.BUSINESS, "入参错误,无法查看订单.");
@@ -483,7 +487,7 @@ public class CommonFlowAction {
 		}
 		String params = "{form:true,pdKey:'" + pdKey + "'}";
 		Actions.redirectAction(request, response,
-				basicUrl.getUrl() + "?" + Keys.PARAMS.toString() + "=" + params + "&" + FlowKeys._TASK_ID.getName() + "=" + taskId + "&" + FlowKeys._ORD_ID.getName() + "=" + fo.getOrdId());
+				basicUrl.getUrl() + "?" + Keys.PARAMS.toString() + "=" + params + "&" + FlowKeys._TASK_ID.getName() + "=" + taskId + "&" + FlowKeys._ORD_ID.getName() + "=" + ordId);
 	}
 
 }
