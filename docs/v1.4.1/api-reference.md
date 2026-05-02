@@ -225,7 +225,7 @@ curl -sS "$BASE_URL/v1/dynamic-tables?$QUERY" \
 ## 对 AI agent 的约束
 
 - 优先读取 [openapi.json](openapi.json)，不要从 HTML 页面反推接口。
-- `database-operations` 默认关闭写操作，启用需显式设置 `BPMT_API_DBOPS_EXECUTE_ENABLED=true`。
+- `database-operations` 默认开启写操作，可通过设置 `BPMT_API_DBOPS_EXECUTE_ENABLED=false` 显式关闭。
 - 所有业务 API 都要签名，文档端点除外。
 - 写接口会执行 DDL，调用前必须明确目标表、字段和索引结构。
 - 不要尝试调用删除动态表或业务数据 CRUD；v1.4.1 未暴露这些能力。

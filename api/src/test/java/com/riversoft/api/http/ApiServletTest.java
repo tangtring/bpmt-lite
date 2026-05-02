@@ -3,8 +3,12 @@ package com.riversoft.api.http;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.riversoft.api.ApiServlet;
+import com.riversoft.api.modules.database_operations.DatabaseOperationController;
+import com.riversoft.api.modules.dynamic_tables.DynamicTableController;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -59,5 +63,26 @@ public class ApiServletTest {
 
         assertTrue(response.getContentAsString().contains("\"code\":\"API_METHOD_NOT_ALLOWED\""));
         assertTrue(response.getStatus() == 405);
+    }
+
+    @Test
+    public void templatesRouteShouldNotBeCapturedAsDynamicTableName() throws Exception {
+        DynamicTableController dynamicTableController = new DynamicTableController() {
+            @Override
+            public Map<String, Object> templates() {
+                Map<String, Object> result = new LinkedHashMap<String, Object>();
+                result.put("items", Collections.singletonList("tpl-ok"));
+                return result;
+            }
+        };
+        ApiServlet servlet = new ApiServlet(dynamicTableController, new DatabaseOperationController());
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/dynamic-tables/templates");
+        request.setPathInfo("/dynamic-tables/templates");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        servlet.service((javax.servlet.ServletRequest) request, (javax.servlet.ServletResponse) response);
+
+        assertTrue(response.getStatus() == 200);
+        assertTrue(response.getContentAsString().contains("\"tpl-ok\""));
     }
 }

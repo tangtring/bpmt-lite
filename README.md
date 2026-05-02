@@ -203,6 +203,7 @@ API 和 Web 各自内嵌 Hazelcast，并通过 compose 网络组成同一集群�
 | `BPMT_API_APP_KEY` | `bpmt-api` | API appKey |
 | `BPMT_API_APP_SECRET` | `bpmt-api-secret` | API appSecret |
 | `BPMT_API_ACT_AS` | `admin` | API 固定技术用户，未配置或用户不可用时兜底 `admin` |
+| `BPMT_API_DBOPS_EXECUTE_ENABLED` | `true` | 是否开启 `database-operations` 写操作（`save/exec`） |
 | `BPMT_HAZELCAST_PASSWORD` | `bpmt` | Web/API 内嵌 Hazelcast 集群密码 |
 | `LOG_PATH` | `/usr/local/tomcat/webapps/logs` | 容器内 BPMT 业务日志目录 |
 

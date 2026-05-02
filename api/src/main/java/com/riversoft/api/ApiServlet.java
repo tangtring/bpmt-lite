@@ -62,27 +62,6 @@ public class ApiServlet extends HttpServlet {
             throw methodNotAllowed();
         }
 
-        if (path.startsWith("/dynamic-tables/")) {
-            String tail = path.substring("/dynamic-tables/".length());
-            String[] parts = tail.split("/");
-            if (parts.length == 1) {
-                String name = decode(parts[0]);
-                if ("GET".equals(method)) {
-                    return dynamicTableController.detail(name);
-                }
-                if ("PUT".equals(method)) {
-                    return dynamicTableController.update(name, request);
-                }
-                throw methodNotAllowed();
-            }
-            if (parts.length == 2 && "ddl:sync".equals(parts[1])) {
-                if ("POST".equals(method)) {
-                    return dynamicTableController.syncDdl(decode(parts[0]));
-                }
-                throw methodNotAllowed();
-            }
-        }
-
         if ("/dynamic-tables/templates".equals(path)) {
             if ("GET".equals(method)) {
                 return dynamicTableController.templates();
@@ -106,6 +85,27 @@ public class ApiServlet extends HttpServlet {
                 return dynamicTableController.templateDetail(decode(tail));
             }
             throw methodNotAllowed();
+        }
+
+        if (path.startsWith("/dynamic-tables/")) {
+            String tail = path.substring("/dynamic-tables/".length());
+            String[] parts = tail.split("/");
+            if (parts.length == 1) {
+                String name = decode(parts[0]);
+                if ("GET".equals(method)) {
+                    return dynamicTableController.detail(name);
+                }
+                if ("PUT".equals(method)) {
+                    return dynamicTableController.update(name, request);
+                }
+                throw methodNotAllowed();
+            }
+            if (parts.length == 2 && "ddl:sync".equals(parts[1])) {
+                if ("POST".equals(method)) {
+                    return dynamicTableController.syncDdl(decode(parts[0]));
+                }
+                throw methodNotAllowed();
+            }
         }
 
         if ("/database-operations/query".equals(path)) {

@@ -57,6 +57,7 @@ services:
       BPMT_API_APP_KEY: ${BPMT_API_APP_KEY:-bpmt-api}
       BPMT_API_APP_SECRET: ${BPMT_API_APP_SECRET:-bpmt-api-secret}
       BPMT_API_ACT_AS: ${BPMT_API_ACT_AS:-admin}
+      BPMT_API_DBOPS_EXECUTE_ENABLED: ${BPMT_API_DBOPS_EXECUTE_ENABLED:-true}
       HIBERNATE_CACHE: "true"
       HAZELCAST_TCPIP: "true"
       HAZELCAST_TCPIP_MEMBERS: web,api
