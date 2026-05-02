@@ -68,7 +68,7 @@ public class ApiAuthFilter implements Filter {
             throw new ApiException(401, "INVALID_SIGNATURE", "API 请求签名无效。");
         }
 
-        String path = normalizePath(request);
+        String path = signaturePath(request);
         String query = HmacSignature.normalizeQuery(request.getParameterMap());
         String bodyHash = HmacSignature.sha256Hex(body);
         String canonical = HmacSignature.canonical(request.getMethod(), path, query, timestamp, nonce, bodyHash);
@@ -96,12 +96,8 @@ public class ApiAuthFilter implements Filter {
         }
     }
 
-    private String normalizePath(HttpServletRequest request) {
+    static String signaturePath(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
-        String contextPath = request.getContextPath();
-        if (requestUri != null && contextPath != null && contextPath.length() > 0 && requestUri.startsWith(contextPath)) {
-            return requestUri.substring(contextPath.length());
-        }
         return requestUri == null ? "" : requestUri;
     }
 

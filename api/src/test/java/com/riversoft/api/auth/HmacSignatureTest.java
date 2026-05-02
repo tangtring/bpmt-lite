@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 public class HmacSignatureTest {
 
@@ -35,6 +36,15 @@ public class HmacSignatureTest {
                 "body-hash");
 
         assertEquals("GET\n/v1/dynamic-tables\nb=2\n1710000000\nnonce-1\nbody-hash", canonical);
+    }
+
+    @Test
+    public void apiAuthFilterPathKeepsPublicApiContextPath() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/dynamic-tables");
+        request.setContextPath("/api");
+        request.setRequestURI("/api/v1/dynamic-tables");
+
+        assertEquals("/api/v1/dynamic-tables", ApiAuthFilter.signaturePath(request));
     }
 
     @Test
