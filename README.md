@@ -137,6 +137,15 @@ rm -rf db/data
 docker compose up -d
 ```
 
+如果曾经用旧版 `run.sh` 启动并出现 nginx 配置挂载错误，先清掉 Docker 自动创建的错误目录，再重新下载脚本启动：
+
+```bash
+docker compose down
+rm -rf docker/nginx/nginx.conf
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.4.1/scripts/run.sh -o run.sh
+sh run.sh
+```
+
 检查入口：
 
 ```bash

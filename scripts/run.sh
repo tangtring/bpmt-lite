@@ -43,10 +43,14 @@ case "$MODE" in
     ;;
 esac
 
-mkdir -p db/init
+mkdir -p db/init docker/nginx
 
 download "$RAW_BASE_URL/docker-compose.yml" docker-compose.yml
 download "$RAW_BASE_URL/scripts/init-db.sh" init-db.sh
+if [ -d docker/nginx/nginx.conf ]; then
+  rm -rf docker/nginx/nginx.conf
+fi
+download "$RAW_BASE_URL/docker/nginx/nginx.conf" docker/nginx/nginx.conf
 
 chmod +x init-db.sh
 BPMT_SQL_BASE_URL="$SQL_BASE_URL" sh ./init-db.sh $init_arg
