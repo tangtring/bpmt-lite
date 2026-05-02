@@ -10,6 +10,7 @@ public final class DynamicTableValidator {
     private static final String[] SYSTEM_PREFIXES = new String[]{
             "CM_", "DEV_", "VW_", "WDG_", "ACT_GE_", "ACT_RE_", "US_", "WF_", "TB_", "TPL_", "WX_"
     };
+    private static final String IDENTIFIER_PATTERN = "[A-Za-z][A-Za-z0-9_]*";
 
     private DynamicTableValidator() {
     }
@@ -28,7 +29,11 @@ public final class DynamicTableValidator {
             if (column == null || StringUtils.isBlank(column.getName())) {
                 throw new ApiException(400, "DYNAMIC_TABLE_COLUMN_NAME_REQUIRED", "字段名不能为空。");
             }
-            if (!columnNames.add(column.getName().toUpperCase())) {
+            String columnName = StringUtils.trim(column.getName());
+            if (!columnName.matches(IDENTIFIER_PATTERN)) {
+                throw new ApiException(422, "DYNAMIC_TABLE_COLUMN_NAME_INVALID", "字段名只能包含字母、数字和下划线，且必须以字母开头。");
+            }
+            if (!columnNames.add(columnName.toUpperCase())) {
                 throw new ApiException(409, "DYNAMIC_TABLE_COLUMN_DUPLICATED", "字段名重复。");
             }
             hasPrimaryKey = hasPrimaryKey || column.isPrimaryKey();
@@ -42,7 +47,11 @@ public final class DynamicTableValidator {
         if (StringUtils.isBlank(name)) {
             throw new ApiException(400, "DYNAMIC_TABLE_NAME_REQUIRED", "表名不能为空。");
         }
-        String upper = name.toUpperCase();
+        String trimmed = StringUtils.trim(name);
+        if (!trimmed.matches(IDENTIFIER_PATTERN)) {
+            throw new ApiException(422, "DYNAMIC_TABLE_NAME_INVALID", "表名只能包含字母、数字和下划线，且必须以字母开头。");
+        }
+        String upper = trimmed.toUpperCase();
         for (String prefix : SYSTEM_PREFIXES) {
             if (upper.startsWith(prefix)) {
                 throw new ApiException(422, "DYNAMIC_TABLE_SYSTEM_PREFIX_FORBIDDEN", "[" + prefix + "]开头的表是系统表。");
