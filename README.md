@@ -8,8 +8,13 @@
 
 `v1.3.0` 已发布，按保守 H5 策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
+`v1.4.0` 开发中，新增独立 API 服务，首批开放动态表结构管理接口。API 文档公开发布，业务接口使用 HMAC-SHA256 签名认证。
+
 - 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.3.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.3.0`（发布 v1.4.0 时切换到 `1.4.0`）
 - 默认访问地址：`http://127.0.0.1:8080/`
+- API 文档地址：`http://127.0.0.1:8081/api/docs/`
+- OpenAPI 地址：`http://127.0.0.1:8081/api/openapi.json`
 - Web 应用：Tomcat `ROOT`
 - 附带应用：`/ueditor`
 - 默认数据库名：`bpmt`
@@ -135,9 +140,17 @@ docker compose up -d
 ```bash
 curl -fsSI http://127.0.0.1:8080/
 curl -fsSI http://127.0.0.1:8080/ueditor/
+curl -fsSI http://127.0.0.1:8081/api/openapi.json
+curl -fsSI http://127.0.0.1:8081/api/docs/
 ```
 
 期望返回 `HTTP/1.1 200`。
+
+API 业务接口默认需要签名。维护者本地验收可执行：
+
+```bash
+scripts/smoke-api.sh
+```
 
 ## 常用配置
 
@@ -146,12 +159,18 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 | 配置 | 默认值 | 说明 |
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `8080` | Web 访问端口 |
+| `BPMT_API_HTTP_PORT` | `8081` | API 服务访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
 | `BPMT_IMAGE_TAG` | `1.3.0` | Web 镜像 tag |
+| `BPMT_API_IMAGE_TAG` | `1.3.0` | API 镜像 tag，发布 v1.4.0 时切到 `1.4.0` |
 | `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
 | `DB_PASSWORD` | `123456` | 数据库密码 |
+| `BPMT_API_APP_KEY` | `bpmt-api` | API appKey |
+| `BPMT_API_APP_SECRET` | `bpmt-api-secret` | API appSecret |
+| `BPMT_API_ACT_AS` | `admin` | API 固定技术用户，未配置或用户不可用时兜底 `admin` |
+| `BPMT_HAZELCAST_PASSWORD` | `bpmt` | Web/API 内嵌 Hazelcast 集群密码 |
 | `LOG_PATH` | `/usr/local/tomcat/webapps/logs` | 容器内 BPMT 业务日志目录 |
 
 示例：把 Web 端口改成 18080。
@@ -173,6 +192,8 @@ runtime/download/        BPMT 下载目录，不提交 git
 runtime/ueditor-upload/  UEditor 上传目录，不提交 git
 runtime/platform-logs/   BPMT 平台日志目录，不提交 git
 runtime/tomcat-logs/     Tomcat 日志目录，不提交 git
+runtime/api-platform-logs/ API 平台日志目录，不提交 git
+runtime/api-tomcat-logs/   API Tomcat 日志目录，不提交 git
 config/overrides/        properties 覆盖文件目录，不提交具体覆盖文件
 ```
 
@@ -183,9 +204,10 @@ config/overrides/        properties 覆盖文件目录，不提交具体覆盖�
 ```bash
 cp settings.example.xml settings.local.xml
 scripts/build-image.sh
+scripts/build-api-image.sh
 ```
 
-`scripts/build-image.sh` 会构建本地镜像，并验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体。更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
+`scripts/build-image.sh` 会构建本地 Web 镜像，并验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体。`scripts/build-api-image.sh` 会构建本地 API 镜像，并验证 `/api`、`openapi.json`、`docs/index.html` 和 entrypoint。更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
 
 ## 文档
 
@@ -195,6 +217,8 @@ scripts/build-image.sh
 - 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
 - v1.3.0 发布记录：[docs/release-v1.3.0.md](docs/release-v1.3.0.md)
 - v1.3.0 H5 验收清单：[docs/v1.3.0/h5-acceptance.md](docs/v1.3.0/h5-acceptance.md)
+- v1.4.0 API 开发规范：[docs/v1.4.0/api-guidelines.md](docs/v1.4.0/api-guidelines.md)
+- v1.4.0 API 验收清单：[docs/v1.4.0/api-acceptance.md](docs/v1.4.0/api-acceptance.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者

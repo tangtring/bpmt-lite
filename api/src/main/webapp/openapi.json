@@ -25,6 +25,9 @@
         "summary": "List dynamic table structures",
         "description": "Returns dynamic table metadata from tb_table/tb_column. Business rows inside dynamic tables are outside this API scope.",
         "operationId": "listDynamicTables",
+        "x-bpmt-writes-metadata": false,
+        "x-bpmt-executes-ddl": false,
+        "x-bpmt-risk-level": "read",
         "parameters": [
           {
             "name": "start",
@@ -71,6 +74,9 @@
         "summary": "Create a dynamic table structure",
         "description": "Creates physical DDL and corresponding tb_table/tb_column metadata. The request must include at least one primary key column.",
         "operationId": "createDynamicTable",
+        "x-bpmt-writes-metadata": true,
+        "x-bpmt-executes-ddl": true,
+        "x-bpmt-risk-level": "high",
         "requestBody": {
           "required": true,
           "content": {
@@ -133,6 +139,9 @@
       "get": {
         "summary": "Get a dynamic table structure",
         "operationId": "getDynamicTable",
+        "x-bpmt-writes-metadata": false,
+        "x-bpmt-executes-ddl": false,
+        "x-bpmt-risk-level": "read",
         "parameters": [
           {
             "$ref": "#/components/parameters/DynamicTableName"
@@ -161,6 +170,9 @@
         "summary": "Update a dynamic table structure",
         "description": "Updates metadata and runs table alter DDL through the existing TableService. The path name is authoritative.",
         "operationId": "updateDynamicTable",
+        "x-bpmt-writes-metadata": true,
+        "x-bpmt-executes-ddl": true,
+        "x-bpmt-risk-level": "high",
         "parameters": [
           {
             "$ref": "#/components/parameters/DynamicTableName"
@@ -207,6 +219,9 @@
         "summary": "Synchronize dynamic table DDL",
         "description": "Runs the existing DDL synchronization for a dynamic table after confirming the metadata exists.",
         "operationId": "syncDynamicTableDdl",
+        "x-bpmt-writes-metadata": false,
+        "x-bpmt-executes-ddl": true,
+        "x-bpmt-risk-level": "high",
         "parameters": [
           {
             "$ref": "#/components/parameters/DynamicTableName"
@@ -236,6 +251,9 @@
       "get": {
         "summary": "List dynamic table templates",
         "operationId": "listDynamicTableTemplates",
+        "x-bpmt-writes-metadata": false,
+        "x-bpmt-executes-ddl": false,
+        "x-bpmt-risk-level": "read",
         "responses": {
           "200": {
             "description": "Template names",

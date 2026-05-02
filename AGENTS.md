@@ -18,9 +18,13 @@
 - `v1.0.0` 是首个正式 Docker 化版本。
 - `v1.1.0` 是已发布的第二个 Docker 化版本。
 - `v1.3.0` 是当前发布版本。
+- `v1.4.0` 是 API 层开发版本，新增独立 `api` 子项目和独立 API Docker 容器。
 - 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.3.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.3.0`；正式发布 v1.4.0 时切到 `1.4.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest`
 - 默认访问地址：`http://127.0.0.1:8080/`
+- 默认 API 文档：`http://127.0.0.1:8081/api/docs/`
+- 默认 OpenAPI：`http://127.0.0.1:8081/api/openapi.json`
 - `ROOT` 应用对应 BPMT `platform`
 - 额外包含 `/ueditor` 应用
 - MariaDB 默认初始化数据库名：`bpmt`
@@ -103,6 +107,10 @@ mvn -s settings.local.xml -DskipTests compile
 ## Docker 与运行约定
 
 - 默认启动方式是 `docker compose up -d`。
+- v1.4.0 API 方案使用独立 `api` 容器，不进入 `web` 容器内部。
+- Web 和 API 各自内嵌 Hazelcast，不单独引入 Hazelcast Server 容器。
+- Web/API 通过 compose 网络和 `HAZELCAST_TCPIP_MEMBERS=web,api` 加入同一 Hazelcast 集群。
+- 缓存不能关闭，`HIBERNATE_CACHE` 应保持 `true`。
 - 快速体验允许只拉起容器而不导入业务数据。
 - 若要得到完整初始化业务数据，使用 `scripts/init-db.sh` 从 `database/bpmt.sql.gz` 解压生成 `db/init/bpmt.sql`。
 - 若要得到最小初始化库，使用 `scripts/init-db.sh min` 从 `database/bpmt-min.sql.gz` 解压生成 `db/init/bpmt-min.sql`。
@@ -121,10 +129,18 @@ docker compose up -d
 
 - 平台入口：`http://127.0.0.1:8080/`
 - UEditor：`http://127.0.0.1:8080/ueditor/`
+- API 文档：`http://127.0.0.1:8081/api/docs/`
+- OpenAPI：`http://127.0.0.1:8081/api/openapi.json`
 - 常用环境变量：
   - `BPMT_HTTP_PORT`
+  - `BPMT_API_HTTP_PORT`
   - `BPMT_DB_PORT`
   - `BPMT_IMAGE_TAG`
+  - `BPMT_API_IMAGE_TAG`
+  - `BPMT_API_APP_KEY`
+  - `BPMT_API_APP_SECRET`
+  - `BPMT_API_ACT_AS`
+  - `BPMT_HAZELCAST_PASSWORD`
   - `DB_HOST`
   - `DB_NAME`
   - `DB_USER`
@@ -160,6 +176,12 @@ docker compose up -d
 - `runtime/tomcat-logs/`
   - Tomcat 日志目录
   - 不提交 git
+- `runtime/api-platform-logs/`
+  - API 容器 BPMT 平台日志目录
+  - 不提交 git
+- `runtime/api-tomcat-logs/`
+  - API 容器 Tomcat 日志目录
+  - 不提交 git
 - `config/overrides/`
   - properties 覆盖目录
   - 不提交具体覆盖文件
@@ -170,6 +192,18 @@ docker compose up -d
 - 覆盖文件中的同名 key 优先级更高。
 - Docker 默认 `LOG_PATH` 指向 `/usr/local/tomcat/webapps/logs`，对应宿主机 `runtime/platform-logs/`；不要把 BPMT 业务日志重新混入 Tomcat 日志目录。
 
+## API 开发规则
+
+- 后续所有 API 开发必须遵守 `docs/v1.4.0/api-guidelines.md`。
+- 对外接口统一挂载在 `/api/v1/*`，公开文档固定为 `/api/openapi.json` 与 `/api/docs/`。
+- 业务接口统一使用 `appKey/appSecret` 的 HMAC-SHA256 签名。
+- HMAC canonical path 必须包含公开 context path，例如 `/api/v1/dynamic-tables`，不能只签 `/v1/dynamic-tables`。
+- `BPMT_API_APP_KEY` 和 `BPMT_API_APP_SECRET` 从 Docker compose 环境变量注入；正式部署必须覆盖默认值。
+- `BPMT_API_ACT_AS` 是固定技术用户；未配置或用户不可用时兜底 `admin`。
+- JSON 响应统一为 `success/data/error` 包装，错误响应必须包含稳定 `code` 和 `requestId`。
+- 每个对外接口必须同步更新 OpenAPI、Web 文档和单测。
+- 动态表 API 只管理结构，不管理业务数据；动态表删除等危险能力默认不暴露。
+
 ## 维护者构建约定
 
 README 中的维护者构建入口是：
@@ -177,6 +211,7 @@ README 中的维护者构建入口是：
 ```bash
 cp settings.example.xml settings.local.xml
 scripts/build-image.sh
+scripts/build-api-image.sh
 ```
 
 维护相关约束：
@@ -379,12 +414,14 @@ v1.4.0 首批 API 范围：
 ```text
 METHOD
 PATH
-QUERY
+NORMALIZED_QUERY
 TIMESTAMP
 NONCE
 SHA256_HEX(BODY)
 ```
 
+- `PATH` 必须是公开请求 URI，例如 `/api/v1/dynamic-tables`。
+- `NORMALIZED_QUERY` 必须按解码后的参数名和值排序，再 URL encode。
 - `appSecret` 不允许明文出现在请求 body 或 query 中。
 - 文档端点不需要 HMAC 认证，业务 API 必须认证。
 
@@ -421,7 +458,7 @@ HTTP 状态约定：
 统一 API 文档规范：
 
 - 公开 `GET /api/openapi.json`，用于 AI agent、N8N、飞书集成平台和后续 skill 生成。
-- 公开 `GET /api/docs/`，用于 Swagger UI 人工阅读和调试。
+- 公开 `GET /api/docs/`，用于 Web 方式人工阅读和调试。
 - 每个对外接口必须包含 `summary`、`description`、请求 JSON Schema、响应 JSON Schema、错误码列表、HMAC 签名说明和 `curl` 示例。
 - 每个对外接口必须标注：
   - `x-bpmt-writes-metadata`
@@ -442,6 +479,18 @@ HTTP 状态约定：
 v1.4.0 API 设计文档：
 
 - `docs/superpowers/specs/2026-05-02-bpmt-lite-v1.4.0-api-design.md`
+- `docs/v1.4.0/api-guidelines.md`
+- `docs/v1.4.0/api-acceptance.md`
+
+2026-05-02 当前实现状态：
+
+- `api` Maven 子模块已创建，产物为 `api.war`。
+- API 统一 JSON 响应、HMAC 认证、固定技术用户上下文和 admin 兜底已实现。
+- 已实现动态表结构接口：列表、详情、创建、更新、DDL 同步、模板列表。
+- 已发布公开 `openapi.json` 和 `/docs/` 静态 Web 文档。
+- 已新增独立 API Dockerfile、`scripts/build-api-image.sh`、compose `api` 服务和 `scripts/smoke-api.sh`。
+- 本地已验证 `docker compose config` 通过，`scripts/build-api-image.sh` 通过，生成 `ghcr.io/wodenwang/bpmt-lite-api:1.3.0`。
+- 当前 Maven 版本仍是 `1.3.0`；正式发布 v1.4.0 时再统一切换 Maven 版本、compose 默认 tag、GHCR tag 和 release 文档。
 
 ## 原始项目参考源
 

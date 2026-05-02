@@ -84,6 +84,24 @@ scripts/build-image.sh
 mvn -s settings.local.xml -pl platform -am -Pdocker-image verify -Ddocker.apt.mirror=http://ports.ubuntu.com/ubuntu-ports
 ```
 
+## API 镜像构建
+
+`v1.4.0` 起新增独立 API 镜像，构建入口为：
+
+```bash
+scripts/build-api-image.sh
+```
+
+脚本会：
+
+- 检查 `settings.local.xml`
+- 检查当前 Java 是否为 Java 8
+- 执行 Maven `-pl api -am -Pdocker-image package`
+- 构建 `ghcr.io/wodenwang/bpmt-lite-api:<project.version>`
+- 启动一次临时容器，验证 `/usr/local/tomcat/webapps/api`、`openapi.json`、`docs/index.html` 和 entrypoint 可用
+
+API 镜像复用 `docker/docker-entrypoint.sh` 生成数据库、Hibernate、Hazelcast 等 properties；容器内 `APP_CLASSES` 指向 `/usr/local/tomcat/webapps/api/WEB-INF/classes`。
+
 ## 本地运行验证
 
 准备数据库初始化文件：
@@ -123,6 +141,29 @@ curl -fsSI http://127.0.0.1:8080/ueditor/
 
 期望均返回 `HTTP/1.1 200 OK`。
 
+检查 API 文档：
+
+```bash
+curl -fsSI http://127.0.0.1:8081/api/openapi.json
+curl -fsSI http://127.0.0.1:8081/api/docs/
+```
+
+检查 API 鉴权和动态表列表签名链路：
+
+```bash
+scripts/smoke-api.sh
+```
+
+API 业务接口默认使用以下环境变量：
+
+```text
+BPMT_API_APP_KEY=bpmt-api
+BPMT_API_APP_SECRET=bpmt-api-secret
+BPMT_API_ACT_AS=admin
+```
+
+`BPMT_API_ACT_AS` 未配置或对应用户不可用时兜底 `admin`。`appKey` 和 `appSecret` 必须配置；默认 compose 已给出开发默认值，正式部署应覆盖。
+
 检查 H5 登录入口和本地资源：
 
 ```bash
@@ -137,9 +178,12 @@ rg -n 'apps.bdimg.com|cdn.bootcss.com|cdn.bootcdn.net|res.wx.qq.com' /tmp/bpmt-h
 ```bash
 find runtime/platform-logs -maxdepth 3 -type f | sort
 find runtime/tomcat-logs -maxdepth 2 -type f | sort
+find runtime/api-platform-logs -maxdepth 3 -type f | sort
+find runtime/api-tomcat-logs -maxdepth 2 -type f | sort
 ```
 
 `platform.log`、`script.log`、`sql/`、`stat/`、`perf4j/` 应落在 `runtime/platform-logs/`；Tomcat 自身日志应落在 `runtime/tomcat-logs/`。
+API 容器对应日志分别落在 `runtime/api-platform-logs/` 和 `runtime/api-tomcat-logs/`。
 
 ## 发布流程
 
@@ -152,12 +196,13 @@ find runtime/tomcat-logs -maxdepth 2 -type f | sort
 5. 运行 `scripts/verify-repo.sh`
 6. 使用 Java 8 编译
 7. 执行 `scripts/build-image.sh`
-8. 推送 GHCR 镜像
-9. 匿名拉取镜像验证
-10. 基于 tag 或干净克隆运行 compose 验证
-11. 合并 PR 到 `main`
-12. 在合并后的 `main` 打 git tag
-13. 创建 GitHub Release
+8. 执行 `scripts/build-api-image.sh`
+9. 推送 Web 和 API GHCR 镜像
+10. 匿名拉取镜像验证
+11. 基于 tag 或干净克隆运行 compose 验证
+12. 合并 PR 到 `main`
+13. 在合并后的 `main` 打 git tag
+14. 创建 GitHub Release
 
 ## v1.1.0 发布候选验收
 
