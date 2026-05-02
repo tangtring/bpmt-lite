@@ -44,3 +44,13 @@ scripts/smoke-api.sh
 - 数据库操作模块 4 个接口可用，且写操作默认受配置开关保护。
 - 默认 `safe.role=DEV_SYS` 已写入运行时配置生成逻辑。
 - issue #10 复现场景回归通过，不再出现异常 `.view` 跳转链接。
+
+## 回归记录
+
+### issue #10 回归（2026-05-03）
+
+- 回归入口：`/flow/CommonFlowAction/taskList.shtml`
+- 复现路径：任务列表点击“处理”，进入 `/flow/CommonFlowAction/form.shtml?_TASK_ID=<taskId>`
+- 修复前现象：重定向 URL 含 `_ORD_ID=null`，导致打开异常 `.view` 链接并返回 `400`
+- 修复后结果：重定向 URL 含真实 `_ORD_ID=HRLE1609001`，`_ORD_ID` 不再为 `null`
+- 核验方式：浏览器网络请求检查（reqid `614`）
