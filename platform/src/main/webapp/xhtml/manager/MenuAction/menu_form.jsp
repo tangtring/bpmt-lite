@@ -7,6 +7,20 @@
 <script type="text/javascript">
 	$(function() {
 		var $zone = $('#${_zone}');
+		var toggleMenuActionFields = function() {
+			var openType = $(':input[name=openType]:checked', $zone).val();
+			if (openType == undefined || openType == '') {
+				openType = $(':input[name=openType]', $zone).val();
+			}
+			$('[data-menu-open-type]', $zone).each(function() {
+				var $row = $(this);
+				var active = $row.attr('data-menu-open-type') == openType;
+				$row.toggle(active);
+				$(':input', $row).prop('disabled', !active);
+			});
+		};
+		$zone.on('change click ifChecked', ':input[name=openType]', toggleMenuActionFields);
+		toggleMenuActionFields();
 
 		//表单动作
 		$('form', $zone).submit(function() {
@@ -64,9 +78,13 @@
 								<th>打开类型</th>
 								<td><wcm:widget name="openType" cmd="radio[@com.riversoft.module.frame.MenuOpenType]{required:true}" value="${isCreate?1:vo.openType}"></wcm:widget></td>
 							</tr>
-							<tr>
-								<th>链接视图</th>
+							<tr data-menu-open-type="1">
+								<th>打开网址</th>
 								<td><wcm:widget name="action" cmd="view[MENU]" value="${vo.action}" /></td>
+							</tr>
+							<tr data-menu-open-type="2">
+								<th>打开第三方网址</th>
+								<td><textarea name="thirdpartUrl" rows="4" style="width: 90%;"><c:out value='${vo.action}' /></textarea> <font color="red" tip="true" title="打开类型为第三方网页时使用该地址，可填写 http://、https:// 或 / 开头的地址。">(提示)</font></td>
 							</tr>
 						</c:when>
 						<c:otherwise>

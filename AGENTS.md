@@ -18,20 +18,21 @@
 - `v1.0.0` 是首个正式 Docker 化版本。
 - `v1.1.0` 是已发布的第二个 Docker 化版本。
 - `v1.3.0` 是 H5 修复发布版本。
-- `v1.4.0` 是当前发布版本，新增独立 `api` 子项目和独立 API Docker 容器。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.0`
+- `v1.4.0` 是新增独立 `api` 子项目和独立 API Docker 容器的发布版本。
+- `v1.4.1` 是当前发布版本，新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.1`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.1`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
-- 默认访问地址：`http://127.0.0.1:8080/`
-- 默认 API 文档：`http://127.0.0.1:8081/api/docs/`
-- 默认 OpenAPI：`http://127.0.0.1:8081/api/openapi.json`
+- 默认访问地址：`http://127.0.0.1/`
+- 默认 API 文档：`http://127.0.0.1/api/docs/`
+- 默认 OpenAPI：`http://127.0.0.1/api/openapi.json`
 - `ROOT` 应用对应 BPMT `platform`
 - 额外包含 `/ueditor` 应用
 - MariaDB 默认初始化数据库名：`bpmt`
 - MariaDB 最小初始化数据库名：`bpmt_min`
 - README 中记录的发布验收基线是：
-  - 使用 `database/bpmt-min.sql.gz` 最小库初始化后 173 张表
-  - 使用 `database/bpmt.sql.gz` 完整库初始化后 377 张表
+  - 使用 `database/bpmt-min.sql.gz` 最小库初始化后 176 张表
+  - 使用 `database/bpmt.sql.gz` 完整库初始化后 380 张表
   - `/` 返回 200
   - `/ueditor/` 返回 200
 
@@ -42,6 +43,7 @@
 - 如果后续 agent 更新运行说明、维护说明或交接说明，应与 README 的中文风格保持一致。
 - v1.3.0 期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/v1.3.0/*` -> `docs/v1.2.0/*` -> `README.md` -> implementation。
 - v1.4.0 API 规划和开发期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-02-bpmt-lite-v1.4.0-api-design.md` -> `docs/v1.4.0/*` -> `README.md` -> implementation。
+- v1.5.0 OAuth 登录开发期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-03-bpmt-lite-v1.5.0-oauth-login-design.md` -> `docs/v1.5.0/*` -> `README.md` -> implementation。
 - 涉及 Docker、数据库、初始化脚本、发布验收、公开文档的变更，必须同步更新对应文档，不能只改代码。
 
 ## 已验证的本地编译基线
@@ -127,13 +129,12 @@ docker compose up -d
 
 ## 默认访问与常用配置
 
-- 平台入口：`http://127.0.0.1:8080/`
-- UEditor：`http://127.0.0.1:8080/ueditor/`
-- API 文档：`http://127.0.0.1:8081/api/docs/`
-- OpenAPI：`http://127.0.0.1:8081/api/openapi.json`
+- 平台入口：`http://127.0.0.1/`
+- UEditor：`http://127.0.0.1/ueditor/`
+- API 文档：`http://127.0.0.1/api/docs/`
+- OpenAPI：`http://127.0.0.1/api/openapi.json`
 - 常用环境变量：
   - `BPMT_HTTP_PORT`
-  - `BPMT_API_HTTP_PORT`
   - `BPMT_DB_PORT`
   - `BPMT_IMAGE_TAG`
   - `BPMT_API_IMAGE_TAG`
@@ -203,6 +204,24 @@ docker compose up -d
 - JSON 响应统一为 `success/data/error` 包装，错误响应必须包含稳定 `code` 和 `requestId`。
 - 每个对外接口必须同步更新 OpenAPI、Web 文档和单测。
 - 动态表 API 只管理结构，不管理业务数据；动态表删除等危险能力默认不暴露。
+
+## v1.5.0 OAuth 开发规则
+
+- v1.5.0 OAuth 主流程完全在 `bpmt-web/platform`，不进入也不改 `bpmt-api`。
+- `bpmt-api` 的 `/api/docs/` 和 `/api/openapi.json` 只作为回归验收入口，不为 OAuth 新增 API 内容。
+- BPMT 作为 OAuth2 Authorization Code 服务端，不实现 OIDC，不提供 `refresh_token`。
+- OAuth 端点固定为 `/oauth/authorize`、`/oauth/token`、`/oauth/userinfo`。
+- `/oauth/token` 和 `/oauth/userinfo` 使用 OAuth JSON 响应，不使用 `success/data/error` 包装；`/oauth/authorize` 是浏览器跳转或错误页。
+- 外部系统主数据是 `CM_THIRDPART`，授权码状态是 `CM_THIRDPART_AUTH_CODE`，token 状态是 `CM_THIRDPART_ACCESS_TOKEN`。
+- 三张 OAuth 表必须进入 `database/bpmt.sql.gz`、`database/bpmt-min.sql.gz` 和 `database/bpmt-db.sql` 默认初始化路径；Docker 默认 `HIBERNATE_AUTOUPDATE=false`，不能依赖 Hibernate 自动建表。
+- 默认初始化数据必须包含后台菜单 `系统开发 -> 第三方系统`，菜单 ID 和菜单权限资源均为 `sys_thirdpart`，入口地址为 `/thirdpart/ThirdpartAction/index.shtml`。
+- `code` 和 `access_token` 只保存 hash，DB 是 OAuth 运行态 source of truth。
+- 外部系统 `clientSecret` 只展示一次，DB 只保存 `CLIENT_SECRET_HASH`。
+- 权限边界使用 `CM_THIRDPART.PRI_KEY` 对接现有 BPMT 权限体系，并在 `权限组管理 -> 第三方系统权限` 页签中配置。
+- 菜单第三方 URL / iframe 只是辅助入口，不是 OAuth 主流程；第三方页面无登录态时应自行发起 OAuth。
+- `userid + thirdpartKey` 独立权限校验 API 暂不纳入 v1.5.0 验收范围。
+- OAuth 主流程必须登记 `INFO` 日志，覆盖 authorize、token、userinfo 的开始、结果、错误码和关键状态。
+- 日志禁止记录明文 `code`、`access_token`、`client_secret`、`password`。
 
 ## 维护者构建约定
 
@@ -498,6 +517,30 @@ v1.4.0 API 设计文档：
 - 本地 Web/API Hazelcast 双 member 验证通过，日志显示 `Members [2]`。
 - `ghcr.io/wodenwang/bpmt-lite:1.4.0` 与 `ghcr.io/wodenwang/bpmt-lite-api:1.4.0` 已推送，匿名拉取验证通过；两个 `latest` tag 已同步到对应 digest。
 - 发布后已用 `v1.4.0` raw `scripts/run.sh`、最小库 `bpmt_min` 和发布镜像做独立临时 compose 验证；`/`、`/ueditor/`、API 文档、API smoke 和 Hazelcast 双 member 均通过。
+
+## v1.5.0 OAuth 登录状态
+
+截至 2026-05-03，v1.5.0 已确认规划方向：在 `bpmt-web/platform` 内新增外部系统 OAuth 登录能力，让 BPMT 作为 OAuth2 Authorization Code 服务端复用现有用户、登录页和权限体系。
+
+当前状态摘要：
+
+- OAuth 主流程只在 `bpmt-web/platform`，不改 `bpmt-api`。
+- `bpmt-api` 的 `/api/docs/` 和 `/api/openapi.json` 仍需作为回归验收项返回 200。
+- 外部系统主数据使用 `CM_THIRDPART`，授权码使用 `CM_THIRDPART_AUTH_CODE`，token 使用 `CM_THIRDPART_ACCESS_TOKEN`。
+- `database/v1.5.0-oauth-tables.sql` 是三张 OAuth 表的初始化 SQL 片段，已追加进完整库、最小库和旧明文最小库。
+- 默认初始化菜单包含 `sys_thirdpart`，后台入口为 `系统开发 -> 第三方系统`，位于 `用户菜单` 下方。
+- `权限组管理` 必须包含 `第三方系统权限` 页签，用于分配 `CM_THIRDPART.PRI_KEY`。
+- `code`、`access_token`、`clientSecret` 明文不入库；DB 只保存 hash，DB 是 OAuth 运行态 source of truth。
+- `/oauth/token` 和 `/oauth/userinfo` 使用 OAuth JSON，不使用 `success/data/error` 包装；`/oauth/authorize` 是浏览器跳转或错误页。
+- OAuth 主流程必须有 `INFO` 日志，且不能记录明文 `code`、`access_token`、`client_secret`、`password`。
+- 菜单第三方 URL / iframe 是辅助入口，不是 OAuth 主流程。
+- `userid + thirdpartKey` 独立权限校验 API 暂不纳入 v1.5.0，后续版本单独设计。
+- v1.5.0 不包含独立 `bpmt-thirdpart-login-demo` 仓库。
+
+v1.5.0 文档见：
+
+- `docs/v1.5.0/oauth-login-reference.md`
+- `docs/v1.5.0/oauth-login-acceptance.md`
 
 ## 原始项目参考源
 

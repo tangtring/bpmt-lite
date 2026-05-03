@@ -130,7 +130,7 @@ docker compose exec -T mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-`v1.3.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果仍是 `173`，其中 Activiti 24 张、Quartz 11 张。完整库以 `database/bpmt.sql.gz` 压缩交付，默认 `admin` 密码为 `admin`。
+`v1.5.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `176`，其中 Activiti 24 张、Quartz 11 张、OAuth 登录表 3 张。完整库 `database/bpmt.sql.gz` 的期望结果是 `380` 张表或视图，默认 `admin` 密码为 `admin`。
 
 检查 Web：
 
@@ -163,6 +163,45 @@ BPMT_API_ACT_AS=admin
 ```
 
 `BPMT_API_ACT_AS` 未配置或对应用户不可用时兜底 `admin`。`appKey` 和 `appSecret` 必须配置；默认 compose 已给出开发默认值，正式部署应覆盖。
+
+检查 OAuth 主流程：
+
+```bash
+curl -fsSI 'http://127.0.0.1/oauth/authorize?response_type=code&client_id=demo-client&redirect_uri=http%3A%2F%2F127.0.0.1%2Fdemo%2Fcallback&state=abc'
+```
+
+`v1.5.0` OAuth 主流程完全在 `bpmt-web/platform`，不改 `bpmt-api`。未登录访问 authorize 时应进入 BPMT 登录页，登录成功后回到原始 authorize 请求。`/oauth/token` 和 `/oauth/userinfo` 使用 OAuth JSON 响应，不使用 `success/data/error` 包装。
+
+检查 OAuth INFO 日志：
+
+```bash
+find runtime/platform-logs -type f | sort
+rg -n "oauth|OAuth|requestId|clientId|thirdpartKey|access_denied|invalid_grant" runtime/platform-logs runtime/tomcat-logs
+```
+
+OAuth 日志应能串联 authorize、token、userinfo 的开始和结果，并包含 `clientId`、`thirdpartKey`、`userid`、权限校验结果、错误码和失败原因。日志中禁止出现明文 `code`、`access_token`、`client_secret`、`password`；如需排障，只记录 hash 前缀、记录主键或 requestId。
+
+外部系统 `clientSecret` 重置：
+
+1. 进入 BPMT 后台外部系统管理入口。
+2. 找到目标 `CM_THIRDPART` 记录。
+3. 进入编辑页，在“重置密钥”输入框手工填写新 secret。
+4. 保存后系统只写入新的 `CLIENT_SECRET_HASH`，不会回显新 secret。
+5. 将同一新 secret 更新到第三方系统服务端配置。
+6. 使用新 secret 完成一次 authorize -> token -> userinfo 验收。
+7. 确认旧 secret 已无法换取 token。
+
+注意：新增外部系统时，系统会生成 `clientSecret` 并只展示一次；编辑页重置密钥不是系统生成展示流程，而是维护者手工输入新 secret 后保存。
+
+OAuth 状态表排障：
+
+| 表 | 重点字段 | 用途 |
+| --- | --- | --- |
+| `CM_THIRDPART` | `CLIENT_ID`、`CLIENT_SECRET_HASH`、`REDIRECT_URIS`、`PRI_KEY`、`ACTIVE_FLAG` | 外部系统启停、回调白名单、权限点和 client 凭证 |
+| `CM_THIRDPART_AUTH_CODE` | `CODE_HASH`、`CLIENT_ID`、`USER_ID`、`REDIRECT_URI`、`EXPIRES_AT`、`USED_AT` | 判断 code 是否存在、过期、已使用或绑定信息不一致 |
+| `CM_THIRDPART_ACCESS_TOKEN` | `TOKEN_HASH`、`CLIENT_ID`、`USER_ID`、`EXPIRES_AT`、`REVOKED_AT`、`LAST_USED_AT` | 判断 token 是否存在、过期、撤销或最近使用时间 |
+
+当前默认授权码有效期为 5 分钟，access token 有效期为 2 小时。后续可扩展为环境变量配置，例如授权码 TTL 和 access token TTL；在代码实现对应环境变量前，维护文档和部署脚本不要把这些 TTL 写成已可配置项。
 
 检查 H5 登录入口和本地资源：
 
@@ -211,7 +250,7 @@ API 容器对应日志分别落在 `runtime/api-platform-logs/` 和 `runtime/api
 - Java 8 + public-only 临时 Maven settings + 空本地 Maven 仓库：`mvn -s <tmp-settings> -DskipTests compile` 通过。
 - `scripts/build-image.sh` 通过，生成本地镜像 `ghcr.io/wodenwang/bpmt-lite:1.1.0`。
 - 使用 `database/bpmt-db.sql` 从零初始化 MariaDB 通过。
-- 初始化后 `kyq` 表数量为 173，Activiti 24 张，Quartz 11 张。
+- 初始化后 `kyq` 表数量为 176，Activiti 24 张，Quartz 11 张，OAuth 登录表 3 张。
 - `http://127.0.0.1:<test-port>/` 返回 200。
 - `http://127.0.0.1:<test-port>/ueditor/` 返回 200。
 - `config/overrides/page.properties` 覆盖已验证。
