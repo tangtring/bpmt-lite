@@ -87,6 +87,15 @@ public class CommonFlowActionIssue10Test {
         assertTrue(url.contains("_TASK_ID=TASK-1"));
     }
 
+    @Test
+    public void detailRedirectUrlIncludesTaskAndFallbackOrderId() {
+        String url = CommonFlowAction.buildDetailRedirectUrl("/flow/view/FooAction/detail.shtml", "{detail:true,taskId:'TASK-1'}", "TASK-1", "ORD-1");
+
+        assertTrue(url.contains("_TASK_ID=TASK-1"));
+        assertTrue(url.contains("_ORD_ID=ORD-1"));
+        assertFalse(url.contains("_ORD_ID=null"));
+    }
+
     private String readWebapp(String relativePath) throws Exception {
         return new String(Files.readAllBytes(Paths.get("src/main/webapp", relativePath)), StandardCharsets.UTF_8);
     }

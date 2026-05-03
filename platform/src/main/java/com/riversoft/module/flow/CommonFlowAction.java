@@ -99,6 +99,17 @@ public class CommonFlowAction {
 		return url.toString();
 	}
 
+	static String buildDetailRedirectUrl(String basicUrl, String params, String taskId, String ordId) {
+		StringBuilder url = new StringBuilder(basicUrl).append("?").append(Keys.PARAMS.toString()).append("=").append(params);
+		if (StringUtils.isNotEmpty(taskId)) {
+			url.append("&").append(FlowKeys._TASK_ID.getName()).append("=").append(taskId);
+		}
+		if (StringUtils.isNotEmpty(ordId)) {
+			url.append("&").append(FlowKeys._ORD_ID.getName()).append("=").append(ordId);
+		}
+		return url.toString();
+	}
+
 	@SysMethod
 	@Conf(description = "工作流通用", sort = 1, doc = "classpath:/doc/module/flow.html", target = { TargetType.MENU, TargetType.HOME, TargetType.BTN })
 	public void index(HttpServletRequest request, HttpServletResponse response) {
@@ -446,7 +457,7 @@ public class CommonFlowAction {
 			throw new SystemRuntimeException(ExceptionType.BUSINESS, "流程已被删除,无法浏览订单.");
 		}
 
-		Actions.redirectAction(request, response, basicUrl.getUrl() + "?" + Keys.PARAMS.toString() + "=" + params);
+		Actions.redirectAction(request, response, buildDetailRedirectUrl(basicUrl.getUrl(), params, fo.getTaskId(), ordId));
 	}
 
 	/**
