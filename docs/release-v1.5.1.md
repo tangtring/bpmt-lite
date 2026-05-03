@@ -13,13 +13,12 @@
 
 ## 验收摘要
 
-- 当前修复分支已完成完整库 `bpmt` issue #10 浏览器验收：见 `docs/v1.5.1/issue-10-acceptance.md`。
-- 当前修复分支已完成 `/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json` 回归。
-- 当前修复分支已完成 `/oauth/authorize` 基线回归。
-- 当前修复分支已完成 `scripts/smoke-api.sh` 回归。
-- 当前修复分支已完成 OAuth 单测回归。
-- 当前修复分支已完成 Hazelcast Web/API 双 member 回归。
-- 发布前还需要使用最终 `1.5.1` Web/API 镜像在完整库 `bpmt` 环境中复验，并将最终结果补充到 `docs/v1.5.1/issue-10-acceptance.md`。
+- 最终 `1.5.1` Web/API 镜像已完成完整库 `bpmt` issue #10 浏览器验收：见 `docs/v1.5.1/issue-10-acceptance.md`。
+- `/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json` 回归通过。
+- `/oauth/authorize` 基线回归通过。
+- `scripts/smoke-api.sh` 回归通过。
+- OAuth 单测回归通过。
+- Hazelcast Web/API 双 member 回归通过。
 
 ## 镜像列表
 

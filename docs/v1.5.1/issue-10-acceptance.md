@@ -121,6 +121,39 @@
 - 修复后直连 `/flow/CommonFlowAction/taskList.shtml` 不再抛 `Core.fn(...) is not a function`。
 - 修复后“查看”和“处理”均进入真实工作流查看/办理页面。
 
+### 6.1 最终 `1.5.1` 镜像复验
+
+2026-05-04 使用最终 `1.5.1` 镜像重新启动干净完整库运行时复验：
+
+- Compose project: `bpmt-v151-release`
+- Web image: `ghcr.io/wodenwang/bpmt-lite:1.5.1`
+- API image: `ghcr.io/wodenwang/bpmt-lite-api:1.5.1`
+- Database: 完整库 `bpmt`，由 `database/bpmt.sql.gz` 解压到临时目录 `db/init/bpmt.sql` 初始化；本次导入后 `information_schema.tables` 统计为 380 张表。
+- Browser base URL: `http://127.0.0.1:18080`
+- Login: `zhangzongcai/123`
+
+最终镜像点击“查看”结果：
+
+- `GET /flow/CommonFlowAction/taskList.shtml => 200`
+- `POST /flow/CommonFlowAction/detail.shtml => 302`
+- `GET /1iI5xylQL9X.view?_params=%7Bdetail%3Atrue%2CtaskId%3A%27b26481fc-42d3-11f1-b6d7-de29797a6eb7%27%7D&_TASK_ID=b26481fc-42d3-11f1-b6d7-de29797a6eb7&_ORD_ID=FNBW2604001&_zone=win_2&_form=null => 200`
+- 页面打开 `员工借款[FNBW2604001]:审核` 查看窗口，能看到基础信息、流程意见、流程信息和流程历史。
+- 浏览器 console 无新增 error，page error 为空。
+
+最终镜像点击“处理”结果：
+
+- `GET /flow/CommonFlowAction/taskList.shtml => 200`
+- `POST /flow/CommonFlowAction/form.shtml => 302`
+- `GET /1iI5xylQL9X.view?_params=%7Bform%3Atrue%2CpdKey%3A%27%27%7D&_TASK_ID=b26481fc-42d3-11f1-b6d7-de29797a6eb7&_ORD_ID=FNBW2604001&_zone=win_2&_form=null => 200`
+- 页面打开 `员工借款[FNBW2604001]:审核` 处理窗口，能看到基础信息、流程意见、保存、转交、退回和确认按钮。
+- 浏览器 console 无新增 error，page error 为空。
+
+最终镜像 `_ORD_ID=null` 检查：
+
+- “查看”与“处理”两条网络记录均不包含 `_ORD_ID=null`。
+- 两条 `.view` 请求均包含 `_ORD_ID=FNBW2604001`。
+- 两条 `.view` 请求均使用已编码 `_params=%7B...%7D`。
+
 ## 7. v1.5.0 基线回归
 
 2026-05-04 使用同一临时完整库环境回归：
@@ -137,6 +170,20 @@
 | OAuth 单测 | `Tests run: 28, Failures: 0, Errors: 0, Skipped: 0` |
 | 完整库表数 | `380` |
 | Hazelcast Web/API | Web 日志显示 `Members [2]`，包含 `bpmt-api` 与 `bpmt-web` |
+
+2026-05-04 使用最终 `1.5.1` 镜像完整库环境再次回归：
+
+| 项目 | 结果 |
+| --- | --- |
+| `/` | `200` |
+| `/ueditor/` | `200` |
+| `/api/docs/` | `200` |
+| `/api/openapi.json` | `200` |
+| `/oauth/authorize` | `200` |
+| `/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1` | `200` |
+| `scripts/smoke-api.sh` with `BPMT_API_BASE_URL=http://127.0.0.1:18080/api` | `API smoke passed` |
+| 完整库表数 | `380` |
+| Hazelcast Web/API | Web 与 API 日志均显示 `Members [2]`，包含 `bpmt-api` 与 `bpmt-web` |
 
 回归命令：
 
