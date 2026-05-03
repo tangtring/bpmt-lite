@@ -80,19 +80,25 @@ public class CommonFlowActionIssue10Test {
     }
 
     @Test
-    public void formRedirectUrlOmitsNullOrderId() {
-        String url = CommonFlowAction.buildFormRedirectUrl("/flow/view/FooAction/form.shtml", "{form:true,pdKey:''}", "TASK-1", null);
+    public void formRedirectUrlEncodesParamsAndOmitsNullOrderId() {
+        String url = CommonFlowAction.buildFormRedirectUrl("/flow/view/FooAction/form.shtml", "{form:true,pdKey:''}", "TASK:1", null);
 
+        assertFalse(url.contains("{"));
+        assertFalse(url.contains("}"));
+        assertTrue(url.contains("_params=%7Bform%3Atrue%2CpdKey%3A%27%27%7D"));
+        assertTrue(url.contains("_TASK_ID=TASK%3A1"));
         assertFalse(url.contains("_ORD_ID=null"));
-        assertTrue(url.contains("_TASK_ID=TASK-1"));
     }
 
     @Test
-    public void detailRedirectUrlIncludesTaskAndFallbackOrderId() {
-        String url = CommonFlowAction.buildDetailRedirectUrl("/flow/view/FooAction/detail.shtml", "{detail:true,taskId:'TASK-1'}", "TASK-1", "ORD-1");
+    public void detailRedirectUrlEncodesParamsTaskAndFallbackOrderId() {
+        String url = CommonFlowAction.buildDetailRedirectUrl("/flow/view/FooAction/detail.shtml", "{detail:true,taskId:'TASK-1'}", "TASK:1", "ORD,1");
 
-        assertTrue(url.contains("_TASK_ID=TASK-1"));
-        assertTrue(url.contains("_ORD_ID=ORD-1"));
+        assertFalse(url.contains("{"));
+        assertFalse(url.contains("}"));
+        assertTrue(url.contains("_params=%7Bdetail%3Atrue%2CtaskId%3A%27TASK-1%27%7D"));
+        assertTrue(url.contains("_TASK_ID=TASK%3A1"));
+        assertTrue(url.contains("_ORD_ID=ORD%2C1"));
         assertFalse(url.contains("_ORD_ID=null"));
     }
 

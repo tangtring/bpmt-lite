@@ -5,6 +5,8 @@
  */
 package com.riversoft.module.flow;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -91,23 +93,31 @@ public class CommonFlowAction {
 	}
 
 	static String buildFormRedirectUrl(String basicUrl, String params, String taskId, String ordId) {
-		StringBuilder url = new StringBuilder(basicUrl).append("?").append(Keys.PARAMS.toString()).append("=").append(params)
-				.append("&").append(FlowKeys._TASK_ID.getName()).append("=").append(taskId == null ? "" : taskId);
+		StringBuilder url = new StringBuilder(basicUrl).append("?").append(Keys.PARAMS.toString()).append("=").append(encodeQueryValue(params))
+				.append("&").append(FlowKeys._TASK_ID.getName()).append("=").append(encodeQueryValue(taskId));
 		if (StringUtils.isNotEmpty(ordId)) {
-			url.append("&").append(FlowKeys._ORD_ID.getName()).append("=").append(ordId);
+			url.append("&").append(FlowKeys._ORD_ID.getName()).append("=").append(encodeQueryValue(ordId));
 		}
 		return url.toString();
 	}
 
 	static String buildDetailRedirectUrl(String basicUrl, String params, String taskId, String ordId) {
-		StringBuilder url = new StringBuilder(basicUrl).append("?").append(Keys.PARAMS.toString()).append("=").append(params);
+		StringBuilder url = new StringBuilder(basicUrl).append("?").append(Keys.PARAMS.toString()).append("=").append(encodeQueryValue(params));
 		if (StringUtils.isNotEmpty(taskId)) {
-			url.append("&").append(FlowKeys._TASK_ID.getName()).append("=").append(taskId);
+			url.append("&").append(FlowKeys._TASK_ID.getName()).append("=").append(encodeQueryValue(taskId));
 		}
 		if (StringUtils.isNotEmpty(ordId)) {
-			url.append("&").append(FlowKeys._ORD_ID.getName()).append("=").append(ordId);
+			url.append("&").append(FlowKeys._ORD_ID.getName()).append("=").append(encodeQueryValue(ordId));
 		}
 		return url.toString();
+	}
+
+	private static String encodeQueryValue(String value) {
+		try {
+			return URLEncoder.encode(value == null ? "" : value, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException("UTF-8 is not supported.", e);
+		}
 	}
 
 	@SysMethod
