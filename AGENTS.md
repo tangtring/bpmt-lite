@@ -111,7 +111,8 @@ mvn -s settings.local.xml -DskipTests compile
 - 默认启动方式是 `docker compose up -d`。
 - v1.4.0 API 方案使用独立 `api` 容器，不进入 `web` 容器内部。
 - Web 和 API 各自内嵌 Hazelcast，不单独引入 Hazelcast Server 容器。
-- Web/API 通过 compose 网络和 `HAZELCAST_TCPIP_MEMBERS=web,api` 加入同一 Hazelcast 集群。
+- Docker Compose 服务名和固定容器名统一使用 `bpmt-` 前缀：`bpmt-nginx`、`bpmt-web`、`bpmt-api`、`bpmt-mariadb`。
+- Web/API 通过 compose 网络和 `HAZELCAST_TCPIP_MEMBERS=bpmt-web,bpmt-api` 加入同一 Hazelcast 集群。
 - 缓存不能关闭，`HIBERNATE_CACHE` 应保持 `true`。
 - 快速体验允许只拉起容器而不导入业务数据。
 - 若要得到完整初始化业务数据，使用 `scripts/init-db.sh` 从 `database/bpmt.sql.gz` 解压生成 `db/init/bpmt.sql`。
@@ -490,7 +491,7 @@ HTTP 状态约定：
 
 - 每个对外发布接口都必须完成单测。
 - 单测至少覆盖路由、JSON 解析、认证失败、错误响应结构、字段校验、索引规则、技术用户兜底和错误码映射。
-- 集成验收必须覆盖 `web + api + mariadb` compose 启动。
+- 集成验收必须覆盖 `bpmt-web + bpmt-api + bpmt-mariadb` compose 启动。
 - 集成验收必须先从 `web` 读取目标动态表结构，再通过 `api` 创建或调整动态表，最后在不重启 `web` 的情况下确认 Web 侧读到最新结构。
 - 集成验收必须确认 `web` 和 `api` 日志中 Hazelcast 已加入同一集群。
 - 如果 Hazelcast 双 member 验证失败，fallback 是收缩写接口发布范围，而不是关闭缓存。

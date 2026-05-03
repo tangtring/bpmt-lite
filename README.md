@@ -98,13 +98,13 @@ Web 应用连接哪个库由 `DB_NAME` 决定。
 切到最小库：
 
 ```bash
-DB_NAME=bpmt_min docker compose up -d web
+DB_NAME=bpmt_min docker compose up -d bpmt-web
 ```
 
 切回默认完整库：
 
 ```bash
-DB_NAME=bpmt docker compose up -d web
+DB_NAME=bpmt docker compose up -d bpmt-web
 ```
 
 注意：MariaDB 官方镜像只会在首次创建 `db/data` 时自动执行 `db/init/*.sql`。如果已经启动过，再新增或替换 SQL 文件不会自动重新导入。
@@ -231,7 +231,7 @@ OAuth 端点：
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
 | `BPMT_IMAGE_TAG` | `1.4.1` | Web 镜像 tag |
 | `BPMT_API_IMAGE_TAG` | `1.4.1` | API 镜像 tag |
-| `DB_HOST` | `mariadb` | Web 容器访问数据库的主机名 |
+| `DB_HOST` | `bpmt-mariadb` | Web/API 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
 | `DB_PASSWORD` | `123456` | 数据库密码 |

@@ -1,11 +1,11 @@
 services:
-  nginx:
+  bpmt-nginx:
     image: nginx:1.27-alpine
-    container_name: bpmt-lite-nginx
+    container_name: bpmt-nginx
     depends_on:
-      web:
+      bpmt-web:
         condition: service_started
-      api:
+      bpmt-api:
         condition: service_started
     restart: unless-stopped
     ports:
@@ -13,23 +13,23 @@ services:
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
-  web:
+  bpmt-web:
     image: ghcr.io/wodenwang/bpmt-lite:${BPMT_IMAGE_TAG:-1.4.1}
-    container_name: bpmt-lite-web
+    container_name: bpmt-web
     depends_on:
-      mariadb:
+      bpmt-mariadb:
         condition: service_healthy
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      DB_HOST: ${DB_HOST:-mariadb}
+      DB_HOST: ${DB_HOST:-bpmt-mariadb}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME:-bpmt}
       DB_USER: ${DB_USER:-root}
       DB_PASSWORD: ${DB_PASSWORD:-123456}
       HIBERNATE_CACHE: "true"
       HAZELCAST_TCPIP: "true"
-      HAZELCAST_TCPIP_MEMBERS: web,api
+      HAZELCAST_TCPIP_MEMBERS: bpmt-web,bpmt-api
       HAZELCAST_GROUP_NAME: ${HAZELCAST_GROUP_NAME:-bpmt}
       HAZELCAST_GROUP_PASSWORD: ${BPMT_HAZELCAST_PASSWORD:-bpmt}
     volumes:
@@ -40,16 +40,16 @@ services:
       - ./runtime/platform-logs:/usr/local/tomcat/webapps/logs
       - ./runtime/tomcat-logs:/usr/local/tomcat/logs
 
-  api:
+  bpmt-api:
     image: ghcr.io/wodenwang/bpmt-lite-api:${BPMT_API_IMAGE_TAG:-1.4.1}
-    container_name: bpmt-lite-api
+    container_name: bpmt-api
     depends_on:
-      mariadb:
+      bpmt-mariadb:
         condition: service_healthy
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      DB_HOST: ${DB_HOST:-mariadb}
+      DB_HOST: ${DB_HOST:-bpmt-mariadb}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME:-bpmt}
       DB_USER: ${DB_USER:-root}
@@ -60,7 +60,7 @@ services:
       BPMT_API_DBOPS_EXECUTE_ENABLED: ${BPMT_API_DBOPS_EXECUTE_ENABLED:-true}
       HIBERNATE_CACHE: "true"
       HAZELCAST_TCPIP: "true"
-      HAZELCAST_TCPIP_MEMBERS: web,api
+      HAZELCAST_TCPIP_MEMBERS: bpmt-web,bpmt-api
       HAZELCAST_GROUP_NAME: ${HAZELCAST_GROUP_NAME:-bpmt}
       HAZELCAST_GROUP_PASSWORD: ${BPMT_HAZELCAST_PASSWORD:-bpmt}
     volumes:
@@ -68,9 +68,9 @@ services:
       - ./runtime/api-platform-logs:/usr/local/tomcat/webapps/logs
       - ./runtime/api-tomcat-logs:/usr/local/tomcat/logs
 
-  mariadb:
+  bpmt-mariadb:
     image: mariadb:10.11
-    container_name: bpmt-lite-mariadb
+    container_name: bpmt-mariadb
     restart: unless-stopped
     ports:
       - "${BPMT_DB_PORT:-3306}:3306"

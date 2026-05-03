@@ -39,7 +39,7 @@
 `bpmt.sql.gz` 使用当前本地 MariaDB 中的 `bpmt` 数据库导出：
 
 ```bash
-docker compose exec -T mariadb mariadb-dump -uroot -p123456 \
+docker compose exec -T bpmt-mariadb mariadb-dump -uroot -p123456 \
   --default-character-set=utf8 \
   --single-transaction \
   --routines --triggers --events \
