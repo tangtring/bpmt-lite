@@ -19,9 +19,10 @@
 - `v1.1.0` 是已发布的第二个 Docker 化版本。
 - `v1.3.0` 是 H5 修复发布版本。
 - `v1.4.0` 是新增独立 `api` 子项目和独立 API Docker 容器的发布版本。
-- `v1.4.1` 是当前发布版本，新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.4.1`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.4.1`
+- `v1.4.1` 是新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口的发布版本。
+- `v1.5.0` 是当前发布版本，新增外部系统 OAuth 登录能力。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - 默认 API 文档：`http://127.0.0.1/api/docs/`
@@ -521,7 +522,7 @@ v1.4.0 API 设计文档：
 
 ## v1.5.0 OAuth 登录状态
 
-截至 2026-05-03，v1.5.0 已确认规划方向：在 `bpmt-web/platform` 内新增外部系统 OAuth 登录能力，让 BPMT 作为 OAuth2 Authorization Code 服务端复用现有用户、登录页和权限体系。
+截至 2026-05-03，v1.5.0 已完成发布收口：在 `bpmt-web/platform` 内新增外部系统 OAuth 登录能力，让 BPMT 作为 OAuth2 Authorization Code 服务端复用现有用户、登录页和权限体系。
 
 当前状态摘要：
 
@@ -537,11 +538,17 @@ v1.4.0 API 设计文档：
 - 菜单第三方 URL / iframe 是辅助入口，不是 OAuth 主流程。
 - `userid + thirdpartKey` 独立权限校验 API 暂不纳入 v1.5.0，后续版本单独设计。
 - v1.5.0 不包含独立 `bpmt-thirdpart-login-demo` 仓库。
+- Maven 项目版本已切到 `1.5.0`。
+- 默认 Web/API 镜像 tag 已切到 `1.5.0`。
+- `scripts/install.sh` 和 `scripts/run.sh` 默认 tag 已切到 `v1.5.0`。
+- 本地已验证 `docker compose config`、Java 8 全仓编译、API 单测、OAuth/第三方系统目标测试、Web/API 镜像构建和临时 compose smoke。
+- `ghcr.io/wodenwang/bpmt-lite:1.5.0` 与 `ghcr.io/wodenwang/bpmt-lite-api:1.5.0` 已推送；两个 `latest` tag 已同步到对应 digest。
 
 v1.5.0 文档见：
 
 - `docs/v1.5.0/oauth-login-reference.md`
 - `docs/v1.5.0/oauth-login-acceptance.md`
+- `docs/release-v1.5.0.md`
 
 ## 原始项目参考源
 
