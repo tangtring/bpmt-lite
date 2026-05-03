@@ -6,14 +6,16 @@
 
 ## 当前版本
 
-`v1.5.0` 为当前版本，新增外部系统 OAuth 登录能力。BPMT 可以作为 OAuth2 Authorization Code 服务端，向第三方 Web 系统提供统一登录入口。
+`v1.5.1` 为当前补丁版本，基于 `v1.5.0`，修复完整库工作流待办列表点击“查看/处理”时 `_ORD_ID=null` 的问题。`v1.5.0` 已发布的外部系统 OAuth 登录能力继续保留。
+
+`v1.5.0` 新增外部系统 OAuth 登录能力。BPMT 可以作为 OAuth2 Authorization Code 服务端，向第三方 Web 系统提供统一登录入口。
 
 `v1.4.1` 是上一版 API 增强版本，新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口。
 
 `v1.3.0` 是 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.0`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.1`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.1`
 - 默认访问地址：`http://127.0.0.1/`
 - API 文档地址：`http://127.0.0.1/api/docs/`
 - OpenAPI 地址：`http://127.0.0.1/api/openapi.json`
@@ -30,10 +32,10 @@
 如果只是快速体验，推荐先使用最小库启动：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.0/scripts/install.sh | bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.1/scripts/install.sh | bash
 ```
 
-说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.5.0`）。如需切换版本，可显式设置 `BPMT_REF`。
+说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.5.1`）。如需切换版本，可显式设置 `BPMT_REF`。
 
 访问：
 
@@ -61,17 +63,17 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 如果要使用完整业务库，执行：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.0/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.1/scripts/install.sh | bash -s -- full
 ```
 
 ## 完整库启动
 
-`v1.5.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
+`v1.5.1` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库启动命令：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.0/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.1/scripts/install.sh | bash -s -- full
 ```
 
 如果你本机已有可导入的完整 SQL，也可以直接放到：
@@ -138,7 +140,7 @@ docker compose up -d
 ```bash
 docker compose down
 rm -rf docker/nginx/nginx.conf
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.0/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.1/scripts/install.sh | bash -s -- full
 ```
 
 检查入口：
@@ -160,7 +162,7 @@ scripts/smoke-api.sh
 
 ## API 使用
 
-`v1.5.0` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。
+`v1.5.1` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。
 
 API 文档有两种形态：
 
@@ -231,8 +233,8 @@ OAuth 端点：
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `80` | Nginx 对外访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.5.0` | Web 镜像 tag |
-| `BPMT_API_IMAGE_TAG` | `1.5.0` | API 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.5.1` | Web 镜像 tag |
+| `BPMT_API_IMAGE_TAG` | `1.5.1` | API 镜像 tag |
 | `DB_HOST` | `bpmt-mariadb` | Web/API 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
@@ -295,6 +297,7 @@ scripts/build-api-image.sh
 - v1.5.0 发布记录：[docs/release-v1.5.0.md](docs/release-v1.5.0.md)
 - v1.5.0 OAuth 登录参考：[docs/v1.5.0/oauth-login-reference.md](docs/v1.5.0/oauth-login-reference.md)
 - v1.5.0 OAuth 验收清单：[docs/v1.5.0/oauth-login-acceptance.md](docs/v1.5.0/oauth-login-acceptance.md)
+- v1.5.1 发布记录：[docs/release-v1.5.1.md](docs/release-v1.5.1.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者

@@ -20,9 +20,10 @@
 - `v1.3.0` 是 H5 修复发布版本。
 - `v1.4.0` 是新增独立 `api` 子项目和独立 API Docker 容器的发布版本。
 - `v1.4.1` 是新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口的发布版本。
-- `v1.5.0` 是当前发布版本，新增外部系统 OAuth 登录能力。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.0`
+- `v1.5.0` 是新增外部系统 OAuth 登录能力的发布版本。
+- `v1.5.1` 是当前补丁版本，基于 `v1.5.0` 修复 issue #10 工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.1`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.1`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - 默认 API 文档：`http://127.0.0.1/api/docs/`
@@ -549,6 +550,24 @@ v1.5.0 文档见：
 - `docs/v1.5.0/oauth-login-reference.md`
 - `docs/v1.5.0/oauth-login-acceptance.md`
 - `docs/release-v1.5.0.md`
+
+## v1.5.1 issue #10 补丁状态
+
+截至 2026-05-04，v1.5.1 是当前补丁版本，目标是修复完整库 `bpmt` 下 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”跳转问题，确认不再生成 `_ORD_ID=null`。
+
+当前状态摘要：
+
+- Maven 项目版本已切到 `1.5.1`。
+- 默认 Web/API 镜像 tag 已切到 `1.5.1`。
+- `scripts/install.sh`、`scripts/run.sh` 和 `scripts/init-db.sh` 默认 release/raw tag 已切到 `v1.5.1`。
+- `api/src/main/webapp/openapi.json` 仅更新 `info` 标题和版本到 `v1.5.1`；不新增 OAuth 端点，不改 API 路径。
+- v1.5.0 OAuth 能力继续保留，`bpmt-api` 仍作为回归验收入口。
+- v1.5.1 验收必须使用完整库 `bpmt` 浏览器实点 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”，确认网络请求中无 `_ORD_ID=null`。
+
+v1.5.1 文档见：
+
+- `docs/v1.5.1/issue-10-acceptance.md`
+- `docs/release-v1.5.1.md`
 
 ## 原始项目参考源
 
