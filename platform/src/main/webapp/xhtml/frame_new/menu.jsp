@@ -11,6 +11,36 @@
 		var $main = $('[main-zone]');//主刷新区域
 
 		//触发事件
+		var resizeThirdpartFrame = function($host) {
+			var offset = $host.offset();
+			var top = offset ? offset.top : ($main.offset() ? $main.offset().top : 0);
+			var height = $(window).height() - top - 20;
+			if (height < 600) {
+				height = 600;
+			}
+			$host.css('height', height + 'px');
+			$('iframe', $host).css('height', height + 'px');
+		};
+		var openThirdpartFrame = function(src) {
+			$main.empty();
+			var $host = $('<div class="bpmt-thirdpart-host"></div>').css({
+				width : '100%',
+				overflow : 'hidden'
+			});
+			var iframe = document.createElement("iframe");
+			iframe.setAttribute("src", src);
+			iframe.setAttribute("frameborder", "0");
+			iframe.setAttribute("width", "100%");
+			iframe.setAttribute("class", "bpmt-thirdpart-frame");
+			iframe.setAttribute("style", "display:block;width:100%;border:0;background:#fff;");
+			$host.append(iframe);
+			$main.append($host);
+			resizeThirdpartFrame($host);
+			$(window).off('resize.bpmtThirdpartFrame').on('resize.bpmtThirdpartFrame', function() {
+				resizeThirdpartFrame($host);
+			});
+		};
+
 		var clickFunc = function(treeNode, params) {
 			if (params == undefined || params == null) {
 				params = "";
@@ -30,9 +60,13 @@
 				case 0://无操作
 					return;
 				case 1://ajax刷新
+					$(window).off('resize.bpmtThirdpartFrame');
 					Ajax.post($main, _cp + action + params, {
 						data : data
 					});
+					break;
+				case 2://第三方网页
+					openThirdpartFrame(action);
 					break;
 				default:
 					break;

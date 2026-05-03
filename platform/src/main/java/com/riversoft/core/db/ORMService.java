@@ -31,7 +31,7 @@ import com.riversoft.core.exception.SystemRuntimeException;
 /**
  * 通用数据库服务.<br>
  * 封装通用hibernate操作。
- * 
+ *
  */
 public class ORMService {
 
@@ -102,6 +102,19 @@ public class ORMService {
 	 */
 	@SuppressWarnings("rawtypes")
 	public void executeHQL(String hql, Object... values) {
+		executeHQLUpdate(hql, values);
+	}
+
+	/**
+	 * 执行自定义HQL更新并返回影响行数.
+	 *
+	 * @param hql
+	 * @param values
+	 * @return 影响行数
+	 * @throws SystemRuntimeException
+	 */
+	@SuppressWarnings("rawtypes")
+	public int executeHQLUpdate(String hql, Object... values) {
 		Session session = this.sessionFactory.getCurrentSession();
 		try {
 			Query query = session.createQuery(hql);
@@ -121,8 +134,9 @@ public class ORMService {
 					}
 				}
 			}
-			query.executeUpdate();
+			int rows = query.executeUpdate();
 			session.flush();
+			return rows;
 		} catch (Throwable e) {
 			throw new SystemRuntimeException(ExceptionType.DB, "执行[" + hql + "]出错.", e);
 		}
