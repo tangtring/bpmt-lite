@@ -57,22 +57,104 @@
 
 ## 5. 修复点
 
-待后续修复任务补充。本任务不编辑业务代码。
+本次修复范围限定在工作流待办查看/处理链路：
+
+- `xhtml/flow/CommonFlowAction/task_list.jsp`
+  - 直连 `/flow/CommonFlowAction/taskList.shtml` 时，如果父级页面没有注册 `invokeDetail` / `invokeTask`，按钮会 fallback 到本 action 的 `detail.shtml` / `form.shtml`。
+  - 如果由 `taskMain.shtml` 等父级页面加载，仍优先调用父级 handler，保留原 tab / quickMode / callback 行为。
+- `CommonFlowAction.detail()` / `CommonFlowAction.form()`
+  - task 入参路径增加 `task == null`、`processInstance == null` 防御。
+  - `ordId` 优先使用 `ProcessInstance.businessKey`。
+  - `businessKey` 为空时，从流程变量 `_ORDER_HISTORY_TABLE_NAME` 指向的历史表按 `TASK_ID` 兜底查 `ORD_ID`。
+  - 仍找不到订单号时抛业务异常，不再重定向到 `_ORD_ID=null`。
+  - `.view` 重定向中的 `_params`、`_TASK_ID`、`_ORD_ID` query value 统一 URL encode，避免 Tomcat 7 因 raw `{}` 返回 400。
+- `BaseFlowBasicAction.form()` / `BaseFlowBasicAction.detail()`
+  - 目标视图收到 `_TASK_ID` 后，只在 `businessKey` 非空时覆盖已有 `FlowObject.ordId`，避免把上游兜底出的 `_ORD_ID` 覆盖为空。
+- 测试：
+  - `CommonFlowActionIssue10Test`
+  - `BaseFlowBasicActionIssue10Test`
+
+相关提交：
+
+- `0c899cb fix(flow): repair task list navigation`
+- `89c0b96 fix(flow): preserve task order fallback`
+- `76c235b fix(flow): pass fallback order to detail`
+- `3aa4184 fix(flow): encode view redirect params`
 
 ## 6. 修复后验收记录
 
-- 点击“查看”结果: 待修复后补充。
-- 点击“处理”结果: 待修复后补充。
-- `_ORD_ID=null` 检查: 待修复后补充。
-- 页面状态: 待修复后补充。
+2026-05-04 使用当前分支重新构建 Web 镜像 `ghcr.io/wodenwang/bpmt-lite:1.5.0`，并在临时完整库 compose 环境中只重建 `bpmt-v151-issue10-web` 后复测。
+
+复测前置：
+
+- `DB_PASSWORD=root docker compose -p bpmt-v151-issue10 -f /tmp/bpmt-v151-issue10-5vJiZM/docker-compose.yml up -d --no-deps --force-recreate bpmt-web`
+- `/` 返回 `200`
+- `admin/admin` 访问 `/development/SystemAction/pausePlatform.shtml?pause=0`，将临时运行态切出维护模式。
+- `zhangzongcai/123` 登录后，`/flow/CommonFlowAction/taskList.shtml` 显示 1 条真实待办：
+  - `TASK_ID=b26481fc-42d3-11f1-b6d7-de29797a6eb7`
+  - `ORD_ID=FNBW2604001`
+
+点击“查看”结果：
+
+- `GET /flow/CommonFlowAction/taskList.shtml => 200`
+- `POST /flow/CommonFlowAction/detail.shtml => 302`
+- `GET /1iI5xylQL9X.view?_params=%7Bdetail%3Atrue%2CtaskId%3A%27b26481fc-42d3-11f1-b6d7-de29797a6eb7%27%7D&_TASK_ID=b26481fc-42d3-11f1-b6d7-de29797a6eb7&_ORD_ID=FNBW2604001&_zone=win_2&_form=null => 200`
+- 页面打开 `员工借款[FNBW2604001]:审核` 查看窗口，能看到基础信息、流程意见、流程信息和流程历史。
+- 浏览器 console 无新增 error。
+
+点击“处理”结果：
+
+- `GET /flow/CommonFlowAction/taskList.shtml => 200`
+- `POST /flow/CommonFlowAction/form.shtml => 302`
+- `GET /1iI5xylQL9X.view?_params=%7Bform%3Atrue%2CpdKey%3A%27%27%7D&_TASK_ID=b26481fc-42d3-11f1-b6d7-de29797a6eb7&_ORD_ID=FNBW2604001&_zone=win_2&_form=null => 200`
+- 页面打开 `员工借款[FNBW2604001]:审核` 处理窗口，能看到基础信息、流程意见、保存、转交、退回和确认按钮。
+- 浏览器 console 无新增 error。
+
+`_ORD_ID=null` 检查：
+
+- “查看”与“处理”两条网络记录均不包含 `_ORD_ID=null`。
+- 两条 `.view` 请求均包含 `_ORD_ID=FNBW2604001`。
+- 两条 `.view` 请求均使用已编码 `_params=%7B...%7D`，不再触发 Tomcat 7 `Invalid character found in the request target`。
+
+页面状态：
+
+- 修复后直连 `/flow/CommonFlowAction/taskList.shtml` 不再抛 `Core.fn(...) is not a function`。
+- 修复后“查看”和“处理”均进入真实工作流查看/办理页面。
 
 ## 7. v1.5.0 基线回归
 
-- `/`: `HTTP/1.1 200 OK`
-- `/ueditor/`: `HTTP/1.1 200 OK`
-- `/api/docs/`: `HTTP/1.1 200 OK`
-- `/api/openapi.json`: `HTTP/1.1 200 OK`
-- `/oauth/authorize`: `HTTP/1.1 200 OK`，未登录时返回 BPMT 登录页。
+2026-05-04 使用同一临时完整库环境回归：
+
+| 项目 | 结果 |
+| --- | --- |
+| `/` | `200` |
+| `/ueditor/` | `200` |
+| `/api/docs/` | `200` |
+| `/api/openapi.json` | `200` |
+| `/oauth/authorize` | `200` |
+| `/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1` | `200`，返回 OAuth 错误页，说明 OAuth filter/action 仍正常接管请求 |
+| `scripts/smoke-api.sh` with `BPMT_API_BASE_URL=http://127.0.0.1:18080/api` | `API smoke passed` |
+| OAuth 单测 | `Tests run: 28, Failures: 0, Errors: 0, Skipped: 0` |
+| 完整库表数 | `380` |
+| Hazelcast Web/API | Web 日志显示 `Members [2]`，包含 `bpmt-api` 与 `bpmt-web` |
+
+回归命令：
+
+```bash
+for path in / /ueditor/ /api/docs/ /api/openapi.json /oauth/authorize; do
+  /usr/bin/curl -s -o /tmp/body -w '%{http_code}\n' "http://127.0.0.1:18080$path"
+done
+
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin \
+BPMT_API_BASE_URL=http://127.0.0.1:18080/api \
+scripts/smoke-api.sh
+
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
+mvn -s settings.local.xml -pl platform \
+  -Dtest=OAuthActionTest,OAuthServiceTest,OAuthSecurityTest,OAuthHbmMappingTest,OAuthLoginReturnTest,OAuthDatabaseInitSqlTest \
+  test
+```
 
 ## 8. SQL 证据
 
