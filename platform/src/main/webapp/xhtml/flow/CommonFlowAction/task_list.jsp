@@ -7,25 +7,61 @@
 <script type="text/javascript">
 	$(function() {
 		var $zone = $('#${_zone}');
+		var refresh = function() {
+			var $form = $('#${_form}');
+			if ($form.size() > 0) {
+				$form.submit();
+			}
+		};
 
-		$('button[name=detail]', $zone).click(function() {
-			var id = $(this).val();
-			Ajax.win('${_acp}/detail.shtml', {
+		var callHandler = function(handler, id) {
+			if (handler.length > 1) {
+				handler($zone, id);
+			} else {
+				handler(id);
+			}
+		};
+
+		var fallbackDetail = function(id) {
+			var $win = Ajax.win('${_acp}/detail.shtml', {
+				title : '${wpf:lan("#:zh[查看订单]:en[View Order]#")}',
 				minWidth : 1024,
 				data : {
 					_TASK_ID : id
 				}
 			});
+			Core.fn($win, 'callback', refresh);
+		};
+
+		var fallbackTask = function(id) {
+			var $win = Ajax.win('${_acp}/form.shtml', {
+				title : '${wpf:lan("#:zh[处理订单]:en[Handle Order]#")}',
+				minWidth : 1024,
+				data : {
+					_TASK_ID : id
+				}
+			});
+			Core.fn($win, 'callback', refresh);
+		};
+
+		$('button[name=detail]', $zone).click(function() {
+			var id = $(this).val();
+			var invokeDetail = Core.fn($zone, 'invokeDetail');
+			if ($.isFunction(invokeDetail)) {
+				callHandler(invokeDetail, id);
+			} else {
+				fallbackDetail(id);
+			}
 		});
 
 		$('button[name=task]', $zone).click(function() {
 			var id = $(this).val();
-			Ajax.win('${_acp}/form.shtml', {
-				minWidth : 1024,
-				data : {
-					_TASK_ID : id
-				}
-			});
+			var invokeTask = Core.fn($zone, 'invokeTask');
+			if ($.isFunction(invokeTask)) {
+				callHandler(invokeTask, id);
+			} else {
+				fallbackTask(id);
+			}
 		});
 	});
 </script>

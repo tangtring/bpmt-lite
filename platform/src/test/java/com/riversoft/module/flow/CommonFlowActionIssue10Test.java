@@ -18,14 +18,21 @@ import com.riversoft.flow.key.VariableKeys;
 public class CommonFlowActionIssue10Test {
 
     @Test
-    public void taskListButtonsNavigateDirectlyWithTaskId() throws Exception {
+    public void taskListButtonsUseParentHandlerWithDirectFallback() throws Exception {
         String jsp = readWebapp("xhtml/flow/CommonFlowAction/task_list.jsp");
 
         assertFalse(jsp.contains("Core.fn($zone, 'invokeDetail')(id)"));
         assertFalse(jsp.contains("Core.fn($zone, 'invokeTask')(id)"));
+        assertTrue(jsp.contains("var invokeDetail = Core.fn($zone, 'invokeDetail')"));
+        assertTrue(jsp.contains("var invokeTask = Core.fn($zone, 'invokeTask')"));
+        assertTrue(jsp.contains("$.isFunction(invokeDetail)"));
+        assertTrue(jsp.contains("$.isFunction(invokeTask)"));
+        assertTrue(jsp.contains("var callHandler = function(handler, id)"));
+        assertTrue(jsp.contains("handler.length > 1"));
         assertTrue(jsp.contains("detail.shtml"));
         assertTrue(jsp.contains("form.shtml"));
         assertTrue(jsp.contains("_TASK_ID : id"));
+        assertTrue(jsp.contains("Core.fn($win, 'callback', refresh)"));
     }
 
     @Test

@@ -85,6 +85,12 @@ public class BaseFlowBasicAction {
 	 */
 	private final String viewKey;
 
+	static void applyBusinessKeyIfPresent(FlowObject fo, String businessKey) {
+		if (StringUtils.isNotEmpty(businessKey)) {
+			fo.setOrdId(businessKey);
+		}
+	}
+
 	protected BaseFlowBasicAction(String viewKey) {
 		this.viewKey = viewKey;
 	}
@@ -860,7 +866,7 @@ public class BaseFlowBasicAction {
 			task = FlowFactory.getTaskService().createTaskQuery().taskId(fo.getTaskId()).singleResult();
 			ProcessInstance pi = FlowFactory.getRuntimeService().createProcessInstanceQuery()
 					.processInstanceId(task.getProcessInstanceId()).singleResult();
-			fo.setOrdId(pi.getBusinessKey());
+			applyBusinessKeyIfPresent(fo, pi.getBusinessKey());
 		}
 
 		String tableName = (String) config.getTable().get("tableName");
@@ -1290,7 +1296,7 @@ public class BaseFlowBasicAction {
 			if (task != null) {
 				ProcessInstance pi = FlowFactory.getRuntimeService().createProcessInstanceQuery()
 						.processInstanceId(task.getProcessInstanceId()).singleResult();
-				fo.setOrdId(pi.getBusinessKey());
+				applyBusinessKeyIfPresent(fo, pi.getBusinessKey());
 				if (StringUtils.isEmpty(fo.getActivityId())) {
 					Execution execution = FlowFactory.getRuntimeService().createExecutionQuery()
 							.executionId(task.getExecutionId()).singleResult();
