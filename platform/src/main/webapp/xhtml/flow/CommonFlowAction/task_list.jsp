@@ -10,12 +10,22 @@
 
 		$('button[name=detail]', $zone).click(function() {
 			var id = $(this).val();
-			Core.fn($zone, 'invokeDetail')(id);
+			Ajax.win('${_acp}/detail.shtml', {
+				minWidth : 1024,
+				data : {
+					_TASK_ID : id
+				}
+			});
 		});
 
 		$('button[name=task]', $zone).click(function() {
 			var id = $(this).val();
-			Core.fn($zone, 'invokeTask')(id);
+			Ajax.win('${_acp}/form.shtml', {
+				minWidth : 1024,
+				data : {
+					_TASK_ID : id
+				}
+			});
 		});
 	});
 </script>

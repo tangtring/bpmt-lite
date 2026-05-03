@@ -36,6 +36,7 @@ import com.riversoft.flow.FlowService;
 import com.riversoft.flow.key.FlowKeys;
 import com.riversoft.flow.key.NodeType;
 import com.riversoft.flow.key.OrderHistoryModelKeys;
+import com.riversoft.flow.key.VariableKeys;
 import com.riversoft.platform.SessionManager;
 import com.riversoft.platform.db.ORMAdapterService;
 import com.riversoft.platform.po.VwUrl;
@@ -53,6 +54,50 @@ import com.riversoft.platform.web.view.annotation.Sys.SysMethod;
  */
 @Sys
 public class CommonFlowAction {
+
+	interface TaskOrdIdHistoryLookup {
+		String findOrdId(String historyTableName, String taskId);
+	}
+
+	static String resolveTaskOrdId(String taskId, String businessKey, Map<String, Object> processVariables, TaskOrdIdHistoryLookup lookup) {
+		if (StringUtils.isNotEmpty(businessKey)) {
+			return businessKey;
+		}
+		String historyTableName = null;
+		if (processVariables != null) {
+			Object value = processVariables.get(VariableKeys._ORDER_HISTORY_TABLE_NAME.name());
+			if (value != null) {
+				historyTableName = value.toString();
+			}
+		}
+		if (StringUtils.isNotEmpty(historyTableName) && lookup != null) {
+			String ordId = lookup.findOrdId(historyTableName, taskId);
+			if (StringUtils.isNotEmpty(ordId)) {
+				return ordId;
+			}
+		}
+		throw new SystemRuntimeException(ExceptionType.BUSINESS, "任务[" + taskId + "]缺少订单号,无法打开流程订单.");
+	}
+
+	static String findTaskOrdIdFromHistory(String historyTableName, String taskId) {
+		List<Map<String, Object>> list = ORMAdapterService.getInstance().query(historyTableName,
+				new DataCondition().setStringEqual(OrderHistoryModelKeys.TASK_ID.getColumn().getName(), taskId)
+						.setOrderByDesc(OrderHistoryModelKeys.TASK_BEGIN_DATE.getColumn().getName()).toEntity());
+		if (list.size() < 1) {
+			return null;
+		}
+		Object ordId = list.get(0).get(OrderHistoryModelKeys.ORD_ID.getColumn().getName());
+		return ordId == null ? null : ordId.toString();
+	}
+
+	static String buildFormRedirectUrl(String basicUrl, String params, String taskId, String ordId) {
+		StringBuilder url = new StringBuilder(basicUrl).append("?").append(Keys.PARAMS.toString()).append("=").append(params)
+				.append("&").append(FlowKeys._TASK_ID.getName()).append("=").append(taskId == null ? "" : taskId);
+		if (StringUtils.isNotEmpty(ordId)) {
+			url.append("&").append(FlowKeys._ORD_ID.getName()).append("=").append(ordId);
+		}
+		return url.toString();
+	}
 
 	@SysMethod
 	@Conf(description = "工作流通用", sort = 1, doc = "classpath:/doc/module/flow.html", target = { TargetType.MENU, TargetType.HOME, TargetType.BTN })
@@ -332,9 +377,20 @@ public class CommonFlowAction {
 
 		String params = null;
 		if (StringUtils.isNotEmpty(fo.getTaskId())) {// 任务入参
-			Task task = FlowFactory.getTaskService().createTaskQuery().taskId(fo.getTaskId()).singleResult();
-			ProcessInstance pi = FlowFactory.getRuntimeService().createProcessInstanceQuery().processInstanceId(task.getProcessInstanceId()).singleResult();
-			ordId = pi.getBusinessKey();
+			Task task = FlowFactory.getTaskService().createTaskQuery().taskId(fo.getTaskId()).includeProcessVariables().singleResult();
+			if (task == null) {
+				throw new SystemRuntimeException(ExceptionType.FLOW_TASK_ASSIGNEE, "任务不存在,可能已被处理.");
+			}
+			ProcessInstance pi = FlowFactory.getRuntimeService().createProcessInstanceQuery().processInstanceId(task.getProcessInstanceId()).includeProcessVariables().singleResult();
+			if (pi == null) {
+				throw new SystemRuntimeException(ExceptionType.BUSINESS, "任务[" + fo.getTaskId() + "]对应流程实例不存在,无法查看订单.");
+			}
+			ordId = resolveTaskOrdId(fo.getTaskId(), pi.getBusinessKey(), pi.getProcessVariables(), new TaskOrdIdHistoryLookup() {
+				@Override
+				public String findOrdId(String historyTableName, String taskId) {
+					return findTaskOrdIdFromHistory(historyTableName, taskId);
+				}
+			});
 			pdId = pi.getProcessDefinitionId();
 			params = "{detail:true,taskId:'" + fo.getTaskId() + "'}";
 		} else if (StringUtils.isNotEmpty(fo.getOrdId()) && StringUtils.isNotEmpty(fo.getPdId())) {// 订单号+流程ID入参
@@ -382,8 +438,11 @@ public class CommonFlowAction {
 		}
 
 		WfPd config = FlowService.getInstance().findPdConfig(pdId);
+		if (config == null) {
+			throw new SystemRuntimeException(ExceptionType.BUSINESS, "流程已被删除,无法浏览订单.");
+		}
 		VwUrl basicUrl = (VwUrl) ORMService.getInstance().findByPk(VwUrl.class.getName(), config.getBasicViewKey());
-		if (config == null || basicUrl == null) {
+		if (basicUrl == null) {
 			throw new SystemRuntimeException(ExceptionType.BUSINESS, "流程已被删除,无法浏览订单.");
 		}
 
@@ -436,15 +495,23 @@ public class CommonFlowAction {
 		String ordId;
 
 		if (StringUtils.isNotEmpty(fo.getTaskId())) {// 任务入参
-			Task task = FlowFactory.getTaskService().createTaskQuery().taskId(fo.getTaskId()).singleResult();
+			Task task = FlowFactory.getTaskService().createTaskQuery().taskId(fo.getTaskId()).includeProcessVariables().singleResult();
 			if (task == null) {
 				throw new SystemRuntimeException(ExceptionType.FLOW_TASK_ASSIGNEE, "任务不存在,可能已被处理.");
 			}
-			ProcessInstance pi = FlowFactory.getRuntimeService().createProcessInstanceQuery().processInstanceId(task.getProcessInstanceId()).singleResult();
+			ProcessInstance pi = FlowFactory.getRuntimeService().createProcessInstanceQuery().processInstanceId(task.getProcessInstanceId()).includeProcessVariables().singleResult();
+			if (pi == null) {
+				throw new SystemRuntimeException(ExceptionType.BUSINESS, "任务[" + fo.getTaskId() + "]对应流程实例不存在,无法处理订单.");
+			}
 			pdId = pi.getProcessDefinitionId();
 			taskId = task.getId();
 			pdKey = "";
-			ordId = pi.getBusinessKey();
+			ordId = resolveTaskOrdId(fo.getTaskId(), pi.getBusinessKey(), pi.getProcessVariables(), new TaskOrdIdHistoryLookup() {
+				@Override
+				public String findOrdId(String historyTableName, String taskId) {
+					return findTaskOrdIdFromHistory(historyTableName, taskId);
+				}
+			});
 		} else if (StringUtils.isNotEmpty(fo.getOrdId()) && StringUtils.isNotEmpty(fo.getPdId())) {// 订单号+流程ID入参
 			pdId = fo.getPdId();
 			ordId = fo.getOrdId();
@@ -481,13 +548,15 @@ public class CommonFlowAction {
 		}
 
 		WfPd config = FlowService.getInstance().findPdConfig(pdId);
+		if (config == null) {
+			throw new SystemRuntimeException(ExceptionType.BUSINESS, "流程已被删除,无法浏览订单.");
+		}
 		VwUrl basicUrl = (VwUrl) ORMService.getInstance().findByPk(VwUrl.class.getName(), config.getBasicViewKey());
-		if (config == null || basicUrl == null) {
+		if (basicUrl == null) {
 			throw new SystemRuntimeException(ExceptionType.BUSINESS, "流程已被删除,无法浏览订单.");
 		}
 		String params = "{form:true,pdKey:'" + pdKey + "'}";
-		Actions.redirectAction(request, response,
-				basicUrl.getUrl() + "?" + Keys.PARAMS.toString() + "=" + params + "&" + FlowKeys._TASK_ID.getName() + "=" + taskId + "&" + FlowKeys._ORD_ID.getName() + "=" + ordId);
+		Actions.redirectAction(request, response, buildFormRedirectUrl(basicUrl.getUrl(), params, taskId, ordId));
 	}
 
 }
