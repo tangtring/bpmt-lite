@@ -1,9 +1,12 @@
 package com.riversoft.module.oauth;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -47,7 +50,22 @@ public class OAuthActionTest {
     }
 
     @Test
-    public void authorizeWithoutThirdpartPermissionRedirectsAccessDeniedDescription() {
+    public void authorizeWithExistingBpmtLoginDoesNotJumpToLogin() {
+        TestOAuthAction action = new TestOAuthAction();
+        action.loggedIn = true;
+        action.currentUserId = "admin";
+        action.canAccess = true;
+        MockHttpServletRequest request = authorizeRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.authorize(request, response);
+
+        assertNull(action.loginTarget);
+        assertEquals("http://client.example/callback?code=code-a&state=s-1", response.getRedirectedUrl());
+    }
+
+    @Test
+    public void authorizeWithoutThirdpartPermissionShowsBpmtPromptAndStoresContext() {
         TestOAuthAction action = new TestOAuthAction();
         action.loggedIn = true;
         action.currentUserId = "oauth_no_pri";
@@ -57,9 +75,80 @@ public class OAuthActionTest {
 
         action.authorize(request, response);
 
+        assertEquals("/xhtml/oauth/access_denied.jsp", action.forwardedPage);
+        assertNull(response.getRedirectedUrl());
+        assertTrue(request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT) instanceof Map);
+        Map<?, ?> context = (Map<?, ?>) request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT);
+        assertEquals("request-a", context.get("requestId"));
+        assertEquals("client-a", context.get("clientId"));
+        assertEquals("app-a", context.get("thirdpartKey"));
+        assertEquals("演示系统", context.get("thirdpartName"));
+        assertEquals("oauth_no_pri", context.get("userId"));
+        assertEquals("http://client.example/callback", context.get("redirectUri"));
+        assertEquals("s-1", context.get("state"));
+        assertEquals(
+                "http://localhost/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1",
+                context.get("returnUrl"));
+    }
+
+    @Test
+    public void cancelAccessDeniedRedirectsTrustedUriAndKeepsLogin() {
+        TestOAuthAction action = new TestOAuthAction();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST",
+                "/oauth/OAuthAction/cancelAccessDenied.shtml");
+        request.getSession().setAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT, accessDeniedContext());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.cancelAccessDenied(request, response);
+
         assertEquals(
                 "http://client.example/callback?error=access_denied&error_description=%E6%97%A0%E6%9D%83%E9%99%90%E8%AE%BF%E9%97%AE%5B%E6%BC%94%E7%A4%BA%E7%B3%BB%E7%BB%9F%5D%E7%AC%AC%E4%B8%89%E6%96%B9%E7%B3%BB%E7%BB%9F%E3%80%82&state=s-1",
                 response.getRedirectedUrl());
+        assertFalse(action.logoutCalled);
+        assertNull(request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT));
+    }
+
+    @Test
+    public void switchAccountLogsOutAndStoresOAuthReturnUrl() {
+        TestOAuthAction action = new TestOAuthAction();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/oauth/OAuthAction/switchAccount.shtml");
+        request.getSession().setAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT, accessDeniedContext());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.switchAccount(request, response);
+
+        assertTrue(action.logoutCalled);
+        assertEquals("/login.jsp", action.loginTarget);
+        assertEquals(
+                "http://localhost/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1",
+                request.getSession().getAttribute(OAuthSessionKeys.RETURN_URL));
+        assertNull(request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT));
+    }
+
+    @Test
+    public void cancelAccessDeniedWithoutContextShowsBrowserError() {
+        TestOAuthAction action = new TestOAuthAction();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST",
+                "/oauth/OAuthAction/cancelAccessDenied.shtml");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.cancelAccessDenied(request, response);
+
+        assertEquals("/xhtml/oauth/error.jsp", action.forwardedPage);
+        assertNull(response.getRedirectedUrl());
+    }
+
+    @Test
+    public void switchAccountWithoutContextShowsBrowserError() {
+        TestOAuthAction action = new TestOAuthAction();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/oauth/OAuthAction/switchAccount.shtml");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.switchAccount(request, response);
+
+        assertEquals("/xhtml/oauth/error.jsp", action.forwardedPage);
+        assertFalse(action.logoutCalled);
+        assertNull(action.loginTarget);
     }
 
     @Test
@@ -174,6 +263,20 @@ public class OAuthActionTest {
         return request;
     }
 
+    private Map<String, Object> accessDeniedContext() {
+        Map<String, Object> context = new LinkedHashMap<String, Object>();
+        context.put("requestId", "request-a");
+        context.put("clientId", "client-a");
+        context.put("thirdpartKey", "app-a");
+        context.put("thirdpartName", "演示系统");
+        context.put("userId", "oauth_no_pri");
+        context.put("redirectUri", "http://client.example/callback");
+        context.put("state", "s-1");
+        context.put("returnUrl",
+                "http://localhost/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1");
+        return context;
+    }
+
     private static class TestOAuthAction extends OAuthAction {
         private final TestOAuthService service = new TestOAuthService();
         private boolean loggedIn;
@@ -181,6 +284,8 @@ public class OAuthActionTest {
         private String currentUserId;
         private String code = "code-a";
         private String loginTarget;
+        private String forwardedPage;
+        private boolean logoutCalled;
         private boolean userExists = true;
         private final Map<String, Object> tokenResult = new HashMap<String, Object>();
 
@@ -204,6 +309,23 @@ public class OAuthActionTest {
         protected void jumpToLogin(javax.servlet.http.HttpServletRequest request,
                 javax.servlet.http.HttpServletResponse response) {
             loginTarget = "/login.jsp";
+        }
+
+        @Override
+        protected void forwardErrorPage(javax.servlet.http.HttpServletRequest request,
+                javax.servlet.http.HttpServletResponse response) {
+            forwardedPage = "/xhtml/oauth/error.jsp";
+        }
+
+        @Override
+        protected void forwardAccessDeniedPage(javax.servlet.http.HttpServletRequest request,
+                javax.servlet.http.HttpServletResponse response) {
+            forwardedPage = "/xhtml/oauth/access_denied.jsp";
+        }
+
+        @Override
+        protected void logoutCurrentUser(javax.servlet.http.HttpServletRequest request) {
+            logoutCalled = true;
         }
 
         @Override

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -55,10 +56,10 @@ public class OAuthAction {
         Map<String, Object> thirdpart = thirdpart(validation);
         String userId = currentUserId(request);
         if (!service.currentUserCanAccess(thirdpart)) {
-            logger.info("OAuth authorize access denied. requestId={} clientId={} userId={} result={} reason={}",
-                    requestId, clientId, userId, "deny", "access_denied");
-            redirectExternal(response,
-                    appendErrorQuery(redirectUri, "access_denied", accessDeniedDescription(thirdpart), state));
+            storeAccessDeniedContext(request, requestId, clientId, thirdpart, userId, redirectUri, state);
+            logger.info("OAuth authorize access denied prompt. requestId={} clientId={} userId={} result={} reason={}",
+                    requestId, clientId, userId, "deny", "permission_denied_prompt");
+            forwardAccessDeniedPage(request, response);
             return;
         }
 
@@ -149,6 +150,40 @@ public class OAuthAction {
         writeJson(request, response, OAuthJson.userinfo(user, loadDefaultGroup(userId), loadDefaultRole(userId)));
     }
 
+    @ActionAccess(login = false)
+    public void switchAccount(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> context = loadAccessDeniedContext(request);
+        if (context == null) {
+            showBrowserError(request, response, "OAuth 登录请求已失效", "当前 OAuth 登录请求已失效，请从第三方系统重新发起登录。", null);
+            return;
+        }
+        String requestId = stringValue(context.get("requestId"));
+        logger.info("OAuth access denied switch account. requestId={} clientId={} userId={} result={} reason={}",
+                requestId, context.get("clientId"), context.get("userId"), "pending", "switch_account_requested");
+        clearAccessDeniedContext(request);
+        logoutCurrentUser(request);
+        request.getSession().setAttribute(OAuthSessionKeys.RETURN_URL, stringValue(context.get("returnUrl")));
+        jumpToLogin(request, response);
+    }
+
+    @ActionAccess(login = false)
+    public void cancelAccessDenied(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> context = loadAccessDeniedContext(request);
+        if (context == null) {
+            showBrowserError(request, response, "OAuth 登录请求已失效", "当前 OAuth 登录请求已失效，请从第三方系统重新发起登录。", null);
+            return;
+        }
+        String requestId = stringValue(context.get("requestId"));
+        String redirectUri = stringValue(context.get("redirectUri"));
+        String state = stringValue(context.get("state"));
+        String description = accessDeniedDescription(context);
+        logger.info("OAuth access denied cancelled. requestId={} clientId={} userId={} result={} reason={}",
+                requestId, context.get("clientId"), context.get("userId"), "deny", "access_denied_cancelled");
+        clearAccessDeniedContext(request);
+        redirectExternal(response,
+                appendErrorQuery(redirectUri, "access_denied", description, validStateForRedirect(state)));
+    }
+
     protected OAuthService getOAuthService() {
         return new OAuthService();
     }
@@ -174,6 +209,20 @@ public class OAuthAction {
         } catch (ServletException e) {
             throw new IllegalStateException("OAuth error page forward failed.", e);
         }
+    }
+
+    protected void forwardAccessDeniedPage(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            request.getRequestDispatcher("/xhtml/oauth/access_denied.jsp").forward(request, response);
+        } catch (IOException e) {
+            throw new IllegalStateException("OAuth access denied page forward failed.", e);
+        } catch (ServletException e) {
+            throw new IllegalStateException("OAuth access denied page forward failed.", e);
+        }
+    }
+
+    protected void logoutCurrentUser(HttpServletRequest request) {
+        SessionManager.doLogout(request);
     }
 
     protected UsUser loadUser(String userId) {
@@ -206,7 +255,40 @@ public class OAuthAction {
         request.getSession().setAttribute(OAuthSessionKeys.RETURN_URL, Actions.Util.getFullURL(request));
     }
 
-    private void showBrowserError(HttpServletRequest request, HttpServletResponse response, String title, String message,
+    private void storeAccessDeniedContext(HttpServletRequest request, String requestId, String clientId,
+            Map<String, Object> thirdpart, String userId, String redirectUri, String state) {
+        Map<String, Object> context = new LinkedHashMap<String, Object>();
+        context.put("requestId", requestId);
+        context.put("clientId", clientId);
+        context.put("thirdpartKey", stringValue(thirdpart.get("thirdpartKey")));
+        context.put("thirdpartName", stringValue(thirdpart.get("thirdpartName")));
+        context.put("userId", userId);
+        context.put("redirectUri", redirectUri);
+        context.put("state", validStateForRedirect(state));
+        context.put("returnUrl", Actions.Util.getFullURL(request));
+        request.setAttribute("oauthAccessDenied", context);
+        request.getSession().setAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT, context);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> loadAccessDeniedContext(HttpServletRequest request) {
+        Object value = request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT);
+        if (!(value instanceof Map)) {
+            return null;
+        }
+        Map<String, Object> context = (Map<String, Object>) value;
+        if (StringUtils.isBlank(stringValue(context.get("returnUrl")))
+                || StringUtils.isBlank(stringValue(context.get("redirectUri")))) {
+            return null;
+        }
+        return context;
+    }
+
+    private void clearAccessDeniedContext(HttpServletRequest request) {
+        request.getSession().removeAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT);
+    }
+
+    protected void showBrowserError(HttpServletRequest request, HttpServletResponse response, String title, String message,
             String requestId) {
         request.setAttribute("oauthErrorTitle", title);
         request.setAttribute("oauthErrorMessage", message);
