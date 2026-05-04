@@ -21,6 +21,12 @@ import com.riversoft.platform.po.UsUser;
 public class OAuthActionTest {
 
     @Test
+    public void accessDeniedJspExists() {
+        assertTrue(new java.io.File("platform/src/main/webapp/xhtml/oauth/access_denied.jsp").isFile()
+                || new java.io.File("src/main/webapp/xhtml/oauth/access_denied.jsp").isFile());
+    }
+
+    @Test
     public void authorizeWithoutLoginStoresReturnUrl() {
         TestOAuthAction action = new TestOAuthAction();
         action.loggedIn = false;
