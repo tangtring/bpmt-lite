@@ -1,5 +1,38 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.Map"%>
+<%!
+private String escapeHtml(Object value) {
+    if (value == null) {
+        return "";
+    }
+    String text = String.valueOf(value);
+    StringBuilder escaped = new StringBuilder(text.length());
+    for (int i = 0; i < text.length(); i++) {
+        char ch = text.charAt(i);
+        switch (ch) {
+        case '&':
+            escaped.append("&amp;");
+            break;
+        case '<':
+            escaped.append("&lt;");
+            break;
+        case '>':
+            escaped.append("&gt;");
+            break;
+        case '"':
+            escaped.append("&quot;");
+            break;
+        case '\'':
+            escaped.append("&#39;");
+            break;
+        default:
+            escaped.append(ch);
+            break;
+        }
+    }
+    return escaped.toString();
+}
+%>
 <%
 Map oauthAccessDenied = (Map) request.getAttribute("oauthAccessDenied");
 if (oauthAccessDenied == null) {
@@ -8,6 +41,9 @@ if (oauthAccessDenied == null) {
 String userId = oauthAccessDenied == null || oauthAccessDenied.get("userId") == null ? "" : String.valueOf(oauthAccessDenied.get("userId"));
 String thirdpartName = oauthAccessDenied == null || oauthAccessDenied.get("thirdpartName") == null ? "目标外部系统" : String.valueOf(oauthAccessDenied.get("thirdpartName"));
 String requestId = oauthAccessDenied == null || oauthAccessDenied.get("requestId") == null ? "" : String.valueOf(oauthAccessDenied.get("requestId"));
+String escapedUserId = escapeHtml(userId);
+String escapedThirdpartName = escapeHtml(thirdpartName);
+String escapedRequestId = escapeHtml(requestId);
 String cp = request.getContextPath();
 %>
 <!DOCTYPE html>
@@ -64,7 +100,7 @@ body {
 <body>
 <div class="oauth-denied">
     <h1>当前账号无权访问外部系统</h1>
-    <p>当前 BPMT 账号 <strong><%= userId %></strong> 没有访问 <strong><%= thirdpartName %></strong> 的权限。</p>
+    <p>当前 BPMT 账号 <strong><%= escapedUserId %></strong> 没有访问 <strong><%= escapedThirdpartName %></strong> 的权限。</p>
     <p>你可以退出当前 BPMT 账号并重新登录其他账号，也可以取消本次登录并返回第三方系统。</p>
     <div class="oauth-actions">
         <form action="<%= cp %>/oauth/OAuthAction/switchAccount.shtml" method="post">
@@ -75,7 +111,7 @@ body {
         </form>
     </div>
     <% if (requestId.length() > 0) { %>
-    <p class="request-id">Request ID: <%= requestId %></p>
+    <p class="request-id">Request ID: <%= escapedRequestId %></p>
     <% } %>
 </div>
 </body>

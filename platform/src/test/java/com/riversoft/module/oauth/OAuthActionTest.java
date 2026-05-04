@@ -3,8 +3,13 @@ package com.riversoft.module.oauth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,8 +27,28 @@ public class OAuthActionTest {
 
     @Test
     public void accessDeniedJspExists() {
-        assertTrue(new java.io.File("platform/src/main/webapp/xhtml/oauth/access_denied.jsp").isFile()
-                || new java.io.File("src/main/webapp/xhtml/oauth/access_denied.jsp").isFile());
+        assertTrue(accessDeniedJspFile().isFile());
+    }
+
+    @Test
+    public void accessDeniedJspEscapesUserControlledValues() throws Exception {
+        String jsp = readAccessDeniedJsp();
+
+        assertTrue(jsp.contains("private String escapeHtml(Object value)"));
+        assertTrue(jsp.contains("<%= escapedUserId %>"));
+        assertTrue(jsp.contains("<%= escapedThirdpartName %>"));
+        assertTrue(jsp.contains("<%= escapedRequestId %>"));
+        assertFalse(jsp.contains("<%= userId %>"));
+        assertFalse(jsp.contains("<%= thirdpartName %>"));
+        assertFalse(jsp.contains("<%= requestId %>"));
+        assertFalse(jsp.contains("<%= redirectUri %>"));
+        assertFalse(jsp.contains("<%= returnUrl %>"));
+        assertFalse(jsp.contains("<%= code %>"));
+        assertFalse(jsp.contains("<%= token %>"));
+        assertFalse(jsp.contains("<%= secret %>"));
+        assertFalse(jsp.contains("<%= access_token %>"));
+        assertFalse(jsp.contains("<%= client_secret %>"));
+        assertFalse(jsp.contains("<%= clientSecret %>"));
     }
 
     @Test
@@ -112,6 +137,42 @@ public class OAuthActionTest {
                 response.getRedirectedUrl());
         assertFalse(action.logoutCalled);
         assertNull(request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT));
+    }
+
+    @Test
+    public void getSwitchAccountRejectsMethodWithoutSideEffects() throws Exception {
+        TestOAuthAction action = new TestOAuthAction();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth/OAuthAction/switchAccount.shtml");
+        Map<String, Object> context = accessDeniedContext();
+        request.getSession().setAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT, context);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.switchAccount(request, response);
+
+        assertEquals(405, response.getStatus());
+        assertEquals("POST", response.getHeader("Allow"));
+        assertTrue(response.getContentAsString().contains("\"error\":\"invalid_request\""));
+        assertFalse(action.logoutCalled);
+        assertSame(context, request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT));
+        assertNull(action.loginTarget);
+    }
+
+    @Test
+    public void getCancelAccessDeniedRejectsMethodWithoutSideEffects() throws Exception {
+        TestOAuthAction action = new TestOAuthAction();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET",
+                "/oauth/OAuthAction/cancelAccessDenied.shtml");
+        Map<String, Object> context = accessDeniedContext();
+        request.getSession().setAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT, context);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.cancelAccessDenied(request, response);
+
+        assertEquals(405, response.getStatus());
+        assertEquals("POST", response.getHeader("Allow"));
+        assertTrue(response.getContentAsString().contains("\"error\":\"invalid_request\""));
+        assertSame(context, request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT));
+        assertNull(response.getRedirectedUrl());
     }
 
     @Test
@@ -309,6 +370,18 @@ public class OAuthActionTest {
         request.setParameter("state", "s-1");
         request.setQueryString("response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1");
         return request;
+    }
+
+    private File accessDeniedJspFile() {
+        File repoPath = new File("platform/src/main/webapp/xhtml/oauth/access_denied.jsp");
+        if (repoPath.isFile()) {
+            return repoPath;
+        }
+        return new File("src/main/webapp/xhtml/oauth/access_denied.jsp");
+    }
+
+    private String readAccessDeniedJsp() throws IOException {
+        return new String(Files.readAllBytes(accessDeniedJspFile().toPath()), StandardCharsets.UTF_8);
     }
 
     private Map<String, Object> accessDeniedContext() {

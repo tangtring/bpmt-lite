@@ -152,6 +152,10 @@ public class OAuthAction {
 
     @ActionAccess(login = false)
     public void switchAccount(HttpServletRequest request, HttpServletResponse response) {
+        if (!requiresPost(request, response, "switchAccount")) {
+            return;
+        }
+
         Map<String, Object> context = loadAccessDeniedContext(request);
         if (context == null) {
             showBrowserError(request, response, "OAuth 登录请求已失效", "当前 OAuth 登录请求已失效，请从第三方系统重新发起登录。", null);
@@ -168,6 +172,10 @@ public class OAuthAction {
 
     @ActionAccess(login = false)
     public void cancelAccessDenied(HttpServletRequest request, HttpServletResponse response) {
+        if (!requiresPost(request, response, "cancelAccessDenied")) {
+            return;
+        }
+
         Map<String, Object> context = loadAccessDeniedContext(request);
         if (context == null) {
             showBrowserError(request, response, "OAuth 登录请求已失效", "当前 OAuth 登录请求已失效，请从第三方系统重新发起登录。", null);
@@ -249,6 +257,19 @@ public class OAuthAction {
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("Pragma", "no-cache");
         Actions.showJson(request, response, body);
+    }
+
+    private boolean requiresPost(HttpServletRequest request, HttpServletResponse response, String actionName) {
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        logger.info("OAuth access denied action rejected. action={} result={} reason={}", actionName, "deny",
+                "method_not_allowed");
+        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        response.setHeader("Allow", "POST");
+        writeJson(request, response,
+                OAuthJson.error("invalid_request", "OAuth access denied action requires POST."));
+        return false;
     }
 
     private void storeReturnUrl(HttpServletRequest request) {
