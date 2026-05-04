@@ -34,6 +34,10 @@ public class OAuthDirectFilter implements Filter {
             dispatcher.forward(request, response);
             return;
         }
+        if (isAllowedActionPath(path)) {
+            chain.doFilter(request, response);
+            return;
+        }
         httpResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
     }
 
@@ -51,6 +55,11 @@ public class OAuthDirectFilter implements Filter {
             return "/oauth/OAuthAction/userinfo.shtml";
         }
         return null;
+    }
+
+    private boolean isAllowedActionPath(String path) {
+        return "/oauth/OAuthAction/switchAccount.shtml".equals(path)
+                || "/oauth/OAuthAction/cancelAccessDenied.shtml".equals(path);
     }
 
     private String withPublicFullUrl(HttpServletRequest request, String target) {

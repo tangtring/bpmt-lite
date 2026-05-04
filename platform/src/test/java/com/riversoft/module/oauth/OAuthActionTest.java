@@ -251,6 +251,48 @@ public class OAuthActionTest {
                 response.getForwardedUrl());
     }
 
+    @Test
+    public void directFilterAllowsSwitchAccountActionPathToChain() throws Exception {
+        OAuthDirectFilter filter = new OAuthDirectFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/oauth/OAuthAction/switchAccount.shtml");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(request, chain.getRequest());
+        assertNull(response.getErrorMessage());
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void directFilterAllowsCancelAccessDeniedActionPathToChain() throws Exception {
+        OAuthDirectFilter filter = new OAuthDirectFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST",
+                "/oauth/OAuthAction/cancelAccessDenied.shtml");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(request, chain.getRequest());
+        assertNull(response.getErrorMessage());
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void directFilterRejectsUnknownOAuthPath() throws Exception {
+        OAuthDirectFilter filter = new OAuthDirectFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth/not-found");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertNull(chain.getRequest());
+        assertEquals(404, response.getStatus());
+    }
+
     private MockHttpServletRequest authorizeRequest() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth/authorize");
         request.setServerName("localhost");
