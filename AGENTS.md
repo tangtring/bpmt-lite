@@ -22,9 +22,10 @@
 - `v1.4.1` 是新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口的发布版本。
 - `v1.5.0` 是新增外部系统 OAuth 登录能力的发布版本。
 - `v1.5.1` 是基于 `v1.5.0` 修复 issue #10 工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题的补丁版本。
-- `v1.5.2` 是当前补丁版本，基于 `v1.5.1` 增强外部系统 OAuth 登录态切换体验。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.2`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.2`
+- `v1.5.2` 是基于 `v1.5.1` 增强外部系统 OAuth 登录态切换体验的补丁版本。
+- `v1.5.3` 是当前补丁版本，基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.3`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.3`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - 默认 API 文档：`http://127.0.0.1/api/docs/`
@@ -572,13 +573,23 @@ v1.5.1 文档见：
 
 ## v1.5.2 OAuth 登录态切换状态
 
-截至 2026-05-04，v1.5.2 是当前规划补丁版本，基于 `v1.5.1` 增强外部系统 OAuth 登录体验：
+截至 2026-05-04，v1.5.2 是已发布补丁版本，基于 `v1.5.1` 增强外部系统 OAuth 登录体验：
 
 - 浏览器已有 BPMT 登录态时，`/oauth/authorize` 继续复用当前 BPMT 用户。
 - 当前 BPMT 用户无目标第三方系统权限时，显示 BPMT 内部提示页。
 - 用户可以退出当前 BPMT 账号并重新登录其他账号，也可以取消并返回第三方 `access_denied`。
 - README 增加 demo 项目链接 `https://github.com/wodenwang/bpmt-oauth-demo`。
 - `clientSecret` 保持原规则：新增时只展示一次，编辑时只能重置，数据库只保存 hash。
+
+## v1.5.3 nginx Host 转发补丁状态
+
+截至 2026-05-04，v1.5.3 是当前补丁版本，基于 `v1.5.2` 修复发布验收 review 发现的阻塞点：
+
+- `docker/nginx/nginx.conf` 的三处代理转发统一使用 `proxy_set_header Host $http_host;`，保留 `BPMT_HTTP_PORT=18080` 等非 80 端口。
+- OAuth 登录页、授权页、无权限切换页和第三方回调地址在非 80 端口运行时不得丢失端口。
+- v1.5.2 的 OAuth 登录态切换能力继续保留。
+- v1.5.1 issue #10 工作流待办“查看/处理”跳转修复继续保留。
+- 默认 Web/API 镜像 tag、脚本默认 release tag 和 OpenAPI info 已切到 `1.5.3`。
 
 ## 原始项目参考源
 
