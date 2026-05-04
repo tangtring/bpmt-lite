@@ -21,9 +21,10 @@
 - `v1.4.0` 是新增独立 `api` 子项目和独立 API Docker 容器的发布版本。
 - `v1.4.1` 是新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口的发布版本。
 - `v1.5.0` 是新增外部系统 OAuth 登录能力的发布版本。
-- `v1.5.1` 是当前补丁版本，基于 `v1.5.0` 修复 issue #10 工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.1`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.1`
+- `v1.5.1` 是基于 `v1.5.0` 修复 issue #10 工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题的补丁版本。
+- `v1.5.2` 是当前补丁版本，基于 `v1.5.1` 增强外部系统 OAuth 登录态切换体验。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.2`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.2`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - 默认 API 文档：`http://127.0.0.1/api/docs/`
@@ -553,9 +554,9 @@ v1.5.0 文档见：
 
 ## v1.5.1 issue #10 补丁状态
 
-截至 2026-05-04，v1.5.1 是当前补丁版本，目标是修复完整库 `bpmt` 下 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”跳转问题，确认不再生成 `_ORD_ID=null`。
+截至 2026-05-04，v1.5.1 是已发布补丁版本，目标是修复完整库 `bpmt` 下 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”跳转问题，确认不再生成 `_ORD_ID=null`。
 
-当前状态摘要：
+发布状态摘要：
 
 - Maven 项目版本已切到 `1.5.1`。
 - 默认 Web/API 镜像 tag 已切到 `1.5.1`。
@@ -568,6 +569,16 @@ v1.5.1 文档见：
 
 - `docs/v1.5.1/issue-10-acceptance.md`
 - `docs/release-v1.5.1.md`
+
+## v1.5.2 OAuth 登录态切换状态
+
+截至 2026-05-04，v1.5.2 是当前规划补丁版本，基于 `v1.5.1` 增强外部系统 OAuth 登录体验：
+
+- 浏览器已有 BPMT 登录态时，`/oauth/authorize` 继续复用当前 BPMT 用户。
+- 当前 BPMT 用户无目标第三方系统权限时，显示 BPMT 内部提示页。
+- 用户可以退出当前 BPMT 账号并重新登录其他账号，也可以取消并返回第三方 `access_denied`。
+- README 增加 demo 项目链接 `https://github.com/wodenwang/bpmt-oauth-demo`。
+- `clientSecret` 保持原规则：新增时只展示一次，编辑时只能重置，数据库只保存 hash。
 
 ## 原始项目参考源
 
