@@ -130,9 +130,11 @@ docker compose exec -T bpmt-mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-`v1.5.1` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `176`，其中 Activiti 24 张、Quartz 11 张、OAuth 登录表 3 张。完整库 `database/bpmt.sql.gz` 的期望结果是 `380` 张表或视图，默认 `admin` 密码为 `admin`。
+`v1.5.2` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `176`，其中 Activiti 24 张、Quartz 11 张、OAuth 登录表 3 张。完整库 `database/bpmt.sql.gz` 的期望结果是 `380` 张表或视图，默认 `admin` 密码为 `admin`。
 
-`v1.5.1` 是基于 `v1.5.0` 的补丁版本。发布验收除常规入口、API、OAuth smoke 外，必须使用完整库 `bpmt` 浏览器实点 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”，确认网络请求中不再出现 `_ORD_ID=null`。
+`v1.5.2` 是基于 `v1.5.1` 的补丁版本。运行验收除常规入口、API、OAuth smoke 外，必须继承 `v1.5.1` issue #10 回归基线：使用完整库 `bpmt` 浏览器实点 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”，确认网络请求中不再出现 `_ORD_ID=null`。
+
+`v1.5.2` 还需要补充 OAuth 登录态切换验收：已有 BPMT 登录态访问 `/oauth/authorize` 时应复用当前用户；当前用户无目标第三方系统权限时应显示 BPMT 内部提示页；用户取消授权时应返回第三方并携带 `access_denied`；用户选择切换账号时，应退出当前 BPMT 登录态，重新登录后回到原 OAuth 授权流程。
 
 检查 Web：
 
