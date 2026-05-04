@@ -23,9 +23,10 @@
 - `v1.5.0` 是新增外部系统 OAuth 登录能力的发布版本。
 - `v1.5.1` 是基于 `v1.5.0` 修复 issue #10 工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题的补丁版本。
 - `v1.5.2` 是基于 `v1.5.1` 增强外部系统 OAuth 登录态切换体验的补丁版本。
-- `v1.5.3` 是当前补丁版本，基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.3`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.3`
+- `v1.5.3` 是基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
+- `v1.5.4` 是当前补丁版本，基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.4`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.4`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - 默认 API 文档：`http://127.0.0.1/api/docs/`
@@ -592,7 +593,7 @@ v1.5.1 文档见：
 
 ## v1.5.3 nginx Host 转发补丁状态
 
-截至 2026-05-04，v1.5.3 是当前补丁版本，基于 `v1.5.2` 修复发布验收 review 发现的阻塞点：
+截至 2026-05-04，v1.5.3 是基于 `v1.5.2` 修复发布验收 review 发现的阻塞点：
 
 - `docker/nginx/nginx.conf` 的三处代理转发统一使用 `proxy_set_header Host $http_host;`，保留 `BPMT_HTTP_PORT=18080` 等非 80 端口。
 - OAuth 登录页、授权页、无权限切换页和第三方回调地址在非 80 端口运行时不得丢失端口。
@@ -600,11 +601,11 @@ v1.5.1 文档见：
 - v1.5.1 issue #10 工作流待办“查看/处理”跳转修复继续保留。
 - 默认 Web/API 镜像 tag、脚本默认 release tag 和 OpenAPI info 已切到 `1.5.3`。
 
-## v1.5.4 之后 multi-arch 发布规则
+## v1.5.4 multi-arch 发布状态
 
 截至 2026-05-05，已确认 `ghcr.io/wodenwang/bpmt-lite:1.5.3` 和 `ghcr.io/wodenwang/bpmt-lite-api:1.5.3` 的正式 tag 只包含 `linux/arm64` manifest，x86_64 Linux 服务器无法拉取匹配架构镜像。
 
-后续 `v1.5.4` 及之后版本的发布修复原则：
+`v1.5.4` 及之后版本的发布修复原则：
 
 - 不需要为 multi-arch 改业务代码，Java WAR 产物保持同一份。
 - Web/API 镜像正式发布统一走 `scripts/build-multiarch-images.sh`。
@@ -612,6 +613,17 @@ v1.5.1 文档见：
 - 默认同步版本 tag 和 `latest`。
 - 发布验收必须记录 Web/API 两个镜像的 manifest，确认包含 `linux/amd64` 和 `linux/arm64`。
 - 发布验收必须至少在 x86_64 Linux 环境完成一次 `docker compose pull` 或 `docker compose up -d` smoke。
+
+2026-05-05 当前发布结果：
+
+- Maven 项目版本已切到 `1.5.4`。
+- 默认 Web/API 镜像 tag、脚本默认 release tag 和 OpenAPI info 已切到 `1.5.4`。
+- `docker/Dockerfile` 与 `docker/Dockerfile.api` 已区分 amd64 与 ports 架构 apt 镜像源，避免 amd64 multi-arch build 卡在默认 Ubuntu 源。
+- `ghcr.io/wodenwang/bpmt-lite:1.5.4` 已推送，manifest digest 为 `sha256:41efc7c12a72ea7d01c175602562bcfc99330f99dd8137f81101a5311048466b`，包含 `linux/amd64` 和 `linux/arm64`。
+- `ghcr.io/wodenwang/bpmt-lite-api:1.5.4` 已推送，manifest digest 为 `sha256:6e8ee82982e74270755790202c9237f7dc70c2c002e8df1a5eacdfef4fcabd78`，包含 `linux/amd64` 和 `linux/arm64`。
+- 两个 `latest` tag 已同步到 `1.5.4` manifest digest。
+- 已强制 `--platform linux/amd64` 拉取 Web/API `1.5.4` 镜像验证通过。
+- 临时 compose 项目 `bpmt-v154-smoke` 使用最小库 `bpmt_min` 验证 `/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json`、API smoke、176 张表和 Hazelcast 双 member 均通过。
 
 ## 原始项目参考源
 

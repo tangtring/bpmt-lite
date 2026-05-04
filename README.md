@@ -6,7 +6,7 @@
 
 ## 当前版本
 
-`v1.5.3` 为当前补丁版本，基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。`v1.5.2` 的外部系统 OAuth 登录态切换体验继续保留，`v1.5.1` 的工作流待办“查看/处理”跳转修复继续保留。
+`v1.5.4` 为当前补丁版本，基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布，默认镜像同时支持 `linux/amd64` 和 `linux/arm64`。`v1.5.3` 的非 80 端口 OAuth 回跳修复、`v1.5.2` 的外部系统 OAuth 登录态切换体验、`v1.5.1` 的工作流待办“查看/处理”跳转修复继续保留。
 
 `v1.5.0` 新增外部系统 OAuth 登录能力。BPMT 可以作为 OAuth2 Authorization Code 服务端，向第三方 Web 系统提供统一登录入口。
 
@@ -14,8 +14,8 @@
 
 `v1.3.0` 是 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.3`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.3`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.4`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.4`
 - 默认访问地址：`http://127.0.0.1/`
 - API 文档地址：`http://127.0.0.1/api/docs/`
 - OpenAPI 地址：`http://127.0.0.1/api/openapi.json`
@@ -32,10 +32,10 @@
 如果只是快速体验，推荐先使用最小库启动：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.3/scripts/install.sh | bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.4/scripts/install.sh | bash
 ```
 
-说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.5.3`）。如需切换版本，可显式设置 `BPMT_REF`。
+说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.5.4`）。如需切换版本，可显式设置 `BPMT_REF`。
 
 访问：
 
@@ -63,17 +63,17 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 如果要使用完整业务库，执行：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.3/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.4/scripts/install.sh | bash -s -- full
 ```
 
 ## 完整库启动
 
-`v1.5.3` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
+`v1.5.4` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库启动命令：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.3/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.4/scripts/install.sh | bash -s -- full
 ```
 
 如果你本机已有可导入的完整 SQL，也可以直接放到：
@@ -140,7 +140,7 @@ docker compose up -d
 ```bash
 docker compose down
 rm -rf docker/nginx/nginx.conf
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.3/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.5.4/scripts/install.sh | bash -s -- full
 ```
 
 检查入口：
@@ -162,7 +162,7 @@ scripts/smoke-api.sh
 
 ## API 使用
 
-`v1.5.3` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。
+`v1.5.4` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。本版本的 Web/API 默认镜像已改为 multi-arch 发布，支持常见 x86_64 Linux 服务器和 Apple Silicon/ARM64 环境。
 
 API 文档有两种形态：
 
@@ -220,9 +220,9 @@ OAuth 端点：
 
 `/oauth/token` 和 `/oauth/userinfo` 使用 OAuth JSON 响应，不使用 API 的 `success/data/error` 包装；`/oauth/authorize` 是浏览器跳转或错误页。菜单第三方 URL / iframe 只是辅助入口：BPMT 只负责打开第三方页面，第三方页面没有自己的登录态时，应自行跳转 `/oauth/authorize` 发起 OAuth。
 
-`v1.5.3` 继续保留 OAuth 登录态切换体验：第三方系统没有自身登录态时仍跳转 BPMT `/oauth/authorize`；如果当前浏览器已有 BPMT 登录态，BPMT 会复用当前用户，不会强制显示登录页。若当前账号没有目标第三方系统权限，BPMT 会显示提示页，允许用户退出当前账号并重新登录其他账号，或取消并返回第三方系统。
+`v1.5.4` 继续保留 OAuth 登录态切换体验：第三方系统没有自身登录态时仍跳转 BPMT `/oauth/authorize`；如果当前浏览器已有 BPMT 登录态，BPMT 会复用当前用户，不会强制显示登录页。若当前账号没有目标第三方系统权限，BPMT 会显示提示页，允许用户退出当前账号并重新登录其他账号，或取消并返回第三方系统。
 
-`v1.5.3` 同时修复 `nginx` 反向代理转发的 `Host` 头，使用 `BPMT_HTTP_PORT=18080` 等非 80 端口运行时，登录页、OAuth 授权页和第三方回调地址会保留实际端口。
+`v1.5.4` 同时修复 `nginx` 反向代理转发的 `Host` 头，使用 `BPMT_HTTP_PORT=18080` 等非 80 端口运行时，登录页、OAuth 授权页和第三方回调地址会保留实际端口。
 
 OAuth demo 项目见：[bpmt-oauth-demo](https://github.com/wodenwang/bpmt-oauth-demo)。
 
@@ -239,8 +239,8 @@ OAuth demo 项目见：[bpmt-oauth-demo](https://github.com/wodenwang/bpmt-oauth
 | --- | --- | --- |
 | `BPMT_HTTP_PORT` | `80` | Nginx 对外访问端口 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.5.3` | Web 镜像 tag |
-| `BPMT_API_IMAGE_TAG` | `1.5.3` | API 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.5.4` | Web 镜像 tag |
+| `BPMT_API_IMAGE_TAG` | `1.5.4` | API 镜像 tag |
 | `DB_HOST` | `bpmt-mariadb` | Web/API 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |
@@ -314,6 +314,7 @@ scripts/build-multiarch-images.sh
 - v1.5.1 发布记录：[docs/release-v1.5.1.md](docs/release-v1.5.1.md)
 - v1.5.3 发布记录：[docs/release-v1.5.3.md](docs/release-v1.5.3.md)
 - v1.5.3 OAuth 登录态切换验收：[docs/v1.5.3/oauth-session-switch-acceptance.md](docs/v1.5.3/oauth-session-switch-acceptance.md)
+- v1.5.4 发布记录：[docs/release-v1.5.4.md](docs/release-v1.5.4.md)
 - v1.5.4 multi-arch 发布修复：[docs/v1.5.4/multi-arch-release.md](docs/v1.5.4/multi-arch-release.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 

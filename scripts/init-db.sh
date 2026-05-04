@@ -2,7 +2,7 @@
 set -eu
 
 MODE="${1:-full}"
-BASE_URL="${BPMT_SQL_BASE_URL:-https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.5.3/database}"
+BASE_URL="${BPMT_SQL_BASE_URL:-https://raw.githubusercontent.com/wodenwang/bpmt-lite/v1.5.4/database}"
 LOCAL_DATABASE_DIR="${BPMT_SQL_LOCAL_DIR:-database}"
 INIT_DIR="${BPMT_INIT_DIR:-db/init}"
 

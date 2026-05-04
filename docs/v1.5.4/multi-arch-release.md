@@ -68,6 +68,17 @@ docker buildx imagetools inspect ghcr.io/wodenwang/bpmt-lite-api:<version>
 - API 镜像 manifest 有 `linux/arm64`
 - x86_64 Linux 服务器至少完成一次 `docker compose pull` 或 `docker compose up -d` smoke
 
+## v1.5.4 发布结果
+
+2026-05-05 已完成 `v1.5.4` Web/API multi-arch 发布：
+
+- `ghcr.io/wodenwang/bpmt-lite:1.5.4` manifest digest：`sha256:41efc7c12a72ea7d01c175602562bcfc99330f99dd8137f81101a5311048466b`
+- `ghcr.io/wodenwang/bpmt-lite-api:1.5.4` manifest digest：`sha256:6e8ee82982e74270755790202c9237f7dc70c2c002e8df1a5eacdfef4fcabd78`
+- 两个 `1.5.4` tag 都包含 `linux/amd64` 与 `linux/arm64`
+- 两个 `latest` tag 已同步到上述 manifest digest
+- 本机已强制 `--platform linux/amd64` 拉取 Web/API `1.5.4` 镜像
+- 临时 compose 项目 `bpmt-v154-smoke` 已完成最小库 smoke
+
 ## 临时 tag
 
 如果需要验证候选镜像且不覆盖 `latest`：

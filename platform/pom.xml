@@ -3,7 +3,7 @@
   <parent>
     <artifactId>parent</artifactId>
     <groupId>com.riversoft</groupId>
-    <version>1.5.3</version>
+    <version>1.5.4</version>
     <relativePath>../parent/</relativePath>
   </parent>
   <artifactId>platform</artifactId>
@@ -15,7 +15,7 @@
     <docker.context.dir>${project.build.directory}/docker</docker.context.dir>
     <docker.image.name>ghcr.io/wodenwang/bpmt-lite</docker.image.name>
     <docker.image.tag>${project.version}</docker.image.tag>
-    <docker.apt.mirror>https://mirrors.aliyun.com/ubuntu-ports</docker.apt.mirror>
+    <docker.apt.mirror>https://mirrors.aliyun.com/ubuntu</docker.apt.mirror>
   </properties>
 
   <dependencies>

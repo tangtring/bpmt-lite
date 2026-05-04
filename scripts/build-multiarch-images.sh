@@ -34,7 +34,8 @@ PLATFORMS="${BPMT_IMAGE_PLATFORMS:-linux/amd64,linux/arm64}"
 WEB_IMAGE_NAME="${BPMT_IMAGE_NAME:-ghcr.io/wodenwang/bpmt-lite}"
 API_IMAGE_NAME="${BPMT_API_IMAGE_NAME:-ghcr.io/wodenwang/bpmt-lite-api}"
 SYNC_LATEST="${BPMT_SYNC_LATEST:-true}"
-APT_MIRROR="${BPMT_DOCKER_APT_MIRROR:-https://mirrors.aliyun.com/ubuntu-ports}"
+APT_MIRROR="${BPMT_DOCKER_APT_MIRROR:-https://mirrors.aliyun.com/ubuntu}"
+APT_PORTS_MIRROR="${BPMT_DOCKER_APT_PORTS_MIRROR:-https://mirrors.aliyun.com/ubuntu-ports}"
 
 PROJECT_VERSION="$(mvn -s settings.local.xml -q -pl platform help:evaluate -Dexpression=project.version -DforceStdout)"
 WEB_FINAL_NAME="$(mvn -s settings.local.xml -q -pl platform help:evaluate -Dexpression=project.build.finalName -DforceStdout)"
@@ -61,6 +62,7 @@ fi
 run docker buildx build \
   --platform "$PLATFORMS" \
   --build-arg "APT_MIRROR=$APT_MIRROR" \
+  --build-arg "APT_PORTS_MIRROR=$APT_PORTS_MIRROR" \
   $WEB_TAG_ARGS \
   --push \
   platform/target/docker
@@ -81,6 +83,7 @@ fi
 run docker buildx build \
   --platform "$PLATFORMS" \
   --build-arg "APT_MIRROR=$APT_MIRROR" \
+  --build-arg "APT_PORTS_MIRROR=$APT_PORTS_MIRROR" \
   $API_TAG_ARGS \
   --push \
   api/target/docker

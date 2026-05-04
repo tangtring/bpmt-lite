@@ -2,7 +2,8 @@ FROM eclipse-temurin:8-jdk-jammy
 
 ARG TOMCAT_VERSION=7.0.109
 ARG TOMCAT_DOWNLOAD_URL=https://archive.apache.org/dist/tomcat/tomcat-7/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz
-ARG APT_MIRROR=https://mirrors.aliyun.com/ubuntu-ports
+ARG APT_MIRROR=https://mirrors.aliyun.com/ubuntu
+ARG APT_PORTS_MIRROR=https://mirrors.aliyun.com/ubuntu-ports
 
 ENV TZ=Asia/Shanghai \
     CATALINA_HOME=/usr/local/tomcat \
@@ -15,7 +16,15 @@ ENV TZ=Asia/Shanghai \
 
 ADD ${TOMCAT_DOWNLOAD_URL} /tmp/tomcat.tar.gz
 
-RUN if [ -n "$APT_MIRROR" ]; then sed -i "s|http://ports.ubuntu.com/ubuntu-ports|$APT_MIRROR|g" /etc/apt/sources.list; fi \
+RUN dpkg_arch="$(dpkg --print-architecture)" \
+    && if [ "$dpkg_arch" = "amd64" ] && [ -n "$APT_MIRROR" ]; then \
+      sed -i \
+        -e "s|http://archive.ubuntu.com/ubuntu|$APT_MIRROR|g" \
+        -e "s|http://security.ubuntu.com/ubuntu|$APT_MIRROR|g" \
+        /etc/apt/sources.list; \
+    elif [ -n "$APT_PORTS_MIRROR" ]; then \
+      sed -i "s|http://ports.ubuntu.com/ubuntu-ports|$APT_PORTS_MIRROR|g" /etc/apt/sources.list; \
+    fi \
     && apt-get -o Acquire::Retries=3 update \
     && apt-get -o Acquire::Retries=3 install -y --no-install-recommends fontconfig fonts-wqy-zenhei \
     && fc-cache -f \
