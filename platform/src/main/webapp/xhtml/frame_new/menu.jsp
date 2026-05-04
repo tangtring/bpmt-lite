@@ -21,6 +21,36 @@
 			$host.css('height', height + 'px');
 			$('iframe', $host).css('height', height + 'px');
 		};
+		var isLoopbackHost = function(host) {
+			return host == 'localhost' || host == '127.0.0.1' || host == '[::1]' || host == '::1';
+		};
+		var parseAbsoluteUrl = function(src) {
+			var anchor = document.createElement('a');
+			anchor.href = src;
+			if (!anchor.protocol || !anchor.hostname || (anchor.protocol != 'http:' && anchor.protocol != 'https:')) {
+				return null;
+			}
+			return anchor;
+		};
+		var getContextPath = function() {
+			var cp = parseAbsoluteUrl('${_cp}');
+			if (cp == null) {
+				return '${_cp}';
+			}
+			return cp.pathname == '/' ? '' : cp.pathname;
+		};
+		var alignLoopbackHostIfNeeded = function(src, menuId) {
+			var target = parseAbsoluteUrl(src);
+			if (target == null) {
+				return false;
+			}
+			if (!isLoopbackHost(target.hostname) || !isLoopbackHost(window.location.hostname) || target.hostname == window.location.hostname) {
+				return false;
+			}
+			var port = window.location.port ? ':' + window.location.port : '';
+			window.location.href = window.location.protocol + '//' + target.hostname + port + getContextPath() + '/' + domainKey + '/' + menuId + '.xhtml';
+			return true;
+		};
 		var openThirdpartFrame = function(src) {
 			$main.empty();
 			var $host = $('<div class="bpmt-thirdpart-host"></div>').css({
@@ -66,6 +96,9 @@
 					});
 					break;
 				case 2://第三方网页
+					if (alignLoopbackHostIfNeeded(action, treeNode.id)) {
+						return;
+					}
 					openThirdpartFrame(action);
 					break;
 				default:
