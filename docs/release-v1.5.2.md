@@ -21,4 +21,14 @@
 
 ## 验收摘要
 
-发布前补充 `docs/v1.5.2/oauth-session-switch-acceptance.md` 中的最终运行记录。
+2026-05-04 已完成 `docs/v1.5.2/oauth-session-switch-acceptance.md` 记录的发布前验收：
+
+- OAuth 单测 24/24 通过，完整 OAuth 测试集合 40/40 通过。
+- Java 8 全仓编译通过，`docker compose config` 通过。
+- 本地镜像构建通过：`ghcr.io/wodenwang/bpmt-lite:1.5.2`、`ghcr.io/wodenwang/bpmt-lite-api:1.5.2`。
+- 临时完整库运行时 `bpmt-v152` 启动通过，完整库表数 380。
+- `/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json`、`/oauth/authorize` 均返回 200，`scripts/smoke-api.sh` 通过。
+- OAuth 浏览器验收覆盖未登录、已有登录态有权限、已有登录态无权限提示、取消返回 `access_denied`、切换账号后重新登录并继续授权。
+- `v1.5.1` issue #10 回归通过：`zhangzongcai/123` 点击待办“查看/处理”均生成真实 `_ORD_ID=FNBW2604001`，未出现 `_ORD_ID=null`。
+
+镜像推送、Git tag 和 GitHub Release 以实际发布命令结果为准。
