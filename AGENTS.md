@@ -238,10 +238,19 @@ scripts/build-image.sh
 scripts/build-api-image.sh
 ```
 
+`scripts/build-image.sh` 和 `scripts/build-api-image.sh` 是本机单架构 smoke 入口。`v1.5.4` 起正式发布 GHCR 镜像必须使用：
+
+```bash
+scripts/build-multiarch-images.sh
+```
+
+后续正式版本的 Web/API 镜像必须同时包含 `linux/amd64` 和 `linux/arm64`；发布后必须用 `docker buildx imagetools inspect` 验证 manifest。不能再只把 Apple Silicon 本机 `docker build` 产生的 `linux/arm64` 镜像推送为正式 tag 或 `latest`。
+
 维护相关约束：
 
 - 维护者需要 Java 8、Maven、Docker，以及可访问历史依赖的 Maven 仓库。
 - `settings.local.xml` 是本地文件，不应提交到 git。
+- 发布 multi-arch 镜像前需要 Docker buildx builder 和 GHCR push 权限。
 - 更多维护和发布细节见 `docs/maintenance.md`。
 
 ## 构建与排障顺序
@@ -590,6 +599,19 @@ v1.5.1 文档见：
 - v1.5.2 的 OAuth 登录态切换能力继续保留。
 - v1.5.1 issue #10 工作流待办“查看/处理”跳转修复继续保留。
 - 默认 Web/API 镜像 tag、脚本默认 release tag 和 OpenAPI info 已切到 `1.5.3`。
+
+## v1.5.4 之后 multi-arch 发布规则
+
+截至 2026-05-05，已确认 `ghcr.io/wodenwang/bpmt-lite:1.5.3` 和 `ghcr.io/wodenwang/bpmt-lite-api:1.5.3` 的正式 tag 只包含 `linux/arm64` manifest，x86_64 Linux 服务器无法拉取匹配架构镜像。
+
+后续 `v1.5.4` 及之后版本的发布修复原则：
+
+- 不需要为 multi-arch 改业务代码，Java WAR 产物保持同一份。
+- Web/API 镜像正式发布统一走 `scripts/build-multiarch-images.sh`。
+- 默认平台是 `linux/amd64,linux/arm64`。
+- 默认同步版本 tag 和 `latest`。
+- 发布验收必须记录 Web/API 两个镜像的 manifest，确认包含 `linux/amd64` 和 `linux/arm64`。
+- 发布验收必须至少在 x86_64 Linux 环境完成一次 `docker compose pull` 或 `docker compose up -d` smoke。
 
 ## 原始项目参考源
 

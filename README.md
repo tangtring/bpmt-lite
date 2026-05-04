@@ -286,7 +286,15 @@ scripts/build-image.sh
 scripts/build-api-image.sh
 ```
 
-`scripts/build-image.sh` 会构建本地 Web 镜像，并验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体。`scripts/build-api-image.sh` 会构建本地 API 镜像，并验证 `/api`、`openapi.json`、`docs/index.html` 和 entrypoint。更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
+`scripts/build-image.sh` 会构建本地 Web 镜像，并验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体。`scripts/build-api-image.sh` 会构建本地 API 镜像，并验证 `/api`、`openapi.json`、`docs/index.html` 和 entrypoint。
+
+`v1.5.4` 起正式发布 GHCR 镜像时使用 multi-arch 入口：
+
+```bash
+scripts/build-multiarch-images.sh
+```
+
+该脚本默认同时推送 `linux/amd64` 和 `linux/arm64` 的 Web/API 镜像，并同步 `latest`。更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
 
 ## 文档
 
@@ -306,6 +314,7 @@ scripts/build-api-image.sh
 - v1.5.1 发布记录：[docs/release-v1.5.1.md](docs/release-v1.5.1.md)
 - v1.5.3 发布记录：[docs/release-v1.5.3.md](docs/release-v1.5.3.md)
 - v1.5.3 OAuth 登录态切换验收：[docs/v1.5.3/oauth-session-switch-acceptance.md](docs/v1.5.3/oauth-session-switch-acceptance.md)
+- v1.5.4 multi-arch 发布修复：[docs/v1.5.4/multi-arch-release.md](docs/v1.5.4/multi-arch-release.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者

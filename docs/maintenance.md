@@ -61,10 +61,11 @@ scripts/verify-repo.sh
 - 本地运行数据没有进入 git
 - 私有依赖、许可证、数据库备份没有进入 git
 - origin 指向 `https://github.com/wodenwang/bpmt-lite.git`
+- multi-arch 发布脚本的静态检查通过
 
 ## 构建镜像
 
-使用：
+本地 Web 镜像构建使用：
 
 ```bash
 scripts/build-image.sh
@@ -77,6 +78,8 @@ scripts/build-image.sh
 - 执行 Maven `-Pdocker-image verify`
 - 构建 `ghcr.io/wodenwang/bpmt-lite:<project.version>`
 - 启动一次临时容器，验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体可用
+
+该入口用于本机 smoke，默认构建当前 Docker daemon 对应架构，不作为正式发布推送入口。
 
 镜像构建默认使用 `https://mirrors.aliyun.com/ubuntu-ports` 安装中文字体包。需要使用其他 Ubuntu ports 源时可覆盖 Maven 属性：
 
@@ -101,6 +104,61 @@ scripts/build-api-image.sh
 - 启动一次临时容器，验证 `/usr/local/tomcat/webapps/api`、`openapi.json`、`docs/index.html` 和 entrypoint 可用
 
 API 镜像复用 `docker/docker-entrypoint.sh` 生成数据库、Hibernate、Hazelcast 等 properties；容器内 `APP_CLASSES` 指向 `/usr/local/tomcat/webapps/api/WEB-INF/classes`。
+
+该入口用于本机 smoke，默认构建当前 Docker daemon 对应架构，不作为正式发布推送入口。
+
+## Multi-arch 发布镜像
+
+`v1.5.4` 起，正式发布到 GHCR 的 Web/API 镜像必须同时包含 `linux/amd64` 和 `linux/arm64`。发布入口为：
+
+```bash
+scripts/build-multiarch-images.sh
+```
+
+脚本会：
+
+- 检查 `settings.local.xml`
+- 检查当前 Java 是否为 Java 8
+- 使用 Maven 生成 Web/API WAR
+- 使用 `docker buildx build --platform linux/amd64,linux/arm64 --push` 推送 Web 镜像
+- 使用 `docker buildx build --platform linux/amd64,linux/arm64 --push` 推送 API 镜像
+- 默认同步 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
+- 使用 `docker buildx imagetools inspect` 检查发布后的 manifest
+
+常用环境变量：
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `BPMT_IMAGE_PLATFORMS` | `linux/amd64,linux/arm64` | 发布平台列表 |
+| `BPMT_IMAGE_NAME` | `ghcr.io/wodenwang/bpmt-lite` | Web 镜像名 |
+| `BPMT_API_IMAGE_NAME` | `ghcr.io/wodenwang/bpmt-lite-api` | API 镜像名 |
+| `BPMT_IMAGE_TAG` | Maven `project.version` | Web 镜像版本 tag |
+| `BPMT_API_IMAGE_TAG` | Maven `project.version` | API 镜像版本 tag |
+| `BPMT_SYNC_LATEST` | `true` | 是否同步 `latest` |
+| `BPMT_DOCKER_APT_MIRROR` | `https://mirrors.aliyun.com/ubuntu-ports` | Docker 构建时的 Ubuntu ports 镜像 |
+
+发布前准备 buildx builder：
+
+```bash
+docker login ghcr.io
+docker buildx create --name bpmt-multi --use || docker buildx use bpmt-multi
+docker buildx inspect --bootstrap
+```
+
+如果是候选验证或临时 tag，不希望覆盖 `latest`，可执行：
+
+```bash
+BPMT_SYNC_LATEST=false scripts/build-multiarch-images.sh
+```
+
+发布后必须确认两个镜像都包含 `linux/amd64` 和 `linux/arm64`：
+
+```bash
+docker buildx imagetools inspect ghcr.io/wodenwang/bpmt-lite:<version>
+docker buildx imagetools inspect ghcr.io/wodenwang/bpmt-lite-api:<version>
+```
+
+后续发布不能只用 Apple Silicon 本机的 `docker build` 结果直接推送正式 tag；否则 x86_64 Linux 服务器会无法拉取匹配架构的 Web/API 镜像。
 
 ## 本地运行验证
 
@@ -242,12 +300,13 @@ API 容器对应日志分别落在 `runtime/api-platform-logs/` 和 `runtime/api
 6. 使用 Java 8 编译
 7. 执行 `scripts/build-image.sh`
 8. 执行 `scripts/build-api-image.sh`
-9. 推送 Web 和 API GHCR 镜像，并同步 `latest`
-10. 匿名拉取镜像验证
-11. 基于 tag 或干净克隆运行 compose 验证
-12. 合并 PR 到 `main`
-13. 在合并后的 `main` 打 git tag
-14. 创建 GitHub Release
+9. 执行 `scripts/build-multiarch-images.sh` 推送 Web/API multi-arch 镜像，并同步 `latest`
+10. 使用 `docker buildx imagetools inspect` 确认 Web/API 均包含 `linux/amd64` 和 `linux/arm64`
+11. 在 amd64 Linux 和 arm64 环境至少各完成一次拉取或 compose smoke
+12. 基于 tag 或干净克隆运行 compose 验证
+13. 合并 PR 到 `main`
+14. 在合并后的 `main` 打 git tag
+15. 创建 GitHub Release
 
 ## v1.1.0 发布候选验收
 

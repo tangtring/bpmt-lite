@@ -65,4 +65,6 @@ test -z "$forbidden_path" || fail "forbidden/local runtime file is tracked or pe
 origin_url="$(git remote get-url origin)"
 test "$origin_url" = "https://github.com/wodenwang/bpmt-lite.git" || fail "unexpected origin: $origin_url"
 
+sh scripts/test-build-multiarch-images.sh
+
 printf '%s\n' "OK: repository hygiene checks passed"
