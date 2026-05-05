@@ -376,7 +376,7 @@ scripts/build-multiarch-images.sh
 - v1.5.4 发布记录：[docs/release-v1.5.4.md](docs/release-v1.5.4.md)
 - v1.5.4 multi-arch 发布修复：[docs/v1.5.4/multi-arch-release.md](docs/v1.5.4/multi-arch-release.md)
 - v1.6.0 HTTPS 验收清单：[docs/v1.6.0/https-acceptance.md](docs/v1.6.0/https-acceptance.md)
-- v1.6.1 发布记录草案：[docs/release-v1.6.1.md](docs/release-v1.6.1.md)
+- v1.6.1 发布记录：[docs/release-v1.6.1.md](docs/release-v1.6.1.md)
 - v1.6.1 微信 OAuth 验收：[docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 

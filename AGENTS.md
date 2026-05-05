@@ -25,10 +25,10 @@
 - `v1.5.2` 是基于 `v1.5.1` 增强外部系统 OAuth 登录态切换体验的补丁版本。
 - `v1.5.3` 是基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
 - `v1.5.4` 是基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力的补丁版本。
-- `v1.6.0` 是当前版本，新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。
-- `v1.6.1` 是基于 `v1.6.0` 增强微信生态第三方 OAuth 登录态传导的补丁版本。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.0`
+- `v1.6.0` 是新增 HTTPS 入口支持的发布版本，支持内置 nginx TLS 和可信上游 TLS。
+- `v1.6.1` 是当前版本，基于 `v1.6.0` 增强微信生态第三方 OAuth 登录态传导的补丁版本。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.1`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.1`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - HTTPS 访问地址：`https://127.0.0.1/`，需要 `BPMT_HTTPS_ENABLED=1`
