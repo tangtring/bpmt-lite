@@ -47,6 +47,29 @@ public class ThirdpartJspTest {
         assertFalse(jsp.contains("$('#${_zone}_pri_' + treeNode.pri.priKey)"));
     }
 
+    @Test
+    public void thirdpartFormContainsWechatLoginSettings() throws Exception {
+        String jsp = readWebapp("xhtml/thirdpart/ThirdpartAction/form.jsp");
+
+        assertTrue(jsp.contains("<th colspan=\"2\">微信登录</th>"));
+        assertTrue(jsp.contains("name=\"wechatLoginEnabled\""));
+        assertTrue(jsp.contains("name=\"wechatType\""));
+        assertTrue(jsp.contains("name=\"wechatKey\""));
+        assertTrue(jsp.contains("name=\"wechatScope\""));
+        assertTrue(jsp.contains("snsapi_base"));
+        assertTrue(jsp.contains("snsapi_userinfo"));
+    }
+
+    @Test
+    public void thirdpartListShowsWechatLoginSummary() throws Exception {
+        String jsp = readWebapp("xhtml/thirdpart/ThirdpartAction/list.jsp");
+
+        assertTrue(jsp.contains("<th field=\"wechatType\">微信登录</th>"));
+        assertTrue(jsp.contains("企业号: ${vo.wechatKey}"));
+        assertTrue(jsp.contains("服务号: ${vo.wechatKey}"));
+        assertTrue(jsp.contains("关闭"));
+    }
+
     private String readWebapp(String relativePath) throws Exception {
         return new String(Files.readAllBytes(Paths.get("src/main/webapp", relativePath)), StandardCharsets.UTF_8);
     }

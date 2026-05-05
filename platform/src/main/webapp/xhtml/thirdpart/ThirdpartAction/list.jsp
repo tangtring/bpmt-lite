@@ -31,6 +31,7 @@
 			<th field="clientId">Client ID</th>
 			<th field="activeFlag">状态</th>
 			<th field="homeUrl">首页地址</th>
+			<th field="wechatType">微信登录</th>
 			<th field="createTime">创建时间</th>
 			<th field="updateTime">更新时间</th>
 			<th field="description">说明</th>
@@ -55,6 +56,7 @@
 				<td class="left">${vo.clientId}</td>
 				<td class="center"><c:choose><c:when test="${vo.activeFlag == 1}">启用</c:when><c:otherwise>停用</c:otherwise></c:choose></td>
 				<td class="left">${vo.homeUrl}</td>
+				<td class="left"><c:choose><c:when test="${vo.wechatLoginEnabled == 1 && vo.wechatType == 'agent'}">企业号: ${vo.wechatKey}</c:when><c:when test="${vo.wechatLoginEnabled == 1 && vo.wechatType == 'mp'}">服务号: ${vo.wechatKey}</c:when><c:otherwise>关闭</c:otherwise></c:choose></td>
 				<td class="right">${wcm:widget('date[datetime]',vo.createTime)}</td>
 				<td class="right">${wcm:widget('date[datetime]',vo.updateTime)}</td>
 				<td class="left">${vo.description}</td>

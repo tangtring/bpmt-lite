@@ -93,6 +93,10 @@ public class ThirdpartActionTest {
         assertEquals("外部系统 A", action.input.get("thirdpartName"));
         assertEquals("client-a", action.input.get("clientId"));
         assertEquals("http://client.example/callback", action.input.get("redirectUris"));
+        assertEquals("1", action.input.get("wechatLoginEnabled"));
+        assertEquals("agent", action.input.get("wechatType"));
+        assertEquals("corp-agent", action.input.get("wechatKey"));
+        assertEquals("", action.input.get("wechatScope"));
         assertEquals("1", action.input.get("activeFlag"));
         assertEquals(action.pri, action.writtenPri);
         assertTrue(action.redirectMessage.indexOf("plain-secret") >= 0);
@@ -178,6 +182,10 @@ public class ThirdpartActionTest {
         request.setParameter("clientId", "client-a");
         request.setParameter("redirectUris", "http://client.example/callback");
         request.setParameter("homeUrl", "http://client.example/");
+        request.setParameter("wechatLoginEnabled", "1");
+        request.setParameter("wechatType", "agent");
+        request.setParameter("wechatKey", "corp-agent");
+        request.setParameter("wechatScope", "");
         request.setParameter("activeFlag", "1");
         request.setParameter("description", "demo");
         return request;
