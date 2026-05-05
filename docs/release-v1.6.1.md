@@ -68,6 +68,17 @@ git status --short
 - `latest` 同步：通过。`ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest` 已随脚本同步推送。
 - manifest inspect：通过。脚本末尾已执行 `docker buildx imagetools inspect` 并列出两个正式镜像的 `linux/amd64`、`linux/arm64` manifest。
 
+## Task 11 GitHub 发布和公开安装验收
+
+执行时间：2026-05-05。
+
+- GitHub 推送：通过。已推送 `main`，并创建远端 tag `v1.6.1`；发布 tag 指向 `7d86234`。
+- GitHub Release：通过。Release 地址为 `https://github.com/wodenwang/bpmt-lite/releases/tag/v1.6.1`。
+- 公开一行安装：通过。使用 `https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh` 在临时目录安装最小库，端口覆盖为 `BPMT_HTTP_PORT=18082`、`BPMT_DB_PORT=13308`。
+- 公开安装 smoke：通过。`/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json` 均返回 200，OpenAPI 版本为 `1.6.1`。
+- 最小库表数：通过。公开安装生成的 `bpmt_min` 包含 176 张表。
+- 本机运行态恢复：通过。公开安装临时 compose 已停止，本仓原 `DB_NAME=bpmt_min docker compose up -d` 已恢复。
+
 ## 发布边界
 
 - 不新增第三方通知 API。
