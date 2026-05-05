@@ -149,3 +149,26 @@ https://127.0.0.1:18443/oauth/authorize?response_type=code&client_id=client-v160
 - API amd64 digest：`sha256:fabf7b586fe9b6d608b4008d3eae04c9187d4c5f5605759bc420955becc19e4e`
 - API arm64 digest：`sha256:319418992a2f66f87fa63b461e94b3be36a9f6a316d89937a8ea64c7f8b17283`
 - `latest` 已同步到上述 Web/API manifest digest。
+
+## 公开 tag 安装验证
+
+2026-05-05 使用公开 tag 路径执行 HTTPS 最小库安装：
+
+```bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh \
+  | BPMT_HOME=/tmp/bpmt-v160-public-install \
+    BPMT_HTTPS_ENABLED=1 \
+    BPMT_HTTP_PORT=19080 \
+    BPMT_HTTPS_PORT=19443 \
+    BPMT_DB_PORT=14306 \
+    bash
+```
+
+验证结果：
+
+- `https://127.0.0.1:19443/` 返回 200。
+- `https://127.0.0.1:19443/api/docs/` 返回 200。
+- `https://127.0.0.1:19443/api/openapi.json` 返回 200。
+- `http://127.0.0.1:19080/` 返回 301，`Location: https://127.0.0.1:19443/`。
+- `BPMT_API_BASE_URL=https://127.0.0.1:19443/api BPMT_API_CURL_INSECURE=1 sh scripts/smoke-api.sh` 输出 `API smoke passed: https://127.0.0.1:19443/api`。
+- `bpmt_min` 初始化后 176 张表。

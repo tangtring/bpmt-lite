@@ -37,6 +37,7 @@
 - v1.5.2 OAuth 登录态切换回归通过：无权限提示、取消返回、切换账号后继续授权均通过。
 - H5 代表业务路径在 HTTPS 下可浏览，未出现 HTTP CDN mixed content 阻断。
 - multi-arch 发布通过：`scripts/build-multiarch-images.sh`。
+- 公开 tag 一键安装验证通过：从 `https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh` 启动 HTTPS 最小库，`/`、`/api/docs/`、`/api/openapi.json` 返回 200，HTTP 到 HTTPS 301 正确，API HTTPS smoke 通过，`bpmt_min` 为 176 张表。
 
 ## 发布产物
 
@@ -50,10 +51,25 @@
 - API arm64 digest：`sha256:319418992a2f66f87fa63b461e94b3be36a9f6a316d89937a8ea64c7f8b17283`
 - `latest` 已同步到上述 Web/API manifest digest。
 
-## 后续公开验证
+## 公开验证命令
 
-发布 tag 后需用公开 tag 路径执行一键安装验证：
+本次发布后已执行：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh \
+  | BPMT_HOME=/tmp/bpmt-v160-public-install \
+    BPMT_HTTPS_ENABLED=1 \
+    BPMT_HTTP_PORT=19080 \
+    BPMT_HTTPS_PORT=19443 \
+    BPMT_DB_PORT=14306 \
+    bash
 ```
+
+验证结果：
+
+- `https://127.0.0.1:19443/` 返回 200。
+- `https://127.0.0.1:19443/api/docs/` 返回 200。
+- `https://127.0.0.1:19443/api/openapi.json` 返回 200。
+- `http://127.0.0.1:19080/` 返回 301，`Location: https://127.0.0.1:19443/`。
+- `BPMT_API_BASE_URL=https://127.0.0.1:19443/api BPMT_API_CURL_INSECURE=1 sh scripts/smoke-api.sh` 输出 `API smoke passed`。
+- `bpmt_min` 初始化后 176 张表。
