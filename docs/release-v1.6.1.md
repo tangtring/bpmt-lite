@@ -19,13 +19,15 @@
 ```bash
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
-mvn -s settings.local.xml -pl platform -Dtest=OAuthActionTest,OAuthWechatLoginServiceTest,ThirdpartServiceTest,ThirdpartActionTest,ThirdpartJspTest,OAuthHbmMappingTest,OAuthDatabaseInitSqlTest test
+mvn -s settings.local.xml -pl platform -am -DfailIfNoTests=false -Dtest=OAuthActionTest,OAuthWechatLoginServiceTest,ThirdpartServiceTest,ThirdpartActionTest,ThirdpartJspTest,OAuthHbmMappingTest,OAuthDatabaseInitSqlTest test
 mvn -s settings.local.xml -DskipTests compile
-mvn -s settings.local.xml -pl api test
+mvn -s settings.local.xml -DskipTests install
+mvn -U -s settings.local.xml -pl api test
 scripts/build-image.sh
 scripts/build-api-image.sh
 scripts/verify-repo.sh
 git diff --check
+git status --short
 ```
 
 ## Task 8 版本收口验收
@@ -40,6 +42,7 @@ git diff --check
 - API 镜像构建：通过。`scripts/build-api-image.sh` 生成并验证 `ghcr.io/wodenwang/bpmt-lite-api:1.6.1`。
 - 仓库检查：通过。`scripts/verify-repo.sh` 输出 `OK: multi-arch image build script checks passed` 和 `OK: repository hygiene checks passed`。
 - 空白检查：通过。`git diff --check` 无输出。
+- 工作区检查：通过。`git status --short` 在提交前仅显示本次版本收口文件，提交后工作区干净。
 
 ## 发布边界
 
