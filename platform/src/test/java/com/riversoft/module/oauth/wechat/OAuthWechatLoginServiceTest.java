@@ -172,6 +172,57 @@ public class OAuthWechatLoginServiceTest {
         assertEquals(1, provider.loginCalls);
     }
 
+    @Test
+    public void fakeProviderAppendsDefaultCodeToCallbackWithExistingQuery() {
+        FakeWechatOAuthProvider provider = new FakeWechatOAuthProvider();
+
+        String redirectUrl = provider.buildAuthorizationUrl("agent", "fake-agent", null,
+                "http://127.0.0.1/oauth/authorize?client_id=wechat-smoke-client");
+
+        assertEquals("http://127.0.0.1/oauth/authorize?client_id=wechat-smoke-client&code=fake-admin",
+                redirectUrl);
+    }
+
+    @Test
+    public void fakeProviderLogsInAdminByControlledCode() {
+        final String[] loggedInUserId = new String[1];
+        FakeWechatOAuthProvider provider = new FakeWechatOAuthProvider(new FakeWechatOAuthProvider.LoginSessionWriter() {
+            public void doUserLogin(javax.servlet.http.HttpServletRequest request, String userId) {
+                loggedInUserId[0] = userId;
+            }
+        });
+        OAuthWechatLoginService service = new OAuthWechatLoginService(provider);
+        MockHttpServletRequest request = wechatRequest();
+        request.setParameter("code", "fake-admin");
+
+        OAuthWechatLoginResult result = service.handle(request, new MockHttpServletResponse(), agentThirdpart());
+
+        assertEquals(OAuthWechatLoginStatus.LOGGED_IN, result.getStatus());
+        assertEquals("admin", result.getUserId());
+        assertEquals("admin", loggedInUserId[0]);
+    }
+
+    @Test
+    public void fakeProviderInvalidCodeReturnsWechatLoginFailed() {
+        FakeWechatOAuthProvider provider = new FakeWechatOAuthProvider();
+        OAuthWechatLoginService service = new OAuthWechatLoginService(provider);
+        MockHttpServletRequest request = wechatRequest();
+        request.setParameter("code", "fake-invalid");
+
+        OAuthWechatLoginResult result = service.handle(request, new MockHttpServletResponse(), agentThirdpart());
+
+        assertEquals(OAuthWechatLoginStatus.ERROR, result.getStatus());
+        assertEquals("wechat_login_failed", result.getReason());
+    }
+
+    @Test
+    public void fakeProviderSwitchAcceptsOnlyExplicitTrueValues() {
+        assertEquals(false, OAuthWechatLoginService.isFakeProviderEnabled("false", null));
+        assertEquals(false, OAuthWechatLoginService.isFakeProviderEnabled(null, "0"));
+        assertEquals(true, OAuthWechatLoginService.isFakeProviderEnabled("true", null));
+        assertEquals(true, OAuthWechatLoginService.isFakeProviderEnabled(null, "1"));
+    }
+
     private MockHttpServletRequest request() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth/authorize");
         request.setRequestURI("/oauth/authorize");

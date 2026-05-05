@@ -18,7 +18,7 @@ public class OAuthWechatLoginService {
     private final WechatOAuthProvider provider;
 
     public OAuthWechatLoginService() {
-        this(new RealWechatOAuthProvider());
+        this(createDefaultProvider());
     }
 
     public OAuthWechatLoginService(WechatOAuthProvider provider) {
@@ -97,5 +97,22 @@ public class OAuthWechatLoginService {
 
     private static String stringValue(Object value) {
         return value == null ? null : StringUtils.trimToNull(String.valueOf(value));
+    }
+
+    private static WechatOAuthProvider createDefaultProvider() {
+        if (isFakeProviderEnabled(System.getenv("BPMT_OAUTH_WECHAT_FAKE_PROVIDER"),
+                System.getProperty("bpmt.oauth.wechat.fake.provider"))) {
+            return new FakeWechatOAuthProvider();
+        }
+        return new RealWechatOAuthProvider();
+    }
+
+    static boolean isFakeProviderEnabled(String envValue, String propertyValue) {
+        return isTrueValue(envValue) || isTrueValue(propertyValue);
+    }
+
+    private static boolean isTrueValue(String value) {
+        String normalized = StringUtils.trimToEmpty(value);
+        return "true".equalsIgnoreCase(normalized) || "1".equals(normalized);
     }
 }
