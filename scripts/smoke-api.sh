@@ -4,11 +4,16 @@ set -eu
 BASE_URL="${BPMT_API_BASE_URL:-http://127.0.0.1/api}"
 APP_KEY="${BPMT_API_APP_KEY:-bpmt-api}"
 APP_SECRET="${BPMT_API_APP_SECRET:-bpmt-api-secret}"
+CURL_INSECURE="${BPMT_API_CURL_INSECURE:-false}"
+CURL_OPTS="-sS"
+if [ "$CURL_INSECURE" = "1" ] || [ "$CURL_INSECURE" = "true" ]; then
+  CURL_OPTS="$CURL_OPTS -k"
+fi
 
-curl -fsSI "$BASE_URL/openapi.json" | grep -q '200'
-curl -fsSI "$BASE_URL/docs/" | grep -q '200'
+curl $CURL_OPTS -f -I "$BASE_URL/openapi.json" | grep -q '200'
+curl $CURL_OPTS -f -I "$BASE_URL/docs/" | grep -q '200'
 
-STATUS="$(curl -s -o /tmp/bpmt-api-unauthorized.json -w '%{http_code}' "$BASE_URL/v1/dynamic-tables")"
+STATUS="$(curl $CURL_OPTS -o /tmp/bpmt-api-unauthorized.json -w '%{http_code}' "$BASE_URL/v1/dynamic-tables")"
 if [ "$STATUS" != "401" ]; then
   printf '%s\n' "Expected 401 without signature, got $STATUS"
   cat /tmp/bpmt-api-unauthorized.json
@@ -34,7 +39,7 @@ signed_request() {
   fi
 
   if [ -n "$BODY" ]; then
-    STATUS="$(printf '%s' "$BODY" | curl -sS -o "$OUT" -w '%{http_code}' \
+    STATUS="$(printf '%s' "$BODY" | curl $CURL_OPTS -o "$OUT" -w '%{http_code}' \
       -X "$METHOD" \
       -H "Content-Type: application/json" \
       -H "X-BPMT-App-Key: $APP_KEY" \
@@ -44,7 +49,7 @@ signed_request() {
       --data-binary @- \
       "$URL")"
   else
-    STATUS="$(curl -sS -o "$OUT" -w '%{http_code}' \
+    STATUS="$(curl $CURL_OPTS -o "$OUT" -w '%{http_code}' \
       -X "$METHOD" \
       -H "X-BPMT-App-Key: $APP_KEY" \
       -H "X-BPMT-Timestamp: $TIMESTAMP" \
