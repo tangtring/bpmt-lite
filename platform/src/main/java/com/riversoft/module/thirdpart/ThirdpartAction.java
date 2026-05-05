@@ -128,10 +128,12 @@ public class ThirdpartAction {
         copy(request, input, "clientId");
         copy(request, input, "redirectUris");
         copy(request, input, "homeUrl");
-        copy(request, input, "wechatLoginEnabled");
-        copy(request, input, "wechatType");
-        copy(request, input, "wechatKey");
-        copy(request, input, "wechatScope");
+        if (request.getParameterMap().containsKey("wechatLoginEnabled")) {
+            copy(request, input, "wechatLoginEnabled");
+            copy(request, input, "wechatType");
+            copy(request, input, "wechatKey");
+            copy(request, input, "wechatScope");
+        }
         copy(request, input, "activeFlag");
         copy(request, input, "description");
         String clientSecret = RequestUtils.getStringValue(request, "clientSecret");

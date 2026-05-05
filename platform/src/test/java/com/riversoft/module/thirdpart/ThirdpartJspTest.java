@@ -68,6 +68,8 @@ public class ThirdpartJspTest {
         assertTrue(jsp.contains("企业号: ${vo.wechatKey}"));
         assertTrue(jsp.contains("服务号: ${vo.wechatKey}"));
         assertTrue(jsp.contains("关闭"));
+        assertFalse(jsp.contains("clientSecret"));
+        assertFalse(jsp.contains("clientSecretHash"));
     }
 
     private String readWebapp(String relativePath) throws Exception {

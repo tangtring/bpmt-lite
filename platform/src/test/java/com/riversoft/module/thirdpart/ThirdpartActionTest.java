@@ -135,6 +135,23 @@ public class ThirdpartActionTest {
     }
 
     @Test
+    public void submitFormWithoutWechatParametersDoesNotOverwriteWechatBinding() {
+        TestThirdpartAction action = new TestThirdpartAction();
+        action.entities.put("app-a", thirdpart("app-a", 1));
+        MockHttpServletRequest request = legacyRequest();
+        request.setParameter("isCreate", "0");
+
+        action.submitForm(request, new MockHttpServletResponse());
+
+        assertEquals("update", action.writeMode);
+        assertEquals("app-a", action.updatedKey);
+        assertEquals(false, action.input.containsKey("wechatLoginEnabled"));
+        assertEquals(false, action.input.containsKey("wechatType"));
+        assertEquals(false, action.input.containsKey("wechatKey"));
+        assertEquals(false, action.input.containsKey("wechatScope"));
+    }
+
+    @Test
     public void toggleActiveUsesRequestedFlag() {
         TestThirdpartAction action = new TestThirdpartAction();
         action.entities.put("app-a", thirdpart("app-a", 1));
@@ -176,16 +193,21 @@ public class ThirdpartActionTest {
     }
 
     private static MockHttpServletRequest filledRequest() {
+        MockHttpServletRequest request = legacyRequest();
+        request.setParameter("wechatLoginEnabled", "1");
+        request.setParameter("wechatType", "agent");
+        request.setParameter("wechatKey", "corp-agent");
+        request.setParameter("wechatScope", "");
+        return request;
+    }
+
+    private static MockHttpServletRequest legacyRequest() {
         MockHttpServletRequest request = request();
         request.setParameter("thirdpartKey", "app-a");
         request.setParameter("thirdpartName", "外部系统 A");
         request.setParameter("clientId", "client-a");
         request.setParameter("redirectUris", "http://client.example/callback");
         request.setParameter("homeUrl", "http://client.example/");
-        request.setParameter("wechatLoginEnabled", "1");
-        request.setParameter("wechatType", "agent");
-        request.setParameter("wechatKey", "corp-agent");
-        request.setParameter("wechatScope", "");
         request.setParameter("activeFlag", "1");
         request.setParameter("description", "demo");
         return request;
