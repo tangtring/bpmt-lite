@@ -1,0 +1,21 @@
+# This template documents the generated bpmt-lite nginx entrypoint.
+# scripts/render-nginx-conf.sh renders docker/nginx/nginx.conf from BPMT_* env vars.
+
+# HTTP-only:
+# - listen 80
+# - proxy /api/ to bpmt-api:8081/api/
+# - proxy /ueditor/ and / to bpmt-web:8080
+
+# HTTPS:
+# - BPMT_HTTPS_ENABLED=1 enables listen 443 ssl
+# - BPMT_HTTP_REDIRECT=true makes HTTP return 301 to https://$http_host$request_uri
+# - BPMT_HTTP_REDIRECT=false keeps both HTTP and HTTPS proxying business traffic
+# - BPMT_TLS_CERT_FILE and BPMT_TLS_KEY_FILE point to files inside the nginx container
+
+# All generated proxy locations use these headers:
+# proxy_set_header Host $http_host;
+# proxy_set_header X-Forwarded-Host $http_host;
+# proxy_set_header X-Forwarded-Proto http|https;
+# proxy_set_header X-Forwarded-Port 80|443;
+# proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+# proxy_set_header X-Real-IP $remote_addr;

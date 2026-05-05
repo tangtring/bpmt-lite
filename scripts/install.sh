@@ -48,4 +48,5 @@ cd "$INSTALL_DIR"
 download "$RAW_BASE_URL/scripts/run.sh" run.sh
 chmod +x run.sh
 
+# HTTPS-related BPMT_* environment variables intentionally pass through to run.sh.
 BPMT_RAW_BASE_URL="$RAW_BASE_URL" BPMT_SQL_BASE_URL="$SQL_BASE_URL" sh ./run.sh $run_arg

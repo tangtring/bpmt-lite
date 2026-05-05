@@ -24,6 +24,8 @@ config/overrides/*
 !config/overrides/.gitkeep
 !config/overrides/*.example
 
+certs/
+
 *.log
 *.tmp
 cookies.txt
