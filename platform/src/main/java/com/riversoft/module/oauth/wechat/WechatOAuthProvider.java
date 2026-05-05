@@ -7,3 +7,11 @@ public interface WechatOAuthProvider {
 
     String loginByCode(HttpServletRequest request, String wechatType, String wechatKey, String wechatScope, String code);
 }
+
+class OAuthWechatConfigException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    OAuthWechatConfigException(String message) {
+        super(message);
+    }
+}

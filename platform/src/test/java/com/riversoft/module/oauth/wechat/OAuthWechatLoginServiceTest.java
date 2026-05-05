@@ -96,6 +96,21 @@ public class OAuthWechatLoginServiceTest {
     }
 
     @Test
+    public void returnsConfigErrorWhenProviderCannotBuildAuthorizationUrl() {
+        TestWechatOAuthProvider provider = new TestWechatOAuthProvider();
+        provider.authorizationFailure = new OAuthWechatConfigException("WxMp配置不存在.");
+        OAuthWechatLoginService service = new OAuthWechatLoginService(provider);
+        MockHttpServletRequest request = wechatRequest();
+
+        OAuthWechatLoginResult result = service.handle(request, new MockHttpServletResponse(), agentThirdpart());
+
+        assertEquals(OAuthWechatLoginStatus.ERROR, result.getStatus());
+        assertEquals("wechat_config_invalid", result.getReason());
+        assertEquals(1, provider.authorizationCalls);
+        assertEquals(0, provider.loginCalls);
+    }
+
+    @Test
     public void returnsErrorWhenProviderCannotLogin() {
         TestWechatOAuthProvider provider = new TestWechatOAuthProvider();
         provider.loginFailure = new RuntimeException("provider down");
@@ -153,6 +168,7 @@ public class OAuthWechatLoginServiceTest {
     private static class TestWechatOAuthProvider implements WechatOAuthProvider {
         private String authorizationUrl = "https://wechat.example/oauth";
         private String userId = "admin";
+        private RuntimeException authorizationFailure;
         private RuntimeException loginFailure;
         private int authorizationCalls;
         private int loginCalls;
@@ -169,6 +185,9 @@ public class OAuthWechatLoginServiceTest {
             this.wechatKey = wechatKey;
             this.wechatScope = wechatScope;
             this.callbackUrl = callbackUrl;
+            if (authorizationFailure != null) {
+                throw authorizationFailure;
+            }
             return authorizationUrl;
         }
 

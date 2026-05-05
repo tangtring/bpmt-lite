@@ -55,6 +55,8 @@ public class OAuthWechatLoginService {
                         stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")),
                         wechatType, wechatKey, null, "wechat_code_missing");
                 return OAuthWechatLoginResult.redirect(redirectUrl);
+            } catch (OAuthWechatConfigException e) {
+                return error(thirdpart, wechatType, wechatKey, null, "wechat_config_invalid", e.getMessage());
             } catch (RuntimeException e) {
                 return error(thirdpart, wechatType, wechatKey, null, "wechat_login_failed", "微信授权地址生成失败.");
             }
@@ -70,6 +72,8 @@ public class OAuthWechatLoginService {
                     stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")), wechatType,
                     wechatKey, userId, "wechat_code_accepted");
             return OAuthWechatLoginResult.loggedIn(userId);
+        } catch (OAuthWechatConfigException e) {
+            return error(thirdpart, wechatType, wechatKey, null, "wechat_config_invalid", e.getMessage());
         } catch (RuntimeException e) {
             return error(thirdpart, wechatType, wechatKey, null, "wechat_login_failed", "微信登录失败.");
         }
@@ -78,9 +82,9 @@ public class OAuthWechatLoginService {
     private OAuthWechatLoginResult error(Map<String, Object> thirdpart, String wechatType, String wechatKey,
             String userId, String reason, String message) {
         logger.info(
-                "wechat oauth login error clientId={} thirdpartKey={} wechatType={} wechatKey={} userId={} result=ERROR reason={}",
+                "wechat oauth login error clientId={} thirdpartKey={} wechatType={} wechatKey={} userId={} result=ERROR reason={} message={}",
                 stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")), wechatType,
-                wechatKey, userId, reason);
+                wechatKey, userId, reason, message);
         return OAuthWechatLoginResult.error(reason, message);
     }
 
