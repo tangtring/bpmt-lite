@@ -6,9 +6,7 @@
 
 ## 当前版本
 
-`v1.6.0` 为当前版本，新增 `nginx` HTTPS 入口支持。默认仍可 HTTP 快速启动；需要 HTTPS 时可启用内置 TLS、自签证书和 HTTP 到 HTTPS 跳转，也可放在可信上游 TLS 网关后运行。`v1.5.4` 的 Web/API multi-arch 发布能力、`v1.5.3` 的非 80 端口 OAuth 回跳修复、`v1.5.2` 的外部系统 OAuth 登录态切换体验、`v1.5.1` 的工作流待办“查看/处理”跳转修复继续保留。
-
-`v1.6.1` 基于 `v1.6.0` 增强微信生态下第三方 OAuth 登录态传导。外部系统仍按标准 `/oauth/authorize` 发起；微信内、无 BPMT 登录态、且第三方启用微信登录绑定时，BPMT 先走企业号或服务号微信 OAuth，成功后回到原 authorize 并签发标准 OAuth code，第三方仍通过原 `redirect_uri?code=...&state=...` 接收结果。已有数据库升级需执行 `database/v1.6.1-wechat-oauth-thirdpart.sql`；默认关闭，未配置第三方行为与 `v1.6.0` 一致。
+`v1.6.1` 为当前版本，基于 `v1.6.0` 增强微信生态下第三方 OAuth 登录态传导。外部系统仍按标准 `/oauth/authorize` 发起；微信内、无 BPMT 登录态、且第三方启用微信登录绑定时，BPMT 先走企业号或服务号微信 OAuth，成功后回到原 authorize 并签发标准 OAuth code，第三方仍通过原 `redirect_uri?code=...&state=...` 接收结果。已有数据库升级需执行 `database/v1.6.1-wechat-oauth-thirdpart.sql`；默认关闭，未配置第三方行为与 `v1.6.0` 一致。`v1.6.0` 的 `nginx` HTTPS 入口支持、`v1.5.4` 的 Web/API multi-arch 发布能力、`v1.5.3` 的非 80 端口 OAuth 回跳修复、`v1.5.2` 的外部系统 OAuth 登录态切换体验、`v1.5.1` 的工作流待办“查看/处理”跳转修复继续保留。
 
 `v1.5.0` 新增外部系统 OAuth 登录能力。BPMT 可以作为 OAuth2 Authorization Code 服务端，向第三方 Web 系统提供统一登录入口。
 
@@ -16,8 +14,8 @@
 
 `v1.3.0` 是 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
 
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.0`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.0`
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.1`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.1`
 - 默认访问地址：`http://127.0.0.1/`
 - API 文档地址：`http://127.0.0.1/api/docs/`
 - OpenAPI 地址：`http://127.0.0.1/api/openapi.json`
@@ -34,10 +32,10 @@
 如果只是快速体验，推荐先使用最小库启动：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh | bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash
 ```
 
-说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.6.0`）。如需切换版本，可显式设置 `BPMT_REF`。
+说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.6.1`）。如需切换版本，可显式设置 `BPMT_REF`。
 
 访问：
 
@@ -65,7 +63,7 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 如果要使用完整业务库，执行：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash -s -- full
 ```
 
 ### HTTPS 本地体验
@@ -73,7 +71,7 @@ curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/i
 默认仍可使用 HTTP 快速启动。需要本地 HTTPS 时：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
 ```
 
 脚本会在运行目录生成本地自签证书：
@@ -101,12 +99,12 @@ BPMT_HTTPS_ENABLED=1 docker compose -f docker-compose.yml -f docker-compose.http
 
 ## 完整库启动
 
-`v1.6.0` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
+`v1.6.1` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
 
 完整库启动命令：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash -s -- full
 ```
 
 如果你本机已有可导入的完整 SQL，也可以直接放到：
@@ -173,7 +171,7 @@ docker compose up -d
 ```bash
 docker compose down
 rm -rf docker/nginx/nginx.conf
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.0/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash -s -- full
 ```
 
 检查入口：
@@ -195,7 +193,7 @@ scripts/smoke-api.sh
 
 ## API 使用
 
-`v1.6.0` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。启用 HTTPS 后，API 默认路径变为 `https://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。本版本的 Web/API 默认镜像继续使用 multi-arch 发布，支持常见 x86_64 Linux 服务器和 Apple Silicon/ARM64 环境。
+`v1.6.1` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。启用 HTTPS 后，API 默认路径变为 `https://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。本版本的 Web/API 默认镜像继续使用 multi-arch 发布，支持常见 x86_64 Linux 服务器和 Apple Silicon/ARM64 环境。
 
 API 文档有两种形态：
 
@@ -282,8 +280,8 @@ OAuth demo 项目见：[bpmt-oauth-demo](https://github.com/wodenwang/bpmt-oauth
 | `BPMT_TLS_HOSTS` | `localhost` | 自签证书 SAN 域名，逗号分隔 |
 | `BPMT_TLS_IPS` | `127.0.0.1` | 自签证书 SAN IP，逗号分隔 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.6.0` | Web 镜像 tag |
-| `BPMT_API_IMAGE_TAG` | `1.6.0` | API 镜像 tag |
+| `BPMT_IMAGE_TAG` | `1.6.1` | Web 镜像 tag |
+| `BPMT_API_IMAGE_TAG` | `1.6.1` | API 镜像 tag |
 | `DB_HOST` | `bpmt-mariadb` | Web/API 容器访问数据库的主机名 |
 | `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
 | `DB_USER` | `root` | 数据库用户 |

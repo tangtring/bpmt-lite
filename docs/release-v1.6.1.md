@@ -21,10 +21,25 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
 mvn -s settings.local.xml -pl platform -Dtest=OAuthActionTest,OAuthWechatLoginServiceTest,ThirdpartServiceTest,ThirdpartActionTest,ThirdpartJspTest,OAuthHbmMappingTest,OAuthDatabaseInitSqlTest test
 mvn -s settings.local.xml -DskipTests compile
+mvn -s settings.local.xml -pl api test
 scripts/build-image.sh
 scripts/build-api-image.sh
-scripts/smoke-oauth-wechat.sh
+scripts/verify-repo.sh
+git diff --check
 ```
+
+## Task 8 版本收口验收
+
+执行时间：2026-05-05。
+
+- 版本引用检查：通过。Maven 项目版本、默认 Web/API 镜像 tag、`install.sh`/`run.sh` 默认 `BPMT_REF`、`init-db.sh` 默认 raw tag、README 当前安装命令和 OpenAPI 版本字段已切到 `1.6.1` / `v1.6.1`。剩余 `1.6.0` / `v1.6.0` 均为基线或历史说明。
+- 平台窄测：通过。原 `mvn -s settings.local.xml -pl platform ... test` 在 release 版本刚切换后因未带 `-am` 无法解析本地未安装的 `1.6.1` 内部依赖；改用 `mvn -s settings.local.xml -pl platform -am -DfailIfNoTests=false ... test` 后通过，75 tests，0 failures，0 errors。
+- 全仓编译：通过。`mvn -s settings.local.xml -DskipTests compile`，BUILD SUCCESS。
+- API 测试：通过。原 `mvn -s settings.local.xml -pl api test` 在内部 `1.6.1` 依赖未安装时解析失败；先执行 `mvn -s settings.local.xml -DskipTests install` 安装当前 reactor 产物到本地 Maven 仓库，再执行 `mvn -U -s settings.local.xml -pl api test` 通过，39 tests，0 failures，0 errors。
+- Web 镜像构建：通过。`scripts/build-image.sh` 生成并验证 `ghcr.io/wodenwang/bpmt-lite:1.6.1`。
+- API 镜像构建：通过。`scripts/build-api-image.sh` 生成并验证 `ghcr.io/wodenwang/bpmt-lite-api:1.6.1`。
+- 仓库检查：通过。`scripts/verify-repo.sh` 输出 `OK: multi-arch image build script checks passed` 和 `OK: repository hygiene checks passed`。
+- 空白检查：通过。`git diff --check` 无输出。
 
 ## 发布边界
 
