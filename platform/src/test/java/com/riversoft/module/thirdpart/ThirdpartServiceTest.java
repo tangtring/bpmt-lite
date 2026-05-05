@@ -56,6 +56,28 @@ public class ThirdpartServiceTest {
     }
 
     @Test
+    public void normalizesMissingWechatLoginAsDisabled() {
+        Map<String, Object> input = new java.util.HashMap<String, Object>();
+
+        Map<String, Object> normalized = ThirdpartService.normalizeWechatLogin(input);
+
+        assertEquals(Integer.valueOf(0), normalized.get("wechatLoginEnabled"));
+        assertEquals(null, normalized.get("wechatType"));
+        assertEquals(null, normalized.get("wechatKey"));
+        assertEquals(null, normalized.get("wechatScope"));
+    }
+
+    @Test
+    public void normalizesNullWechatLoginAsDisabled() {
+        Map<String, Object> normalized = ThirdpartService.normalizeWechatLogin(null);
+
+        assertEquals(Integer.valueOf(0), normalized.get("wechatLoginEnabled"));
+        assertEquals(null, normalized.get("wechatType"));
+        assertEquals(null, normalized.get("wechatKey"));
+        assertEquals(null, normalized.get("wechatScope"));
+    }
+
+    @Test
     public void normalizesEnabledAgentWechatLogin() {
         Map<String, Object> input = new java.util.HashMap<String, Object>();
         input.put("wechatLoginEnabled", "1");

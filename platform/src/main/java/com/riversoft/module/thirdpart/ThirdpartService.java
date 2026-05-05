@@ -196,7 +196,7 @@ public class ThirdpartService {
 
     public static Map<String, Object> normalizeWechatLogin(Map<String, Object> input) {
         Map<String, Object> normalized = new HashMap<String, Object>();
-        Integer enabled = normalizeActiveFlag(input == null ? null : input.get("wechatLoginEnabled"));
+        Integer enabled = normalizeWechatLoginEnabled(input == null ? null : input.get("wechatLoginEnabled"));
         normalized.put("wechatLoginEnabled", enabled);
         if (!Integer.valueOf(1).equals(enabled)) {
             normalized.put("wechatType", null);
@@ -230,6 +230,13 @@ public class ThirdpartService {
             normalized.put("wechatScope", null);
         }
         return normalized;
+    }
+
+    private static Integer normalizeWechatLoginEnabled(Object value) {
+        if (value == null) {
+            return Integer.valueOf(0);
+        }
+        return normalizeActiveFlag(value);
     }
 
     private static void applyWechatLogin(DataPO po, Map<String, Object> input) {
