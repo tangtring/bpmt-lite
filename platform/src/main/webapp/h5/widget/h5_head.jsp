@@ -14,8 +14,8 @@
 	
 	<title>${wpf:lan(_title)}</title>
 	
-	<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
-	<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.1.0.js"></script>
+	<script src="${_cp}/js/jquery-weui-0.7.2/lib/jquery-2.1.4.js"></script>
+	<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.1.0.js"></script>
 
 	<c:choose>
 		<c:when test="${_h5_js=='amaze'||param._h5_js=='amaze'}">
@@ -23,9 +23,9 @@
 			<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/amazeui/2.6.2/js/amazeui.min.js"></script>
 		</c:when>
 		<c:when test="${_h5_js!='none'&&param._h5_js=='none'}">
-			<link rel="stylesheet" href="http://cdn.bootcss.com/weui/0.4.3/style/weui.min.css">
-			<link rel="stylesheet" href="http://cdn.bootcss.com/jquery-weui/0.8.0/css/jquery-weui.min.css">
-			<script src="http://cdn.bootcss.com/jquery-weui/0.8.0/js/jquery-weui.min.js"></script>
+			<link rel="stylesheet" href="${_cp}/js/jquery-weui-0.7.2/lib/weui.min.css">
+			<link rel="stylesheet" href="${_cp}/js/jquery-weui-0.7.2/css/jquery-weui.min.css">
+			<script src="${_cp}/js/jquery-weui-0.7.2/js/jquery-weui.min.js"></script>
 		</c:when>
 	</c:choose>
 

@@ -16,7 +16,7 @@
 	</script>
 <![endif]-->
 
-<script src="http://res.wx.qq.com/connect/zh_CN/htmledition/js/wxLogin.js"></script>
+<script src="https://res.wx.qq.com/connect/zh_CN/htmledition/js/wxLogin.js"></script>
 <script type="text/javascript">
 	$(function() {
 		var $zone = $('#${_zone}');
@@ -101,7 +101,7 @@
 					id : '${_zone}_wx_qrcode',
 					appid : '${wxWebAppId}',
 					scope : 'snsapi_login',
-					redirect_uri : 'http://${wxDomain}/frame/LoginAction/wxLogin.shtml',
+					redirect_uri : '${_cp}/frame/LoginAction/wxLogin.shtml',
 					state : new Date().getTime()
 				});
 			}

@@ -20,7 +20,7 @@
 <c:set var="baseCp" value="${_cp}/xhtml/frame_new" />
 <link rel="stylesheet" href="${baseCp}/css/main.css">
 
-<script src="http://res.wx.qq.com/connect/zh_CN/htmledition/js/wxLogin.js"></script>
+<script src="https://res.wx.qq.com/connect/zh_CN/htmledition/js/wxLogin.js"></script>
 <script type="text/javascript">
 	
 	$(function(){
@@ -107,7 +107,7 @@
 					id : '${_zone}_wx_qrcode',
 					appid : '${wxWebAppId}',
 					scope : 'snsapi_login',
-					redirect_uri : 'http://${wxDomain}/frame/LoginAction/wxLogin.shtml',
+					redirect_uri : '${_cp}/frame/LoginAction/wxLogin.shtml',
 					state : new Date().getTime()
 				});
 			}
