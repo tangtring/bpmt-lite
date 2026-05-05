@@ -38,7 +38,8 @@ public class OAuthWechatLoginService {
         try {
             wechat = ThirdpartService.normalizeWechatLogin(thirdpart);
         } catch (RuntimeException e) {
-            return error(thirdpart, null, null, null, "wechat_config_invalid", e.getMessage());
+            return error(thirdpart, stringValue(thirdpart.get("wechatType")), stringValue(thirdpart.get("wechatKey")),
+                    null, "wechat_config_invalid", e.getMessage());
         }
 
         String wechatType = stringValue(wechat.get("wechatType"));
@@ -50,9 +51,9 @@ public class OAuthWechatLoginService {
                 String redirectUrl = provider.buildAuthorizationUrl(wechatType, wechatKey, wechatScope,
                         Actions.Util.getFullURL(request));
                 logger.info(
-                        "wechat oauth login redirect clientId={} thirdpartKey={} wechatType={} wechatKey={} result=REDIRECT",
+                        "wechat oauth login redirect clientId={} thirdpartKey={} wechatType={} wechatKey={} userId={} result=REDIRECT reason={}",
                         stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")),
-                        wechatType, wechatKey);
+                        wechatType, wechatKey, null, "wechat_code_missing");
                 return OAuthWechatLoginResult.redirect(redirectUrl);
             } catch (RuntimeException e) {
                 return error(thirdpart, wechatType, wechatKey, null, "wechat_login_failed", "微信授权地址生成失败.");
@@ -65,9 +66,9 @@ public class OAuthWechatLoginService {
                 return error(thirdpart, wechatType, wechatKey, null, "wechat_login_failed", "userId is blank");
             }
             logger.info(
-                    "wechat oauth login success clientId={} thirdpartKey={} wechatType={} wechatKey={} userId={} result=LOGGED_IN",
+                    "wechat oauth login success clientId={} thirdpartKey={} wechatType={} wechatKey={} userId={} result=LOGGED_IN reason={}",
                     stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")), wechatType,
-                    wechatKey, userId);
+                    wechatKey, userId, "wechat_code_accepted");
             return OAuthWechatLoginResult.loggedIn(userId);
         } catch (RuntimeException e) {
             return error(thirdpart, wechatType, wechatKey, null, "wechat_login_failed", "微信登录失败.");
