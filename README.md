@@ -89,9 +89,11 @@ https://127.0.0.1/
 
 自签证书会触发浏览器安全提示，这是本地体验的预期行为。生产环境请把正式证书替换到同一路径后重新启动。
 
-如果手工使用 compose 启 HTTPS，需要同时加载 HTTPS overlay：
+如果在已 clone 的源码目录中手工使用 compose 启 HTTPS，需要先准备证书并渲染 nginx 配置，再加载 HTTPS overlay：
 
 ```bash
+BPMT_HTTPS_ENABLED=1 sh scripts/generate-self-signed-cert.sh
+BPMT_HTTPS_ENABLED=1 sh scripts/render-nginx-conf.sh
 BPMT_HTTPS_ENABLED=1 docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
 ```
 
@@ -270,6 +272,8 @@ OAuth demo 项目见：[bpmt-oauth-demo](https://github.com/wodenwang/bpmt-oauth
 | `BPMT_HTTPS_ENABLED` | `0` | 是否启用内置 nginx HTTPS 入口 |
 | `BPMT_HTTPS_PORT` | `443` | HTTPS 对外访问端口，启用 HTTPS 时通过 `docker-compose.https.yml` 发布 |
 | `BPMT_HTTP_REDIRECT` | `true` | HTTPS 启用时是否把 HTTP 默认 301 跳转到 HTTPS |
+| `BPMT_UPSTREAM_TLS_ENABLED` | `0` | 由可信上游终止 TLS 并转发到本 nginx HTTP 入口时设为 `1` |
+| `BPMT_UPSTREAM_HTTPS_PORT` | `BPMT_HTTPS_PORT` | 可信上游对外 HTTPS 端口 |
 | `BPMT_TLS_HOSTS` | `localhost` | 自签证书 SAN 域名，逗号分隔 |
 | `BPMT_TLS_IPS` | `127.0.0.1` | 自签证书 SAN IP，逗号分隔 |
 | `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
@@ -295,8 +299,17 @@ BPMT_HTTP_PORT=18080 docker compose up -d
 示例：使用非标准端口启用 HTTPS。
 
 ```bash
+BPMT_HTTPS_ENABLED=1 BPMT_HTTP_PORT=18080 BPMT_HTTPS_PORT=18443 sh scripts/generate-self-signed-cert.sh
+BPMT_HTTPS_ENABLED=1 BPMT_HTTP_PORT=18080 BPMT_HTTPS_PORT=18443 sh scripts/render-nginx-conf.sh
 BPMT_HTTPS_ENABLED=1 BPMT_HTTP_PORT=18080 BPMT_HTTPS_PORT=18443 \
   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+```
+
+示例：由可信上游网关终止 TLS，再转发到本 nginx HTTP 入口。
+
+```bash
+BPMT_UPSTREAM_TLS_ENABLED=1 BPMT_UPSTREAM_HTTPS_PORT=443 sh scripts/render-nginx-conf.sh
+docker compose up -d
 ```
 
 后端会信任 `X-Forwarded-Proto`、`X-Forwarded-Host`、`X-Forwarded-Port` 来生成公开 URL。生产部署不要把 `bpmt-web` 或 `bpmt-api` 直接暴露到不可信网络；如果前面还有上游网关，必须由上游覆盖并规范设置这些代理头。

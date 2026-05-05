@@ -645,6 +645,7 @@ v1.5.1 文档见：
 - `scripts/generate-self-signed-cert.sh` 默认生成 `certs/fullchain.pem` 和 `certs/privkey.pem`，证书目录不提交 git。
 - `scripts/render-nginx-conf.sh` 支持 HTTP-only、HTTPS redirect、HTTPS no-redirect 三种 nginx 配置。
 - HTTP 到 HTTPS 默认 301，可用 `BPMT_HTTP_REDIRECT=false` 关闭。
+- 可信上游网关终止 TLS 后转发到本 nginx HTTP 入口时，必须用 `BPMT_UPSTREAM_TLS_ENABLED=1` 重新渲染 nginx 配置，让后端看到公开 `https` scheme。
 - 非标准端口必须通过 `BPMT_HTTP_PORT`、`BPMT_HTTPS_PORT` 写入 `X-Forwarded-Port`，redirect 也必须保留公开 HTTPS 端口。
 - 后端公开 URL 统一通过 `Actions.Util.getContextPath()` 和 `Actions.Util.getFullURL()` 读取可信 `X-Forwarded-*` 头生成。
 - `OAuthDirectFilter` 不信任公网 `/oauth/authorize` 请求自带的 `_full_url` 参数，只从当前 request URI 和 query string 派生转发 URL。

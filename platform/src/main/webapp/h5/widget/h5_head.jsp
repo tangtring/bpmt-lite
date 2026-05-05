@@ -11,9 +11,9 @@
 	<c:if test="${_ico!=null&&_icon!=''}">
 		<link rel="shortcut icon" href="${_ico}" type="image/x-icon" />
 	</c:if>
-	
+
 	<title>${wpf:lan(_title)}</title>
-	
+
 	<script src="${_cp}/js/jquery-weui-0.7.2/lib/jquery-2.1.4.js"></script>
 	<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.1.0.js"></script>
 
@@ -32,7 +32,7 @@
 	<script src="${_cp}/js/jquery.form.min.js"></script>
 	<script src="${_cp}/js/ws-widget.js"></script>
 	<script src="${_cp}/js/ws-wxui.js"></script>
-	
+
 	<style type="text/css">
 	* {
 		margin: 0;

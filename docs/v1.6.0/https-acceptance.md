@@ -14,6 +14,7 @@ v1.6.0 验证 `bpmt-lite` 在内置 nginx HTTPS 入口和可信上游代理语�
 | API 单测 | PASS | `mvn -s settings.local.xml -pl api test`，`Tests run: 39, Failures: 0, Errors: 0` |
 | OAuth/HTTPS 目标单测 | PASS | `ActionsForwardedUrlTest`、`OAuthActionTest`、`HttpsStaticResourceTest` 通过 |
 | 本地 Web/API 镜像构建 | PASS | `scripts/build-image.sh` 与 `scripts/build-api-image.sh` 均通过，生成 `1.6.0` 本地镜像 |
+| 上游 TLS nginx 渲染 | PASS | `BPMT_UPSTREAM_TLS_ENABLED=1` 时 HTTP listener 写出 `X-Forwarded-Proto https` 与公开 HTTPS 端口 |
 
 ## HTTPS runtime
 
@@ -41,8 +42,8 @@ BPMT_HTTPS_ENABLED=1 BPMT_HTTPS_PORT=18443 BPMT_HTTP_PORT=18080 \
 | 桌面登录页 | 无 mixed content 阻断 | PASS，`https://127.0.0.1:18443/login.jsp` 返回 200，console 无 mixed content |
 | H5 登录页 | 无 mixed content 阻断 | PASS，`https://127.0.0.1:18443/login.jsp?_action_mode=h5` 返回 200，console 无 mixed content |
 | 首页和菜单 | 登录后可浏览 | PASS，`admin/admin` 登录后进入 `J_DpS0eJL9X.xhtml`，首页和菜单文本可见 |
-| H5 代表业务路径 | 可浏览 | PASS，H5 登录页渲染；运行主路径未再请求 HTTP CDN 阻断资源 |
-| `/oauth/authorize` | HTTPS 登录与回跳正确 | PASS，无效 `demo-client` 返回 OAuth 错误页，说明 HTTPS 下 filter/action 正常接管 |
+| H5 代表业务路径 | 可浏览 | PASS，`dyn`、`flowbasic`、`rep_list`、`note` 四类代表 URL 均返回 200 |
+| `/oauth/authorize` | HTTPS 登录与回跳正确 | PASS，覆盖未登录、已有登录态、无权限、取消、切换账号主路径 |
 | `/api/docs/` | HTTPS 页面可读 | PASS，页面标题 `BPMT Lite API Docs` |
 | HTTP CDN/mixed-content 扫描 | 无阻断 | PASS，浏览器未出现 `http://apps.bdimg.com`、`http://cdn.bootcss.com`、`http://res.wx.qq.com` 失败请求 |
 
@@ -65,7 +66,7 @@ API smoke passed: https://127.0.0.1:18443/api
 | 基线 | 期望 | 结果 |
 | --- | --- | --- |
 | v1.5.1 issue #10 | 工作流待办“查看/处理”无 `_ORD_ID=null` | PASS，完整库 `zhangzongcai/123` 点击“查看”和“处理”，两条 `.view` 请求均包含 `_ORD_ID=FNBW2604001`，未出现 `_ORD_ID=null` |
-| v1.5.2 OAuth 登录态切换 | 无权限提示、取消、切换账号可用 | PARTIAL，本轮验证 HTTPS 下 `/oauth/authorize` 正常进入 OAuth action；完整交互沿用 v1.5.2 验收，发布前如改 OAuth 交互需复测 |
+| v1.5.2 OAuth 登录态切换 | 无权限提示、取消、切换账号可用 | PASS，HTTPS 下无权限提示、取消回调 `access_denied`、切换账号后 admin 继续授权均通过 |
 | v1.5.3 非标准端口 | OAuth URL 保留端口 | PASS，HTTPS 运行在 `18443`，浏览器和工作流跳转请求均保留 `https://127.0.0.1:18443` |
 | v1.5.4 multi-arch | Web/API manifest 包含 amd64 和 arm64 | 待发布，multi-arch manifest 在 release closure 使用 `scripts/build-multiarch-images.sh` 验证 |
 
@@ -98,3 +99,39 @@ GET  https://127.0.0.1:18443/1iI5xylQL9X.view?...&_TASK_ID=b26481fc-42d3-11f1-b6
 - 查看窗口标题包含 `员工借款[FNBW2604001]:审核`。
 - 处理窗口标题包含 `员工借款[FNBW2604001]:审核`。
 - console error 为空，page error 为空。
+
+## OAuth HTTPS 登录态切换证据
+
+完整库运行时临时插入 OAuth 验收客户端：
+
+- `client_id=client-v160-smoke`
+- `redirect_uri=https://127.0.0.1:18443/oauth-smoke/callback`
+- `PRI_KEY=sys_thirdpart`
+
+测试 URL：
+
+```text
+https://127.0.0.1:18443/oauth/authorize?response_type=code&client_id=client-v160-smoke&redirect_uri=https%3A%2F%2F127.0.0.1%3A18443%2Foauth-smoke%2Fcallback&state=s-160
+```
+
+| 场景 | 结果 |
+| --- | --- |
+| 无 BPMT session 访问 authorize | PASS，跳转 `https://127.0.0.1:18443/login.jsp` |
+| 已有 BPMT session + `admin/admin` | PASS，回跳 `https://127.0.0.1:18443/oauth-smoke/callback?code=...&state=s-160` |
+| 已有 BPMT session + `zhangzongcai/123` 无权限 | PASS，页面显示 `当前账号无权访问外部系统`，包含当前账号 `zhangzongcai` 和客户端名称 |
+| 无权限页点击“取消并返回第三方系统” | PASS，回跳 `https://127.0.0.1:18443/oauth-smoke/callback?error=access_denied&...&state=s-160` |
+| 无权限页点击“退出当前账号并重新登录” | PASS，跳转 `https://127.0.0.1:18443/login.jsp` |
+| 切换账号后以 `admin/admin` 登录 | PASS，继续原 authorize，回跳 `https://127.0.0.1:18443/oauth-smoke/callback?code=...&state=s-160` |
+
+## H5 HTTPS 业务 URL 证据
+
+移动端 viewport 下使用 `admin/admin` 登录后验证：
+
+| 类型 | URL | 结果 |
+| --- | --- | --- |
+| `dyn` | `/dyn/Akf3zTHgJL9XAction/list.shtml?_action_mode=h5` | PASS，200，可见“公司资料”查询区 |
+| `flowbasic` | `/flow/view/AQPyBgISJL9XAction/main.shtml?_action_mode=h5` | PASS，200，可见“收入登记”查询区 |
+| `rep_list` | `/report/AjgOEUDhJL9XAction/list.shtml?_action_mode=h5` | PASS，200，可见“个人经办”查询区 |
+| `note` | `/Fn7MNvjJL9X.view?_action_mode=h5` | PASS，200，可见“测试公告”列表 |
+
+浏览器未出现 `http://apps.bdimg.com`、`http://cdn.bootcss.com`、`http://res.wx.qq.com` 请求失败或 mixed-content console 错误。

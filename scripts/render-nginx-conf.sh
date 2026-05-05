@@ -5,6 +5,8 @@ HTTPS_ENABLED="${BPMT_HTTPS_ENABLED:-0}"
 HTTP_REDIRECT="${BPMT_HTTP_REDIRECT:-true}"
 HTTP_PORT="${BPMT_HTTP_PORT:-80}"
 HTTPS_PORT="${BPMT_HTTPS_PORT:-443}"
+UPSTREAM_TLS_ENABLED="${BPMT_UPSTREAM_TLS_ENABLED:-0}"
+UPSTREAM_HTTPS_PORT="${BPMT_UPSTREAM_HTTPS_PORT:-$HTTPS_PORT}"
 TLS_CERT_FILE="${BPMT_TLS_CERT_FILE:-/etc/nginx/certs/fullchain.pem}"
 TLS_KEY_FILE="${BPMT_TLS_KEY_FILE:-/etc/nginx/certs/privkey.pem}"
 OUTPUT_FILE="${BPMT_NGINX_CONF:-docker/nginx/nginx.conf}"
@@ -21,6 +23,13 @@ is_true() {
 }
 
 mkdir -p "$(dirname "$OUTPUT_FILE")"
+
+HTTP_PUBLIC_PROTO="http"
+HTTP_PUBLIC_PORT="$HTTP_PORT"
+if is_true "$UPSTREAM_TLS_ENABLED"; then
+  HTTP_PUBLIC_PROTO="https"
+  HTTP_PUBLIC_PORT="$UPSTREAM_HTTPS_PORT"
+fi
 
 https_redirect_target() {
   if [ "$HTTPS_PORT" = "443" ]; then
@@ -114,12 +123,12 @@ server {
 
 NGINX
     else
-      write_proxy_server "listen 80" "http" "$HTTP_PORT"
+      write_proxy_server "listen 80" "$HTTP_PUBLIC_PROTO" "$HTTP_PUBLIC_PORT"
     fi
 
     write_proxy_server "listen 443 ssl" "https" "$HTTPS_PORT" "$TLS_CERT_FILE" "$TLS_KEY_FILE"
   else
-    write_proxy_server "listen 80" "http" "$HTTP_PORT"
+    write_proxy_server "listen 80" "$HTTP_PUBLIC_PROTO" "$HTTP_PUBLIC_PORT"
   fi
 } >"$OUTPUT_FILE"
 

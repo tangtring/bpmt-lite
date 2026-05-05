@@ -221,9 +221,11 @@ scripts/smoke-api.sh
 
 ### HTTPS 验收
 
-v1.6.0 起，正式发布前必须验证内置 nginx HTTPS 入口。基础 `docker-compose.yml` 默认只发布 HTTP；启用 HTTPS 时必须同时加载 `docker-compose.https.yml`：
+v1.6.0 起，正式发布前必须验证内置 nginx HTTPS 入口。基础 `docker-compose.yml` 默认只发布 HTTP；启用 HTTPS 时必须先准备证书、渲染 nginx 配置，再同时加载 `docker-compose.https.yml`：
 
 ```bash
+BPMT_HTTPS_ENABLED=1 BPMT_HTTPS_PORT=18443 BPMT_HTTP_PORT=18080 sh scripts/generate-self-signed-cert.sh
+BPMT_HTTPS_ENABLED=1 BPMT_HTTPS_PORT=18443 BPMT_HTTP_PORT=18080 sh scripts/render-nginx-conf.sh
 BPMT_HTTPS_ENABLED=1 BPMT_HTTPS_PORT=18443 BPMT_HTTP_PORT=18080 \
   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
 curl -k -fsSI https://127.0.0.1:18443/
@@ -237,6 +239,13 @@ BPMT_API_BASE_URL=https://127.0.0.1:18443/api BPMT_API_CURL_INSECURE=1 scripts/s
 `curl -fsSI http://127.0.0.1:18080/` 期望返回 `301` 并跳转到 HTTPS。若测试 `BPMT_HTTP_REDIRECT=false`，HTTP 与 HTTPS 应同时代理业务。
 
 后端信任 `X-Forwarded-*` 头。生产部署不得把 `bpmt-web` 或 `bpmt-api` 直接暴露到不可信网络；上游网关必须覆盖并规范设置 `X-Forwarded-Proto`、`X-Forwarded-Host` 和 `X-Forwarded-Port`。
+
+如果由可信上游网关终止 TLS，再把 HTTP 转发到本 nginx 入口，应启用上游 TLS 模式后渲染配置：
+
+```bash
+BPMT_UPSTREAM_TLS_ENABLED=1 BPMT_UPSTREAM_HTTPS_PORT=443 sh scripts/render-nginx-conf.sh
+docker compose up -d
+```
 
 API 业务接口默认使用以下环境变量：
 
