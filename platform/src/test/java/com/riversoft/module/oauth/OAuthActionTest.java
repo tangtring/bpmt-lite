@@ -319,6 +319,26 @@ public class OAuthActionTest {
     }
 
     @Test
+    public void directFilterUsesForwardedHttpsUrlForPublicFullUrl() throws Exception {
+        OAuthDirectFilter filter = new OAuthDirectFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth/authorize");
+        request.setServerName("bpmt-web");
+        request.setServerPort(8080);
+        request.setRequestURI("/oauth/authorize");
+        request.addHeader("X-Forwarded-Proto", "https");
+        request.addHeader("X-Forwarded-Host", "127.0.0.1:18443");
+        request.setQueryString("response_type=code&client_id=client-a");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(
+                "/oauth/OAuthAction/authorize.shtml?_full_url=https%3A%2F%2F127.0.0.1%3A18443%2Foauth%2Fauthorize%3Fresponse_type%3Dcode%26client_id%3Dclient-a",
+                response.getForwardedUrl());
+    }
+
+    @Test
     public void directFilterAllowsSwitchAccountActionPathToChain() throws Exception {
         OAuthDirectFilter filter = new OAuthDirectFilter();
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/oauth/OAuthAction/switchAccount.shtml");

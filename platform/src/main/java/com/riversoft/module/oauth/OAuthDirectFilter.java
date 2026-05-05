@@ -63,11 +63,8 @@ public class OAuthDirectFilter implements Filter {
     }
 
     private String withPublicFullUrl(HttpServletRequest request, String target) {
-        StringBuilder publicUrl = new StringBuilder(request.getRequestURL());
-        if (request.getQueryString() != null) {
-            publicUrl.append('?').append(request.getQueryString());
-        }
-        return target + "?" + Actions.Keys.FULL_URL.toString() + "=" + urlEncode(publicUrl.toString());
+        return target + "?" + Actions.Keys.FULL_URL.toString() + "="
+                + urlEncode(Actions.Util.getFullURL(request));
     }
 
     private String urlEncode(String value) {
