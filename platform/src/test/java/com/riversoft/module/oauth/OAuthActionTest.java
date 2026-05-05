@@ -19,6 +19,7 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import com.riversoft.core.web.Actions;
 import com.riversoft.platform.po.UsGroup;
 import com.riversoft.platform.po.UsRole;
 import com.riversoft.platform.po.UsUser;
@@ -335,6 +336,27 @@ public class OAuthActionTest {
 
         assertEquals(
                 "/oauth/OAuthAction/authorize.shtml?_full_url=https%3A%2F%2F127.0.0.1%3A18443%2Foauth%2Fauthorize%3Fresponse_type%3Dcode%26client_id%3Dclient-a",
+                response.getForwardedUrl());
+    }
+
+    @Test
+    public void directFilterDoesNotTrustIncomingFullUrlParameter() throws Exception {
+        OAuthDirectFilter filter = new OAuthDirectFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth/authorize");
+        request.setServerName("bpmt-web");
+        request.setServerPort(8080);
+        request.setRequestURI("/oauth/authorize");
+        request.addHeader("X-Forwarded-Proto", "https");
+        request.addHeader("X-Forwarded-Host", "127.0.0.1:18443");
+        request.setParameter(Actions.Keys.FULL_URL.toString(), "http://evil.example/callback");
+        request.setQueryString("_full_url=http%3A%2F%2Fevil.example%2Fcallback&client_id=client-a");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(
+                "/oauth/OAuthAction/authorize.shtml?_full_url=https%3A%2F%2F127.0.0.1%3A18443%2Foauth%2Fauthorize%3F_full_url%3Dhttp%253A%252F%252Fevil.example%252Fcallback%26client_id%3Dclient-a",
                 response.getForwardedUrl());
     }
 
