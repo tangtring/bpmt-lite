@@ -635,7 +635,7 @@ v1.5.1 文档见：
 
 ## v1.6.0 HTTPS 支持状态
 
-截至 2026-05-05，v1.6.0 已进入 HTTPS 支持开发收口阶段，目标是让 `bpmt-lite` 的 Web、UEditor、OAuth、H5 和 API 都能在 HTTPS 公开入口下正确运行，同时保留默认 HTTP 快速启动体验。
+截至 2026-05-05，v1.6.0 已完成发布收口，目标是让 `bpmt-lite` 的 Web、UEditor、OAuth、H5 和 API 都能在 HTTPS 公开入口下正确运行，同时保留默认 HTTP 快速启动体验。
 
 当前实现约定：
 
@@ -651,12 +651,16 @@ v1.5.1 文档见：
 - `OAuthDirectFilter` 不信任公网 `/oauth/authorize` 请求自带的 `_full_url` 参数，只从当前 request URI 和 query string 派生转发 URL。
 - H5 运行主路径已去掉阻断 HTTPS 的 HTTP CDN 资源；微信官方脚本改用 HTTPS。
 - `scripts/smoke-api.sh` 支持 `BPMT_API_CURL_INSECURE=1`，用于自签证书 HTTPS API smoke。
+- `ghcr.io/wodenwang/bpmt-lite:1.6.0` 已推送，manifest digest 为 `sha256:65409ca2ab7d187cb71bc1a8ba89a08058a83ccadd7ab72787bfdc8e7b463605`，包含 `linux/amd64` 和 `linux/arm64`。
+- `ghcr.io/wodenwang/bpmt-lite-api:1.6.0` 已推送，manifest digest 为 `sha256:c7ad44f0fd6e0b9d96aa8d555512a3d85017686675c4c921720fb024a8a39452`，包含 `linux/amd64` 和 `linux/arm64`。
+- `latest` 已同步到上述 Web/API manifest digest。
 
 v1.6.0 文档见：
 
 - `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.0-https-design.md`
 - `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.0-https.md`
 - `docs/v1.6.0/https-acceptance.md`
+- `docs/release-v1.6.0.md`
 
 ## 原始项目参考源
 

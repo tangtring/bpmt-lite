@@ -68,7 +68,7 @@ API smoke passed: https://127.0.0.1:18443/api
 | v1.5.1 issue #10 | 工作流待办“查看/处理”无 `_ORD_ID=null` | PASS，完整库 `zhangzongcai/123` 点击“查看”和“处理”，两条 `.view` 请求均包含 `_ORD_ID=FNBW2604001`，未出现 `_ORD_ID=null` |
 | v1.5.2 OAuth 登录态切换 | 无权限提示、取消、切换账号可用 | PASS，HTTPS 下无权限提示、取消回调 `access_denied`、切换账号后 admin 继续授权均通过 |
 | v1.5.3 非标准端口 | OAuth URL 保留端口 | PASS，HTTPS 运行在 `18443`，浏览器和工作流跳转请求均保留 `https://127.0.0.1:18443` |
-| v1.5.4 multi-arch | Web/API manifest 包含 amd64 和 arm64 | 待发布，multi-arch manifest 在 release closure 使用 `scripts/build-multiarch-images.sh` 验证 |
+| v1.5.4 multi-arch | Web/API manifest 包含 amd64 和 arm64 | PASS，`scripts/build-multiarch-images.sh` 已推送并检查 Web/API `1.6.0` 与 `latest` manifest |
 
 ## issue #10 HTTPS 完整库证据
 
@@ -135,3 +135,17 @@ https://127.0.0.1:18443/oauth/authorize?response_type=code&client_id=client-v160
 | `note` | `/Fn7MNvjJL9X.view?_action_mode=h5` | PASS，200，可见“测试公告”列表 |
 
 浏览器未出现 `http://apps.bdimg.com`、`http://cdn.bootcss.com`、`http://res.wx.qq.com` 请求失败或 mixed-content console 错误。
+
+## 发布产物
+
+2026-05-05 使用 `scripts/build-multiarch-images.sh` 发布 Web/API multi-arch 镜像，并同步 `latest`：
+
+- Web image：`ghcr.io/wodenwang/bpmt-lite:1.6.0`
+- Web manifest digest：`sha256:65409ca2ab7d187cb71bc1a8ba89a08058a83ccadd7ab72787bfdc8e7b463605`
+- Web amd64 digest：`sha256:f06ae5f5a872ba9db706626db547fe999e08e19b66ae9eaf51b6e816302e2dcc`
+- Web arm64 digest：`sha256:8e600164d9dcb614e8e1b4c6e20ec999f63ce0d0e8b7ed1c9c3bfc7893761252`
+- API image：`ghcr.io/wodenwang/bpmt-lite-api:1.6.0`
+- API manifest digest：`sha256:c7ad44f0fd6e0b9d96aa8d555512a3d85017686675c4c921720fb024a8a39452`
+- API amd64 digest：`sha256:fabf7b586fe9b6d608b4008d3eae04c9187d4c5f5605759bc420955becc19e4e`
+- API arm64 digest：`sha256:319418992a2f66f87fa63b461e94b3be36a9f6a316d89937a8ea64c7f8b17283`
+- `latest` 已同步到上述 Web/API manifest digest。
