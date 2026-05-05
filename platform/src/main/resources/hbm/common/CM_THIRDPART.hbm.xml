@@ -13,6 +13,10 @@
     <property name="clientSecretHash" type="java.lang.String"><column name="CLIENT_SECRET_HASH" length="128" not-null="true"><comment>OAuth Client Secret Hash</comment></column></property>
     <property name="redirectUris" type="text"><column name="REDIRECT_URIS" not-null="true"><comment>OAuth 回调地址白名单</comment></column></property>
     <property name="homeUrl" type="java.lang.String"><column name="HOME_URL" length="500"><comment>第三方系统入口地址</comment></column></property>
+    <property name="wechatLoginEnabled" type="java.lang.Integer"><column name="WECHAT_LOGIN_ENABLED" length="8" not-null="true" default="0"><comment>微信生态自动登录开关</comment></column></property>
+    <property name="wechatType" type="java.lang.String"><column name="WECHAT_TYPE" length="20"><comment>微信登录类型: agent 或 mp</comment></column></property>
+    <property name="wechatKey" type="java.lang.String"><column name="WECHAT_KEY" length="100"><comment>企业号应用 key 或服务号 mpKey</comment></column></property>
+    <property name="wechatScope" type="java.lang.String"><column name="WECHAT_SCOPE" length="50"><comment>服务号 OAuth scope</comment></column></property>
     <many-to-one name="pri" class="com.riversoft.platform.po.CmPri" cascade="all" lazy="false">
       <column name="PRI_KEY" length="100" not-null="true"><comment>外部系统权限点</comment></column>
     </many-to-one>

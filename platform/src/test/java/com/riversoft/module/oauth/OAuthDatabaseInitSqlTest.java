@@ -34,6 +34,13 @@ public class OAuthDatabaseInitSqlTest {
 			"('sys_thirdpart',1,'sys','/thirdpart/ThirdpartAction/index.shtml','manage','link_edit.png','第三方系统',1,196",
 			"('sys_thirdpart',1,'sys_thirdpart','第三方系统',NULL,1,2,'${true}')" };
 
+    private static final String[] REQUIRED_WECHAT_OAUTH_TOKENS = {
+            "`WECHAT_LOGIN_ENABLED` tinyint",
+            "`WECHAT_TYPE` varchar(20)",
+            "`WECHAT_KEY` varchar(100)",
+            "`WECHAT_SCOPE` varchar(50)",
+            "ALTER TABLE `CM_THIRDPART` ADD COLUMN `WECHAT_LOGIN_ENABLED`" };
+
     @Test
     public void defaultInitializationSqlContainsOAuthTables() throws Exception {
         assertOAuthTables(gzipReader("../database/bpmt-min.sql.gz"));
@@ -51,6 +58,28 @@ public class OAuthDatabaseInitSqlTest {
                 "thirdpart management menu");
         assertSqlContains(Files.newBufferedReader(Paths.get("../database/bpmt-db.sql"), StandardCharsets.UTF_8),
                 REQUIRED_MENU_TOKENS, "thirdpart management menu");
+    }
+
+    @Test
+    public void initializationAndUpgradeSqlContainWechatOAuthFields() throws Exception {
+        assertSqlContains(gzipReader("../database/bpmt-min.sql.gz"), new String[] {
+                "`WECHAT_LOGIN_ENABLED` tinyint",
+                "`WECHAT_TYPE` varchar(20)",
+                "`WECHAT_KEY` varchar(100)",
+                "`WECHAT_SCOPE` varchar(50)" }, "wechat oauth thirdpart fields");
+        assertSqlContains(gzipReader("../database/bpmt.sql.gz"), new String[] {
+                "`WECHAT_LOGIN_ENABLED` tinyint",
+                "`WECHAT_TYPE` varchar(20)",
+                "`WECHAT_KEY` varchar(100)",
+                "`WECHAT_SCOPE` varchar(50)" }, "wechat oauth thirdpart fields");
+        assertSqlContains(Files.newBufferedReader(Paths.get("../database/bpmt-db.sql"), StandardCharsets.UTF_8),
+                new String[] {
+                        "`WECHAT_LOGIN_ENABLED` tinyint",
+                        "`WECHAT_TYPE` varchar(20)",
+                        "`WECHAT_KEY` varchar(100)",
+                        "`WECHAT_SCOPE` varchar(50)" }, "wechat oauth thirdpart fields");
+        assertSqlContains(Files.newBufferedReader(Paths.get("../database/v1.6.1-wechat-oauth-thirdpart.sql"),
+                StandardCharsets.UTF_8), REQUIRED_WECHAT_OAUTH_TOKENS, "wechat oauth upgrade sql");
     }
 
     private void assertOAuthTables(BufferedReader reader) throws IOException {
