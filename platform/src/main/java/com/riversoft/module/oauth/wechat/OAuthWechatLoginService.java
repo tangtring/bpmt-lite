@@ -1,5 +1,7 @@
 package com.riversoft.module.oauth.wechat;
 
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -9,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.riversoft.core.context.SessionContext;
 import com.riversoft.core.web.Actions;
 import com.riversoft.module.thirdpart.ThirdpartService;
 
@@ -67,6 +70,7 @@ public class OAuthWechatLoginService {
             if (StringUtils.isBlank(userId)) {
                 return error(thirdpart, wechatType, wechatKey, null, "wechat_login_failed", "userId is blank");
             }
+            refreshSessionContext(request);
             logger.info(
                     "wechat oauth login success clientId={} thirdpartKey={} wechatType={} wechatKey={} userId={} result=LOGGED_IN reason={}",
                     stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")), wechatType,
@@ -86,6 +90,16 @@ public class OAuthWechatLoginService {
                 stringValue(thirdpart.get("clientId")), stringValue(thirdpart.get("thirdpartKey")), wechatType,
                 wechatKey, userId, reason, message);
         return OAuthWechatLoginResult.error(reason, message);
+    }
+
+    private void refreshSessionContext(HttpServletRequest request) {
+        Enumeration<String> names = request.getSession().getAttributeNames();
+        Map<String, Object> attributes = new HashMap<String, Object>();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            attributes.put(name, request.getSession().getAttribute(name));
+        }
+        SessionContext.init(request.getSession(), attributes);
     }
 
     private static boolean isWechatLoginEnabled(Object value) {

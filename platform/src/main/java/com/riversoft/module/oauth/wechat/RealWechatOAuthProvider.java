@@ -10,6 +10,7 @@ import com.riversoft.core.Config;
 import com.riversoft.core.db.ORMService;
 import com.riversoft.module.thirdpart.ThirdpartService;
 import com.riversoft.platform.SessionManager;
+import com.riversoft.platform.SessionManager.SessionAttributeKey;
 import com.riversoft.platform.po.UsUser;
 import com.riversoft.platform.web.WxActionAspect;
 import com.riversoft.weixin.mp.oauth2.MpOAuth2s;
@@ -49,13 +50,18 @@ public class RealWechatOAuthProvider implements WechatOAuthProvider {
         if (ThirdpartService.WECHAT_TYPE_MP.equals(wechatType)) {
             loadMpConfig(wechatKey);
             new WxActionAspect().mpCodeLogin(request, wechatKey, code);
-            UsUser user = SessionManager.getUser();
+            UsUser user = userFromSession(request);
             if (user == null || StringUtils.isBlank(user.getUid())) {
                 throw new IllegalStateException("微信服务号登录未建立BPMT用户会话.");
             }
             return user.getUid();
         }
         throw new IllegalArgumentException("unsupported wechatType: " + wechatType);
+    }
+
+    static UsUser userFromSession(HttpServletRequest request) {
+        Object user = request.getSession().getAttribute(SessionAttributeKey.USER.toString());
+        return user instanceof UsUser ? (UsUser) user : null;
     }
 
     @SuppressWarnings("unchecked")

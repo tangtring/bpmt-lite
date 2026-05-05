@@ -13,6 +13,8 @@
 - 微信登录配置由第三方系统记录明确指定，不按 UA 自动猜测企业号或服务号。
 - 本机验收通过 fake provider 完成微信 code 回来后的 BPMT session 写入和第三方 OAuth code 回调链路。
 - 最终评审 P1 已修复：企业号微信 OAuth 授权和 code 登录均按第三方系统绑定的 `WECHAT_KEY` 加载 `WxAgent`，配置缺失或不完整时返回 `wechat_config_invalid`，不再静默回退默认企业号。
+- fake smoke 复测补齐了微信登录成功后刷新当前线程 `SessionContext` 的场景，避免同一个 authorize 请求内签发第三方 OAuth code 时仍读到旧登录态。
+- 最终评审 P1 复查已修复：服务号真实登录分支在 `WxActionAspect.mpCodeLogin()` 写入会话后直接从 `HttpSession` 读取 BPMT 用户，避免 provider 内部读取旧 `SessionContext` 导致误判登录失败。
 - 真实企业号或服务号微信 OAuth 只作为部署后人工验收项。
 
 ## 验收命令
@@ -44,6 +46,17 @@ git status --short
 - 仓库检查：通过。`scripts/verify-repo.sh` 输出 `OK: multi-arch image build script checks passed` 和 `OK: repository hygiene checks passed`。
 - 空白检查：通过。`git diff --check` 无输出。
 - 工作区检查：通过。`git status --short` 在提交前仅显示本次版本收口文件，提交后工作区干净。
+
+## Task 9 微信 fake smoke 验收
+
+执行时间：2026-05-05。
+
+- 微信 fake 冒烟：通过。使用当前本机最小库执行 `DB_NAME=bpmt_min scripts/smoke-oauth-wechat.sh`，脚本完成非微信 UA 回落 BPMT 登录页、微信 UA 重定向 fake callback、fake callback 建立 BPMT 登录态并回跳第三方 callback 三段验证。
+- 运行态恢复：通过。脚本退出后 `bpmt-web` 环境变量中无 `BPMT_OAUTH_WECHAT_FAKE_PROVIDER` / `BPMT_OAUTH_WECHAT_FAKE_CODE`，仅保留本轮 compose 使用的 `DB_NAME=bpmt_min`。
+- 数据清理：通过。`CM_THIRDPART`、`CM_THIRDPART_AUTH_CODE`、`CM_THIRDPART_ACCESS_TOKEN` 中 `THIRDPART_KEY='wechat-smoke'` 的记录均为 0。
+- 本机覆盖隔离：通过。脚本临时设置 `SAFE_ROLE=LIGHT_WEIGHT` 并挂载临时 `safe.properties`，避免本机 `config/overrides/safe.properties` 覆盖 `safe.admin` 影响 fake 登录验收；退出后临时文件删除，不修改本机配置。
+- 修复验证：通过。`OAuthWechatLoginService` 在微信 provider 登录成功后刷新当前线程 `SessionContext`，`OAuthWechatLoginServiceTest` 新增覆盖并通过，确保同一请求内 `OAuthService.currentUserCanAccess()` 可读取刚建立的 BPMT 登录态。
+- 服务号分支复查：通过。`RealWechatOAuthProvider` 的服务号路径改为从 `HttpSession` 读取 `USER`，新增 `realProviderReadsMpLoggedInUserFromHttpSession` 覆盖，避免真实服务号 code 登录在 provider 内部读取旧 `SessionContext`。
 
 ## 发布边界
 

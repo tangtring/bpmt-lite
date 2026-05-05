@@ -10,6 +10,7 @@ DB_PASSWORD="${DB_PASSWORD:-123456}"
 
 SMOKE_THIRDPART_KEY="wechat-smoke"
 tmp_override=""
+tmp_safe_override=""
 headers_file=""
 cookie_jar=""
 db_cleanup_enabled=0
@@ -96,7 +97,7 @@ cleanup() {
     cleanup_smoke_records >/dev/null 2>&1
   fi
 
-  rm -f "$tmp_override" "$headers_file" "$cookie_jar"
+  rm -f "$tmp_override" "$tmp_safe_override" "$headers_file" "$cookie_jar"
 
   echo "恢复 bpmt-web/bpmt-nginx 到正常 compose 环境..."
   if ! docker compose up -d --force-recreate bpmt-web bpmt-nginx >/dev/null 2>&1; then
@@ -139,16 +140,25 @@ SQL
 }
 
 tmp_override="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-fake.XXXXXX.yml")"
+tmp_safe_override="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-safe.XXXXXX.properties")"
 headers_file="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-headers.XXXXXX")"
 cookie_jar="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-cookie.XXXXXX")"
 trap cleanup EXIT
 
-cat >"$tmp_override" <<'YAML'
+cat >"$tmp_safe_override" <<'PROPERTIES'
+safe.admin=admin
+PROPERTIES
+
+cat >"$tmp_override" <<YAML
 services:
   bpmt-web:
     environment:
+      SAFE_ROLE: "LIGHT_WEIGHT"
       BPMT_OAUTH_WECHAT_FAKE_PROVIDER: "true"
       BPMT_OAUTH_WECHAT_FAKE_CODE: "fake-admin"
+    volumes:
+      - ./config/overrides:/config/overrides:ro
+      - ${tmp_safe_override}:/config/overrides/safe.properties:ro
 YAML
 
 echo "本脚本是本机 fake WeChat OAuth smoke，会临时 recreate bpmt-web/bpmt-nginx；退出时会恢复真实 provider 并清理 smoke 记录。"

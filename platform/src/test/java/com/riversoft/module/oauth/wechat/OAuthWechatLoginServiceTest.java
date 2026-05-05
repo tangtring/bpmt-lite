@@ -11,7 +11,10 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import com.riversoft.core.context.SessionContext;
 import com.riversoft.module.thirdpart.ThirdpartService;
+import com.riversoft.platform.SessionManager.SessionAttributeKey;
+import com.riversoft.platform.po.UsUser;
 
 public class OAuthWechatLoginServiceTest {
 
@@ -78,6 +81,23 @@ public class OAuthWechatLoginServiceTest {
         assertEquals(0, provider.authorizationCalls);
         assertEquals(1, provider.loginCalls);
         assertEquals("secret-code", provider.code);
+    }
+
+    @Test
+    public void loginRefreshesCurrentSessionContext() {
+        TestWechatOAuthProvider provider = new TestWechatOAuthProvider();
+        provider.userId = "admin";
+        provider.sessionAttributeName = "USER";
+        provider.sessionAttributeValue = "admin";
+        OAuthWechatLoginService service = new OAuthWechatLoginService(provider);
+        MockHttpServletRequest request = wechatRequest();
+        request.setParameter("code", "secret-code");
+        SessionContext.init(request.getSession(), new HashMap<String, Object>());
+
+        OAuthWechatLoginResult result = service.handle(request, new MockHttpServletResponse(), agentThirdpart());
+
+        assertEquals(OAuthWechatLoginStatus.LOGGED_IN, result.getStatus());
+        assertEquals("admin", SessionContext.getCurrent().get("USER"));
     }
 
     @Test
@@ -192,6 +212,17 @@ public class OAuthWechatLoginServiceTest {
         assertEquals("100001", validated.getAgentId());
         assertEquals("corp-id", validated.getCorpId());
         assertEquals("corp-secret", validated.getSecret());
+    }
+
+    @Test
+    public void realProviderReadsMpLoggedInUserFromHttpSession() {
+        MockHttpServletRequest request = wechatRequest();
+        UsUser user = new UsUser();
+        user.setUid("mp-user");
+        request.getSession().setAttribute(SessionAttributeKey.USER.toString(), user);
+        SessionContext.init(request.getSession(), new HashMap<String, Object>());
+
+        assertEquals("mp-user", RealWechatOAuthProvider.userFromSession(request).getUid());
     }
 
     @Test
@@ -320,6 +351,8 @@ public class OAuthWechatLoginServiceTest {
         private String wechatScope;
         private String callbackUrl;
         private String code;
+        private String sessionAttributeName;
+        private Object sessionAttributeValue;
 
         public String buildAuthorizationUrl(String wechatType, String wechatKey, String wechatScope,
                 String callbackUrl) {
@@ -343,6 +376,9 @@ public class OAuthWechatLoginServiceTest {
             this.code = code;
             if (loginFailure != null) {
                 throw loginFailure;
+            }
+            if (sessionAttributeName != null) {
+                request.getSession().setAttribute(sessionAttributeName, sessionAttributeValue);
             }
             return userId;
         }
