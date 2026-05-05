@@ -12,6 +12,7 @@
 - 第三方微信登录默认关闭；未配置第三方行为与 `v1.6.0` 一致。
 - 微信登录配置由第三方系统记录明确指定，不按 UA 自动猜测企业号或服务号。
 - 本机验收通过 fake provider 完成微信 code 回来后的 BPMT session 写入和第三方 OAuth code 回调链路。
+- 最终评审 P1 已修复：企业号微信 OAuth 授权和 code 登录均按第三方系统绑定的 `WECHAT_KEY` 加载 `WxAgent`，配置缺失或不完整时返回 `wechat_config_invalid`，不再静默回退默认企业号。
 - 真实企业号或服务号微信 OAuth 只作为部署后人工验收项。
 
 ## 验收命令

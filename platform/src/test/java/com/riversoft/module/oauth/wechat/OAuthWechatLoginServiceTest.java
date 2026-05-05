@@ -143,6 +143,58 @@ public class OAuthWechatLoginServiceTest {
     }
 
     @Test
+    public void rejectsAgentConfigWithoutAgentIdBeforeWechatSdkCall() {
+        Map<String, Object> agentConfig = agentConfig();
+        agentConfig.remove("agentId");
+
+        try {
+            RealWechatOAuthProvider.validateAgentConfig(agentConfig, "corp-id", "corp-secret");
+            fail("expected OAuthWechatConfigException");
+        } catch (OAuthWechatConfigException e) {
+            assertEquals("WxAgent配置不完整: agentId不能为空.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void rejectsAgentConfigWithoutCorpIdBeforeWechatSdkCall() {
+        Map<String, Object> agentConfig = agentConfig();
+
+        try {
+            RealWechatOAuthProvider.validateAgentConfig(agentConfig, " ", "corp-secret");
+            fail("expected OAuthWechatConfigException");
+        } catch (OAuthWechatConfigException e) {
+            assertEquals("WxAgent配置不完整: wx.qy.corpId不能为空.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void rejectsAgentConfigWithoutAgentSecretOrFallbackBeforeWechatSdkCall() {
+        Map<String, Object> agentConfig = agentConfig();
+        agentConfig.remove("agentSecret");
+
+        try {
+            RealWechatOAuthProvider.validateAgentConfig(agentConfig, "corp-id", " ");
+            fail("expected OAuthWechatConfigException");
+        } catch (OAuthWechatConfigException e) {
+            assertEquals("WxAgent配置不完整: agentSecret不能为空.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void acceptsAgentConfigWithFallbackSecretBeforeWechatSdkCall() {
+        Map<String, Object> agentConfig = agentConfig();
+        agentConfig.remove("agentSecret");
+
+        RealWechatOAuthProvider.AgentOAuthConfig validated = RealWechatOAuthProvider.validateAgentConfig(agentConfig,
+                "corp-id", "corp-secret");
+
+        assertEquals("corp-agent", validated.getAgentKey());
+        assertEquals("100001", validated.getAgentId());
+        assertEquals("corp-id", validated.getCorpId());
+        assertEquals("corp-secret", validated.getSecret());
+    }
+
+    @Test
     public void returnsErrorWhenProviderCannotLogin() {
         TestWechatOAuthProvider provider = new TestWechatOAuthProvider();
         provider.loginFailure = new RuntimeException("provider down");
@@ -246,6 +298,14 @@ public class OAuthWechatLoginServiceTest {
         thirdpart.put("wechatKey", "corp-agent");
         thirdpart.put("wechatScope", ThirdpartService.WECHAT_SCOPE_USERINFO);
         return thirdpart;
+    }
+
+    private Map<String, Object> agentConfig() {
+        Map<String, Object> agentConfig = new HashMap<String, Object>();
+        agentConfig.put("agentKey", "corp-agent");
+        agentConfig.put("agentId", Integer.valueOf(100001));
+        agentConfig.put("agentSecret", "agent-secret");
+        return agentConfig;
     }
 
     private static class TestWechatOAuthProvider implements WechatOAuthProvider {
