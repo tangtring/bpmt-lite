@@ -39,7 +39,10 @@ public class OAuthDatabaseInitSqlTest {
             "`WECHAT_TYPE` varchar(20)",
             "`WECHAT_KEY` varchar(100)",
             "`WECHAT_SCOPE` varchar(50)",
-            "ALTER TABLE `CM_THIRDPART` ADD COLUMN `WECHAT_LOGIN_ENABLED`" };
+            "ALTER TABLE `CM_THIRDPART` ADD COLUMN IF NOT EXISTS `WECHAT_LOGIN_ENABLED`",
+            "ADD COLUMN IF NOT EXISTS `WECHAT_TYPE`",
+            "ADD COLUMN IF NOT EXISTS `WECHAT_KEY`",
+            "ADD COLUMN IF NOT EXISTS `WECHAT_SCOPE`" };
 
     @Test
     public void defaultInitializationSqlContainsOAuthTables() throws Exception {
@@ -78,6 +81,12 @@ public class OAuthDatabaseInitSqlTest {
                         "`WECHAT_TYPE` varchar(20)",
                         "`WECHAT_KEY` varchar(100)",
                         "`WECHAT_SCOPE` varchar(50)" }, "wechat oauth thirdpart fields");
+        assertSqlContains(Files.newBufferedReader(Paths.get("../database/v1.5.0-oauth-tables.sql"),
+                StandardCharsets.UTF_8), new String[] {
+                        "`WECHAT_LOGIN_ENABLED` tinyint",
+                        "`WECHAT_TYPE` varchar(20)",
+                        "`WECHAT_KEY` varchar(100)",
+                        "`WECHAT_SCOPE` varchar(50)" }, "wechat oauth source schema fields");
         assertSqlContains(Files.newBufferedReader(Paths.get("../database/v1.6.1-wechat-oauth-thirdpart.sql"),
                 StandardCharsets.UTF_8), REQUIRED_WECHAT_OAUTH_TOKENS, "wechat oauth upgrade sql");
     }
