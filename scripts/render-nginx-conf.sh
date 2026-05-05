@@ -3,6 +3,8 @@ set -eu
 
 HTTPS_ENABLED="${BPMT_HTTPS_ENABLED:-0}"
 HTTP_REDIRECT="${BPMT_HTTP_REDIRECT:-true}"
+HTTP_PORT="${BPMT_HTTP_PORT:-80}"
+HTTPS_PORT="${BPMT_HTTPS_PORT:-443}"
 TLS_CERT_FILE="${BPMT_TLS_CERT_FILE:-/etc/nginx/certs/fullchain.pem}"
 TLS_KEY_FILE="${BPMT_TLS_KEY_FILE:-/etc/nginx/certs/privkey.pem}"
 OUTPUT_FILE="${BPMT_NGINX_CONF:-docker/nginx/nginx.conf}"
@@ -19,6 +21,14 @@ is_true() {
 }
 
 mkdir -p "$(dirname "$OUTPUT_FILE")"
+
+https_redirect_target() {
+  if [ "$HTTPS_PORT" = "443" ]; then
+    echo 'https://$host$request_uri'
+  else
+    echo "https://\$host:$HTTPS_PORT\$request_uri"
+  fi
+}
 
 write_proxy_locations() {
   proto="$1"
@@ -64,12 +74,23 @@ write_proxy_server() {
   listen_line="$1"
   proto="$2"
   port="$3"
+  cert_file="${4:-}"
+  key_file="${5:-}"
 
   cat <<NGINX
 server {
     $listen_line;
     server_name _;
 
+NGINX
+  if [ -n "$cert_file" ]; then
+    cat <<NGINX
+    ssl_certificate $cert_file;
+    ssl_certificate_key $key_file;
+
+NGINX
+  fi
+  cat <<NGINX
     client_max_body_size 100m;
 
 NGINX
@@ -82,25 +103,23 @@ NGINX
 {
   if is_true "$HTTPS_ENABLED"; then
     if is_true "$HTTP_REDIRECT"; then
-      cat <<'NGINX'
+      redirect_target="$(https_redirect_target)"
+      cat <<NGINX
 server {
     listen 80;
     server_name _;
 
-    return 301 https://$http_host$request_uri;
+    return 301 $redirect_target;
 }
 
 NGINX
     else
-      write_proxy_server "listen 80" "http" "80"
+      write_proxy_server "listen 80" "http" "$HTTP_PORT"
     fi
 
-    write_proxy_server "listen 443 ssl" "https" "443" | \
-      sed "s|listen 443 ssl;|listen 443 ssl;\\
-    ssl_certificate $TLS_CERT_FILE;\\
-    ssl_certificate_key $TLS_KEY_FILE;|"
+    write_proxy_server "listen 443 ssl" "https" "$HTTPS_PORT" "$TLS_CERT_FILE" "$TLS_KEY_FILE"
   else
-    write_proxy_server "listen 80" "http" "80"
+    write_proxy_server "listen 80" "http" "$HTTP_PORT"
   fi
 } >"$OUTPUT_FILE"
 

@@ -1,0 +1,6 @@
+services:
+  bpmt-nginx:
+    ports:
+      - "${BPMT_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro

@@ -8,7 +8,8 @@
 
 # HTTPS:
 # - BPMT_HTTPS_ENABLED=1 enables listen 443 ssl
-# - BPMT_HTTP_REDIRECT=true makes HTTP return 301 to https://$http_host$request_uri
+# - BPMT_HTTP_REDIRECT=true makes HTTP return 301 to https://$host$request_uri
+# - non-443 BPMT_HTTPS_PORT makes redirect use https://$host:${BPMT_HTTPS_PORT}$request_uri
 # - BPMT_HTTP_REDIRECT=false keeps both HTTP and HTTPS proxying business traffic
 # - BPMT_TLS_CERT_FILE and BPMT_TLS_KEY_FILE point to files inside the nginx container
 
@@ -16,6 +17,6 @@
 # proxy_set_header Host $http_host;
 # proxy_set_header X-Forwarded-Host $http_host;
 # proxy_set_header X-Forwarded-Proto http|https;
-# proxy_set_header X-Forwarded-Port 80|443;
+# proxy_set_header X-Forwarded-Port ${BPMT_HTTP_PORT:-80}|${BPMT_HTTPS_PORT:-443};
 # proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 # proxy_set_header X-Real-IP $remote_addr;
