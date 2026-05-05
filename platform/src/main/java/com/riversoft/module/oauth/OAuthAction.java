@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import com.riversoft.core.web.Actions;
 import com.riversoft.core.web.annotation.ActionAccess;
+import com.riversoft.module.oauth.wechat.OAuthWechatLoginResult;
+import com.riversoft.module.oauth.wechat.OAuthWechatLoginService;
+import com.riversoft.module.oauth.wechat.OAuthWechatLoginStatus;
 import com.riversoft.platform.SessionManager;
 import com.riversoft.platform.po.UsGroup;
 import com.riversoft.platform.po.UsRole;
@@ -45,15 +48,33 @@ public class OAuthAction {
             return;
         }
 
+        Map<String, Object> thirdpart = thirdpart(validation);
         if (!isLoggedIn(request)) {
-            storeReturnUrl(request);
-            logger.info("OAuth authorize requires BPMT login. requestId={} clientId={} result={} reason={}",
-                    requestId, clientId, "pending", "login_required");
-            jumpToLogin(request, response);
-            return;
+            OAuthWechatLoginResult wechat = getWechatLoginService().handle(request, response, thirdpart);
+            if (wechat != null && OAuthWechatLoginStatus.REDIRECT.equals(wechat.getStatus())) {
+                logger.info("OAuth authorize redirects to WeChat login. requestId={} clientId={} result={} reason={}",
+                        requestId, clientId, "pending", "wechat_redirect");
+                redirectExternal(response, wechat.getRedirectUrl());
+                return;
+            }
+            if (wechat != null && OAuthWechatLoginStatus.ERROR.equals(wechat.getStatus())) {
+                logger.info("OAuth authorize WeChat login failed. requestId={} clientId={} result={} reason={}",
+                        requestId, clientId, "deny", wechat.getReason());
+                showBrowserError(request, response, "OAuth 微信登录失败", wechat.getMessage(), requestId);
+                return;
+            }
+            if (wechat != null && OAuthWechatLoginStatus.LOGGED_IN.equals(wechat.getStatus())) {
+                logger.info("OAuth authorize WeChat login success. requestId={} clientId={} userId={} result={} reason={}",
+                        requestId, clientId, wechat.getUserId(), "pending", "wechat_logged_in");
+            } else {
+                storeReturnUrl(request);
+                logger.info("OAuth authorize requires BPMT login. requestId={} clientId={} result={} reason={}",
+                        requestId, clientId, "pending", "login_required");
+                jumpToLogin(request, response);
+                return;
+            }
         }
 
-        Map<String, Object> thirdpart = thirdpart(validation);
         String userId = currentUserId(request);
         if (!service.currentUserCanAccess(thirdpart)) {
             storeAccessDeniedContext(request, requestId, clientId, thirdpart, userId, redirectUri, state);
@@ -194,6 +215,10 @@ public class OAuthAction {
 
     protected OAuthService getOAuthService() {
         return new OAuthService();
+    }
+
+    protected OAuthWechatLoginService getWechatLoginService() {
+        return new OAuthWechatLoginService();
     }
 
     protected boolean isLoggedIn(HttpServletRequest request) {

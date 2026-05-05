@@ -20,6 +20,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.riversoft.core.web.Actions;
+import com.riversoft.module.oauth.wechat.OAuthWechatLoginResult;
+import com.riversoft.module.oauth.wechat.OAuthWechatLoginService;
 import com.riversoft.platform.po.UsGroup;
 import com.riversoft.platform.po.UsRole;
 import com.riversoft.platform.po.UsUser;
@@ -64,6 +66,72 @@ public class OAuthActionTest {
         assertEquals("http://localhost/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1",
                 request.getSession().getAttribute(OAuthSessionKeys.RETURN_URL));
         assertEquals("/login.jsp", action.loginTarget);
+    }
+
+    @Test
+    public void authorizeWechatWithoutLoginRedirectsToWechatInsteadOfLogin() {
+        TestOAuthAction action = new TestOAuthAction();
+        action.loggedIn = false;
+        action.wechatResult = OAuthWechatLoginResult.redirect("https://wechat.example/oauth?state=w-1");
+        MockHttpServletRequest request = authorizeRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.authorize(request, response);
+
+        assertEquals("https://wechat.example/oauth?state=w-1", response.getRedirectedUrl());
+        assertNull(action.loginTarget);
+        assertNull(request.getSession().getAttribute(OAuthSessionKeys.RETURN_URL));
+    }
+
+    @Test
+    public void authorizeWechatLoginSuccessContinuesToIssueCode() {
+        TestOAuthAction action = new TestOAuthAction();
+        action.loggedIn = false;
+        action.currentUserId = "admin";
+        action.canAccess = true;
+        action.wechatResult = OAuthWechatLoginResult.loggedIn("admin");
+        MockHttpServletRequest request = authorizeRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.authorize(request, response);
+
+        assertNull(action.loginTarget);
+        assertNull(request.getSession().getAttribute(OAuthSessionKeys.RETURN_URL));
+        assertEquals("http://client.example/callback?code=code-a&state=s-1", response.getRedirectedUrl());
+    }
+
+    @Test
+    public void authorizeWechatConfigErrorShowsOauthErrorPage() {
+        TestOAuthAction action = new TestOAuthAction();
+        action.loggedIn = false;
+        action.wechatResult = OAuthWechatLoginResult.error("wechat_config_invalid", "微信登录配置缺失");
+        MockHttpServletRequest request = authorizeRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.authorize(request, response);
+
+        assertEquals("/xhtml/oauth/error.jsp", action.forwardedPage);
+        assertEquals("OAuth 微信登录失败", request.getAttribute("oauthErrorTitle"));
+        assertEquals("微信登录配置缺失", request.getAttribute("oauthErrorMessage"));
+        assertEquals("request-a", request.getAttribute("requestId"));
+        assertNull(action.loginTarget);
+        assertNull(response.getRedirectedUrl());
+        assertNull(request.getSession().getAttribute(OAuthSessionKeys.RETURN_URL));
+    }
+
+    @Test
+    public void authorizeWechatSkipFallsBackToNormalLogin() {
+        TestOAuthAction action = new TestOAuthAction();
+        action.loggedIn = false;
+        action.wechatResult = OAuthWechatLoginResult.skip();
+        MockHttpServletRequest request = authorizeRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        action.authorize(request, response);
+
+        assertEquals("/login.jsp", action.loginTarget);
+        assertEquals("http://localhost/oauth/authorize?response_type=code&client_id=client-a&redirect_uri=http%3A%2F%2Fclient.example%2Fcallback&state=s-1",
+                request.getSession().getAttribute(OAuthSessionKeys.RETURN_URL));
     }
 
     @Test
@@ -450,12 +518,24 @@ public class OAuthActionTest {
         private String forwardedPage;
         private boolean logoutCalled;
         private boolean userExists = true;
+        private OAuthWechatLoginResult wechatResult = OAuthWechatLoginResult.skip();
         private final Map<String, Object> tokenResult = new HashMap<String, Object>();
 
         @Override
         protected OAuthService getOAuthService() {
             service.action = this;
             return service;
+        }
+
+        @Override
+        protected OAuthWechatLoginService getWechatLoginService() {
+            return new OAuthWechatLoginService() {
+                @Override
+                public OAuthWechatLoginResult handle(javax.servlet.http.HttpServletRequest request,
+                        javax.servlet.http.HttpServletResponse response, Map<String, Object> thirdpart) {
+                    return wechatResult;
+                }
+            };
         }
 
         @Override
