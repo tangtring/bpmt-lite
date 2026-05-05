@@ -58,6 +58,16 @@ git status --short
 - 修复验证：通过。`OAuthWechatLoginService` 在微信 provider 登录成功后刷新当前线程 `SessionContext`，`OAuthWechatLoginServiceTest` 新增覆盖并通过，确保同一请求内 `OAuthService.currentUserCanAccess()` 可读取刚建立的 BPMT 登录态。
 - 服务号分支复查：通过。`RealWechatOAuthProvider` 的服务号路径改为从 `HttpSession` 读取 `USER`，新增 `realProviderReadsMpLoggedInUserFromHttpSession` 覆盖，避免真实服务号 code 登录在 provider 内部读取旧 `SessionContext`。
 
+## Task 10 multi-arch 镜像发布验收
+
+执行时间：2026-05-05。
+
+- 正式镜像发布：通过。执行 `scripts/build-multiarch-images.sh`，重新构建并推送 Web/API 双镜像。
+- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.1`，manifest digest `sha256:e629f1889f198d0c19b9b811472442d6ba5557216cc62a5145b1a42c6875c2d8`，包含 `linux/amd64` 和 `linux/arm64`。
+- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.1`，manifest digest `sha256:beea3c5c36c41f5c38542c37adbbc3aed29fecc7680253fe4ac65ec379d63c25`，包含 `linux/amd64` 和 `linux/arm64`。
+- `latest` 同步：通过。`ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest` 已随脚本同步推送。
+- manifest inspect：通过。脚本末尾已执行 `docker buildx imagetools inspect` 并列出两个正式镜像的 `linux/amd64`、`linux/arm64` manifest。
+
 ## 发布边界
 
 - 不新增第三方通知 API。
