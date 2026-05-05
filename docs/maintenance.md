@@ -247,6 +247,18 @@ BPMT_UPSTREAM_TLS_ENABLED=1 BPMT_UPSTREAM_HTTPS_PORT=443 sh scripts/render-nginx
 docker compose up -d
 ```
 
+### v1.6.1 微信生态第三方 OAuth 验收
+
+本机不能真实完成微信 OAuth，必须使用 fake provider 跑本地验收，确认微信 code 回来后 BPMT session 可写入并继续第三方 OAuth code 回调。
+
+```bash
+scripts/smoke-oauth-wechat.sh
+```
+
+fake provider 只由 smoke 临时启用，退出时恢复真实 provider。
+
+真实微信只作为部署后人工验收项：企业号配置 `WECHAT_TYPE=agent` 与 `WECHAT_KEY`；服务号配置 `WECHAT_TYPE=mp`、`WECHAT_KEY`、`WECHAT_SCOPE`。日志只能记录 requestId、clientId、thirdpartKey、wechatType、userId、result、reason，禁止记录 OAuth code、微信 code、access token、client secret 或用户密码。
+
 API 业务接口默认使用以下环境变量：
 
 ```text

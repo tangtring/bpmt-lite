@@ -26,6 +26,7 @@
 - `v1.5.3` 是基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
 - `v1.5.4` 是基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力的补丁版本。
 - `v1.6.0` 是当前版本，新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。
+- `v1.6.1` 是基于 `v1.6.0` 增强微信生态第三方 OAuth 登录态传导的补丁版本。
 - 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.0`
 - 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
@@ -53,6 +54,7 @@
 - v1.5.0 OAuth 登录开发期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-03-bpmt-lite-v1.5.0-oauth-login-design.md` -> `docs/v1.5.0/*` -> `README.md` -> implementation。
 - 涉及 Docker、数据库、初始化脚本、发布验收、公开文档的变更，必须同步更新对应文档，不能只改代码。
 - v1.6.0 HTTPS 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.0-https-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.0-https.md` -> `docs/v1.6.0/*` -> `README.md` -> implementation。
+- v1.6.1 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.1-wechat-oauth-thirdpart-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.1-wechat-oauth-thirdpart.md` -> `docs/v1.6.1/*` -> `README.md` -> implementation。
 
 ## 已验证的本地编译基线
 
@@ -236,6 +238,15 @@ docker compose up -d
 - `userid + thirdpartKey` 独立权限校验 API 暂不纳入 v1.5.0 验收范围。
 - OAuth 主流程必须登记 `INFO` 日志，覆盖 authorize、token、userinfo 的开始、结果、错误码和关键状态。
 - 日志禁止记录明文 `code`、`access_token`、`client_secret`、`password`。
+
+## v1.6.1 微信生态 OAuth 规则
+
+- 第三方系统仍只接入标准 `/oauth/authorize`、`/oauth/token`、`/oauth/userinfo`。
+- 微信生态下没有 BPMT 登录态时，只有 `CM_THIRDPART.WECHAT_LOGIN_ENABLED=1` 的外部系统才走微信 OAuth 登录。
+- 不得按 UA 自动猜测企业号或服务号配置；必须使用外部系统绑定的 `WECHAT_TYPE`、`WECHAT_KEY`、`WECHAT_SCOPE`。
+- 微信登录成功后必须回到原 authorize 请求，再按标准 OAuth code 回调第三方。
+- 本机验收使用 fake provider；真实微信登录作为部署后人工验收项。
+- fake provider 不得默认启用，只能显式环境变量/系统属性或 smoke 临时启用。
 
 ## 维护者构建约定
 

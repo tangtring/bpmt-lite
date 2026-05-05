@@ -8,6 +8,8 @@
 
 `v1.6.0` 为当前版本，新增 `nginx` HTTPS 入口支持。默认仍可 HTTP 快速启动；需要 HTTPS 时可启用内置 TLS、自签证书和 HTTP 到 HTTPS 跳转，也可放在可信上游 TLS 网关后运行。`v1.5.4` 的 Web/API multi-arch 发布能力、`v1.5.3` 的非 80 端口 OAuth 回跳修复、`v1.5.2` 的外部系统 OAuth 登录态切换体验、`v1.5.1` 的工作流待办“查看/处理”跳转修复继续保留。
 
+`v1.6.1` 基于 `v1.6.0` 增强微信生态下第三方 OAuth 登录态传导。外部系统仍按标准 `/oauth/authorize` 发起；微信内、无 BPMT 登录态、且第三方启用微信登录绑定时，BPMT 先走企业号或服务号微信 OAuth，成功后回到原 authorize 并签发标准 OAuth code，第三方仍通过原 `redirect_uri?code=...&state=...` 接收结果。已有数据库升级需执行 `database/v1.6.1-wechat-oauth-thirdpart.sql`；默认关闭，未配置第三方行为与 `v1.6.0` 一致。
+
 `v1.5.0` 新增外部系统 OAuth 登录能力。BPMT 可以作为 OAuth2 Authorization Code 服务端，向第三方 Web 系统提供统一登录入口。
 
 `v1.4.1` 是上一版 API 增强版本，新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口。
@@ -255,12 +257,15 @@ OAuth 端点：
 
 `v1.6.0` 继承 `nginx` 反向代理转发的 `Host` 头修复，并进一步通过 `X-Forwarded-*` 头生成公开 URL。使用 `BPMT_HTTP_PORT=18080`、`BPMT_HTTPS_PORT=18443` 等非标准端口运行时，登录页、OAuth 授权页和第三方回调地址会保留实际端口和公开 scheme。
 
+`v1.6.1` 在微信生态下增强第三方 OAuth 登录态传导：外部系统仍只需要跳转标准 `/oauth/authorize`。当请求来自微信内、当前没有 BPMT 登录态、且目标第三方系统开启微信登录绑定时，BPMT 会先按该第三方绑定的企业号或服务号配置发起微信 OAuth；微信登录成功后回到原 authorize 请求，继续按 BPMT 权限体系签发标准 OAuth code，并通过原 `redirect_uri?code=...&state=...` 回调第三方。已有数据库升级需执行 `database/v1.6.1-wechat-oauth-thirdpart.sql` 补齐第三方微信登录配置字段；默认关闭，未配置第三方行为与 `v1.6.0` 一致。
+
 OAuth demo 项目见：[bpmt-oauth-demo](https://github.com/wodenwang/bpmt-oauth-demo)。
 
 参考文档：
 
 - [docs/v1.5.0/oauth-login-reference.md](docs/v1.5.0/oauth-login-reference.md)
 - [docs/v1.5.0/oauth-login-acceptance.md](docs/v1.5.0/oauth-login-acceptance.md)
+- [docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)
 
 ## 常用配置
 
@@ -373,6 +378,8 @@ scripts/build-multiarch-images.sh
 - v1.5.4 发布记录：[docs/release-v1.5.4.md](docs/release-v1.5.4.md)
 - v1.5.4 multi-arch 发布修复：[docs/v1.5.4/multi-arch-release.md](docs/v1.5.4/multi-arch-release.md)
 - v1.6.0 HTTPS 验收清单：[docs/v1.6.0/https-acceptance.md](docs/v1.6.0/https-acceptance.md)
+- v1.6.1 发布记录草案：[docs/release-v1.6.1.md](docs/release-v1.6.1.md)
+- v1.6.1 微信 OAuth 验收：[docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)
 - 维护说明：[docs/maintenance.md](docs/maintenance.md)
 
 ## 许可证与作者
