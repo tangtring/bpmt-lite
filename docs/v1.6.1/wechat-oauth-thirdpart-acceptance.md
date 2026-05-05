@@ -25,7 +25,9 @@ bash scripts/smoke-oauth-wechat.sh
 
 - `docker compose ps` 中 `bpmt-mariadb` 可用。
 - 当前运行数据库包含 `CM_THIRDPART`、`CM_THIRDPART_AUTH_CODE`、`CM_THIRDPART_ACCESS_TOKEN`。
-- 接受脚本通过临时 compose override recreate `bpmt-web`，注入 `BPMT_OAUTH_WECHAT_FAKE_PROVIDER=true` 和 `BPMT_OAUTH_WECHAT_FAKE_CODE=fake-admin`。
+- 接受脚本通过临时 compose override recreate `bpmt-web` 和 `bpmt-nginx`，注入 `BPMT_OAUTH_WECHAT_FAKE_PROVIDER=true` 和 `BPMT_OAUTH_WECHAT_FAKE_CODE=fake-admin`。
+- 默认入口仍是 nginx 的 `http://127.0.0.1/`，脚本会等待入口可用后再发起 OAuth 请求。
+- 默认 `CLIENT_ID=wechat-smoke-client`。如果覆盖 `CLIENT_ID`，必须以 `wechat-smoke-` 开头，避免覆盖真实第三方配置。
 
 脚本验收点：
 
@@ -34,6 +36,14 @@ bash scripts/smoke-oauth-wechat.sh
 - 携带 cookie 访问 fake callback 后，BPMT 建立登录态并签发 OAuth 授权码。
 - 最终跳转到第三方 `redirect_uri`，并带回 `code` 与原始 `state`。
 - 脚本输出不打印完整 OAuth code。
+- 退出时脚本删除临时 compose override，并执行正常 `docker compose up -d --force-recreate bpmt-web bpmt-nginx`，恢复真实 provider。
+- 退出时脚本会清理 `CM_THIRDPART.THIRDPART_KEY='wechat-smoke'` 的 smoke 记录，并仅按 `THIRDPART_KEY='wechat-smoke'` 清理对应 OAuth code/token 运行数据。
+
+异常处理要求：
+
+- 即使 smoke 中途失败，也必须执行退出清理和容器恢复。
+- 恢复后应尽量确认 `bpmt-web` 容器环境中不再包含 `BPMT_OAUTH_WECHAT_FAKE_PROVIDER=true`。
+- 如果当前库缺少 v1.6.1 微信登录字段，脚本只按 `database/v1.6.1-wechat-oauth-thirdpart.sql` 的语义补齐字段，不做其他 schema 修改。
 
 ## 真实微信人工验收
 

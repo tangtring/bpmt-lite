@@ -8,6 +8,17 @@ STATE="${STATE:-wechat-smoke-state}"
 DB_NAME="${DB_NAME:-bpmt}"
 DB_PASSWORD="${DB_PASSWORD:-123456}"
 
+SMOKE_THIRDPART_KEY="wechat-smoke"
+tmp_override=""
+headers_file=""
+cookie_jar=""
+db_cleanup_enabled=0
+
+if [[ "$CLIENT_ID" != wechat-smoke-* ]]; then
+  echo "ERROR: CLIENT_ID must start with 'wechat-smoke-' for this local smoke." >&2
+  exit 1
+fi
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: docker is required." >&2
   exit 1
@@ -26,6 +37,10 @@ print(quote(sys.argv[1], safe=""))
 PY
 }
 
+sql_escape() {
+  printf "%s" "$1" | sed "s/'/''/g"
+}
+
 location_from_headers() {
   awk 'BEGIN{IGNORECASE=1} /^Location:/ {sub(/\r$/, "", $0); sub(/^[^:]*:[[:space:]]*/, "", $0); print; exit}' "$1"
 }
@@ -34,22 +49,99 @@ mask_location() {
   sed -E 's/([?&](code|client_secret|access_token)=)[^&]*/\1***/g'
 }
 
+masked() {
+  printf "%s" "$1" | mask_location
+}
+
 require_location_contains() {
   local location="$1"
   local expected="$2"
   local label="$3"
   if [[ "$location" != *"$expected"* ]]; then
     echo "ERROR: ${label} location mismatch." >&2
-    echo "expected contains: ${expected}" >&2
-    echo "actual: $(printf '%s' "$location" | mask_location)" >&2
+    echo "expected contains: $(masked "$expected")" >&2
+    echo "actual: $(masked "$location")" >&2
     exit 1
+  fi
+}
+
+mariadb_exec() {
+  docker compose exec -T bpmt-mariadb mariadb -uroot -p"${DB_PASSWORD}" --database="${DB_NAME}" "$@"
+}
+
+cleanup_smoke_records() {
+  mariadb_exec <<SQL
+DELETE FROM CM_THIRDPART_ACCESS_TOKEN WHERE THIRDPART_KEY='${SMOKE_THIRDPART_KEY}';
+DELETE FROM CM_THIRDPART_AUTH_CODE WHERE THIRDPART_KEY='${SMOKE_THIRDPART_KEY}';
+DELETE FROM CM_THIRDPART WHERE THIRDPART_KEY='${SMOKE_THIRDPART_KEY}';
+SQL
+}
+
+verify_fake_provider_removed() {
+  local env_text
+  env_text="$(docker inspect bpmt-web --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null)"
+  if printf "%s\n" "$env_text" | grep -q '^BPMT_OAUTH_WECHAT_FAKE_PROVIDER=true$'; then
+    echo "WARN: bpmt-web still contains BPMT_OAUTH_WECHAT_FAKE_PROVIDER=true after restore." >&2
+    return 1
+  fi
+  return 0
+}
+
+cleanup() {
+  local status=$?
+  trap - EXIT
+  set +e
+
+  if [[ "$db_cleanup_enabled" == "1" ]]; then
+    cleanup_smoke_records >/dev/null 2>&1
+  fi
+
+  rm -f "$tmp_override" "$headers_file" "$cookie_jar"
+
+  echo "恢复 bpmt-web/bpmt-nginx 到正常 compose 环境..."
+  if ! docker compose up -d --force-recreate bpmt-web bpmt-nginx >/dev/null 2>&1; then
+    echo "WARN: failed to restore bpmt-web/bpmt-nginx with normal compose." >&2
+  fi
+  verify_fake_provider_removed || true
+
+  exit "$status"
+}
+
+wait_for_http() {
+  local url="$1"
+  local label="$2"
+  local i
+  for i in $(seq 1 60); do
+    if curl -fsS -o /dev/null "$url"; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo "ERROR: ${label} is not ready at ${url}." >&2
+  return 1
+}
+
+ensure_wechat_columns() {
+  local db_name_sql
+  local missing_count
+  db_name_sql="$(sql_escape "$DB_NAME")"
+  missing_count="$(mariadb_exec -N -B <<SQL
+SELECT 4 - COUNT(*)
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA='${db_name_sql}'
+  AND TABLE_NAME='CM_THIRDPART'
+  AND COLUMN_NAME IN ('WECHAT_LOGIN_ENABLED','WECHAT_TYPE','WECHAT_KEY','WECHAT_SCOPE');
+SQL
+)"
+  if [[ "$missing_count" != "0" ]]; then
+    mariadb_exec < database/v1.6.1-wechat-oauth-thirdpart.sql
   fi
 }
 
 tmp_override="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-fake.XXXXXX.yml")"
 headers_file="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-headers.XXXXXX")"
 cookie_jar="$(mktemp "${TMPDIR:-/tmp}/bpmt-wechat-cookie.XXXXXX")"
-trap 'rm -f "$tmp_override" "$headers_file" "$cookie_jar"' EXIT
+trap cleanup EXIT
 
 cat >"$tmp_override" <<'YAML'
 services:
@@ -59,25 +151,18 @@ services:
       BPMT_OAUTH_WECHAT_FAKE_CODE: "fake-admin"
 YAML
 
-echo "本脚本是本机 fake WeChat OAuth smoke，会使用临时 compose override recreate bpmt-web；不会删除 db/data 或运行目录。"
-docker compose -f docker-compose.yml -f "$tmp_override" up -d --force-recreate bpmt-web
+echo "本脚本是本机 fake WeChat OAuth smoke，会临时 recreate bpmt-web/bpmt-nginx；退出时会恢复真实 provider 并清理 smoke 记录。"
+docker compose -f docker-compose.yml -f "$tmp_override" up -d --force-recreate bpmt-web bpmt-nginx
+wait_for_http "${BASE_URL%/}/" "bpmt-nginx"
 
-for i in $(seq 1 60); do
-  if curl -fsS -o /dev/null "${BASE_URL%/}/"; then
-    break
-  fi
-  if [[ "$i" == "60" ]]; then
-    echo "ERROR: bpmt-web is not ready at ${BASE_URL%/}/." >&2
-    exit 1
-  fi
-  sleep 2
-done
+ensure_wechat_columns
+db_cleanup_enabled=1
+cleanup_smoke_records
 
-docker compose exec -T bpmt-mariadb mariadb -uroot -p"${DB_PASSWORD}" "${DB_NAME}" <<SQL
-ALTER TABLE CM_THIRDPART ADD COLUMN IF NOT EXISTS WECHAT_LOGIN_ENABLED tinyint NOT NULL DEFAULT 0;
-ALTER TABLE CM_THIRDPART ADD COLUMN IF NOT EXISTS WECHAT_TYPE varchar(20) DEFAULT NULL;
-ALTER TABLE CM_THIRDPART ADD COLUMN IF NOT EXISTS WECHAT_KEY varchar(100) DEFAULT NULL;
-ALTER TABLE CM_THIRDPART ADD COLUMN IF NOT EXISTS WECHAT_SCOPE varchar(50) DEFAULT NULL;
+client_id_sql="$(sql_escape "$CLIENT_ID")"
+callback_url_sql="$(sql_escape "$CALLBACK_URL")"
+
+mariadb_exec <<SQL
 INSERT INTO CM_THIRDPART (
   THIRDPART_KEY,
   THIRDPART_NAME,
@@ -95,12 +180,12 @@ INSERT INTO CM_THIRDPART (
   CREATE_TIME,
   UPDATE_TIME
 ) VALUES (
-  'wechat-smoke',
+  '${SMOKE_THIRDPART_KEY}',
   '微信 smoke',
-  '${CLIENT_ID}',
+  '${client_id_sql}',
   SHA2('wechat-smoke-secret', 256),
-  '${CALLBACK_URL}',
-  '${CALLBACK_URL}',
+  '${callback_url_sql}',
+  '${callback_url_sql}',
   1,
   'agent',
   'fake-agent',
@@ -110,24 +195,13 @@ INSERT INTO CM_THIRDPART (
   'local fake WeChat OAuth smoke',
   NOW(),
   NOW()
-) ON DUPLICATE KEY UPDATE
-  THIRDPART_NAME=VALUES(THIRDPART_NAME),
-  CLIENT_SECRET_HASH=VALUES(CLIENT_SECRET_HASH),
-  REDIRECT_URIS=VALUES(REDIRECT_URIS),
-  HOME_URL=VALUES(HOME_URL),
-  WECHAT_LOGIN_ENABLED=VALUES(WECHAT_LOGIN_ENABLED),
-  WECHAT_TYPE=VALUES(WECHAT_TYPE),
-  WECHAT_KEY=VALUES(WECHAT_KEY),
-  WECHAT_SCOPE=VALUES(WECHAT_SCOPE),
-  PRI_KEY=VALUES(PRI_KEY),
-  ACTIVE_FLAG=VALUES(ACTIVE_FLAG),
-  DESCRIPTION=VALUES(DESCRIPTION),
-  UPDATE_TIME=NOW();
+);
 SQL
 
+encoded_client_id="$(urlencode "$CLIENT_ID")"
 encoded_callback="$(urlencode "$CALLBACK_URL")"
 encoded_state="$(urlencode "$STATE")"
-authorize_url="${BASE_URL%/}/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encoded_callback}&state=${encoded_state}"
+authorize_url="${BASE_URL%/}/oauth/authorize?response_type=code&client_id=${encoded_client_id}&redirect_uri=${encoded_callback}&state=${encoded_state}"
 
 curl -sS -D "$headers_file" -o /dev/null -c "$cookie_jar" -b "$cookie_jar" \
   -H "User-Agent: Mozilla/5.0" \
