@@ -549,12 +549,12 @@ public final class Actions {
 		/**
 		 * 获取根网址<br>
 		 * 返回例如:http://localhost:8080/aincs
-		 * 
+		 *
 		 * @param request
 		 * @return
 		 */
 		public static String getContextPath(HttpServletRequest request) {
-			return request.getScheme() + "://" + request.getServerName() + (request.getServerPort() == 80 ? "" : (":" + request.getServerPort())) + request.getContextPath();
+			return getPublicBaseUri(request) + request.getContextPath();
 		}
 
 		/**
@@ -569,7 +569,8 @@ public final class Actions {
 				return url;
 			}
 
-			StringBuffer requestURL = request.getRequestURL();
+			StringBuilder requestURL = new StringBuilder(getPublicBaseUri(request));
+			requestURL.append(request.getRequestURI());
 			String queryString = request.getQueryString();
 			if (StringUtils.isEmpty(queryString)) {
 				url = requestURL.toString();
@@ -581,6 +582,105 @@ public final class Actions {
 				logger.debug("当前FULL URL:{}", url);
 			}
 			return url;
+		}
+
+		private static String getPublicBaseUri(HttpServletRequest request) {
+			String scheme = firstHeaderValue(request, "X-Forwarded-Proto");
+			if (StringUtils.isEmpty(scheme)) {
+				scheme = request.getScheme();
+			}
+
+			String hostHeader = firstHeaderValue(request, "X-Forwarded-Host");
+			if (StringUtils.isEmpty(hostHeader)) {
+				hostHeader = firstHeaderValue(request, "Host");
+			}
+
+			HostAndPort hostAndPort;
+			if (StringUtils.isNotEmpty(hostHeader)) {
+				hostAndPort = splitHostAndPort(hostHeader);
+			} else {
+				hostAndPort = new HostAndPort(request.getServerName(), request.getServerPort());
+			}
+
+			Integer port = hostAndPort.port;
+			if (port == null) {
+				port = parsePort(firstHeaderValue(request, "X-Forwarded-Port"));
+			}
+			if (port == null && StringUtils.isEmpty(hostHeader)) {
+				port = request.getServerPort();
+			}
+
+			StringBuilder url = new StringBuilder();
+			url.append(scheme).append("://").append(hostAndPort.host);
+			if (port != null && !isDefaultPort(scheme, port.intValue())) {
+				url.append(':').append(port.intValue());
+			}
+			return url.toString();
+		}
+
+		private static String firstHeaderValue(HttpServletRequest request, String name) {
+			String value = request.getHeader(name);
+			if (StringUtils.isEmpty(value)) {
+				return null;
+			}
+			int commaIndex = value.indexOf(',');
+			if (commaIndex >= 0) {
+				value = value.substring(0, commaIndex);
+			}
+			value = value.trim();
+			return StringUtils.isEmpty(value) ? null : value;
+		}
+
+		private static HostAndPort splitHostAndPort(String hostHeader) {
+			if (StringUtils.isEmpty(hostHeader)) {
+				return new HostAndPort(hostHeader, null);
+			}
+
+			if (hostHeader.startsWith("[")) {
+				int bracketIndex = hostHeader.indexOf(']');
+				if (bracketIndex > 0 && hostHeader.length() > bracketIndex + 2 && hostHeader.charAt(bracketIndex + 1) == ':') {
+					Integer port = parsePort(hostHeader.substring(bracketIndex + 2));
+					if (port != null) {
+						return new HostAndPort(hostHeader.substring(0, bracketIndex + 1), port);
+					}
+				}
+				return new HostAndPort(hostHeader, null);
+			}
+
+			int colonIndex = hostHeader.lastIndexOf(':');
+			if (colonIndex > 0 && hostHeader.indexOf(':') == colonIndex) {
+				Integer port = parsePort(hostHeader.substring(colonIndex + 1));
+				if (port != null) {
+					return new HostAndPort(hostHeader.substring(0, colonIndex), port);
+				}
+			}
+			return new HostAndPort(hostHeader, null);
+		}
+
+		private static Integer parsePort(String value) {
+			if (StringUtils.isEmpty(value)) {
+				return null;
+			}
+			try {
+				int port = Integer.parseInt(value.trim());
+				return port > 0 ? Integer.valueOf(port) : null;
+			} catch (NumberFormatException e) {
+				return null;
+			}
+		}
+
+		private static boolean isDefaultPort(String scheme, int port) {
+			return ("http".equalsIgnoreCase(scheme) && port == 80) || ("https".equalsIgnoreCase(scheme) && port == 443);
+		}
+
+		private static class HostAndPort {
+			private final String host;
+			private final Integer port;
+
+			private HostAndPort(String host, Integer port) {
+				this.host = host;
+				this.port = port;
+			}
 		}
 
 		/**
