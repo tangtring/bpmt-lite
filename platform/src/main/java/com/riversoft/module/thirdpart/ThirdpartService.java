@@ -1,6 +1,7 @@
 package com.riversoft.module.thirdpart;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -17,6 +18,10 @@ import com.riversoft.platform.po.CmPri;
 public class ThirdpartService {
     private static final String ENTITY_NAME = "CmThirdpart";
     private static final Pattern SAFE_KEY = Pattern.compile("^[A-Za-z0-9_.-]{1,100}$");
+    public static final String WECHAT_TYPE_AGENT = "agent";
+    public static final String WECHAT_TYPE_MP = "mp";
+    public static final String WECHAT_SCOPE_BASE = "snsapi_base";
+    public static final String WECHAT_SCOPE_USERINFO = "snsapi_userinfo";
 
     public static boolean isAllowedRedirectUri(String redirectUris, String candidate) {
         if (StringUtils.isBlank(redirectUris) || StringUtils.isBlank(candidate)) {
@@ -99,6 +104,7 @@ public class ThirdpartService {
         po.set("pri", pri);
         po.set("activeFlag", normalizeActiveFlag(input.get("activeFlag")));
         po.set("description", trimToNull(input.get("description")));
+        applyWechatLogin(po, input);
         po.set("createTime", now);
         po.set("updateTime", now);
         ORMService.getInstance().save(po.toEntity());
@@ -134,6 +140,9 @@ public class ThirdpartService {
         if (pri != null) {
             prepareThirdpartPri(pri, thirdpartKey, trimToNull(po.get("thirdpartName")));
             po.set("pri", pri);
+        }
+        if (input.containsKey("wechatLoginEnabled")) {
+            applyWechatLogin(po, input);
         }
         po.set("updateTime", new Date());
         ORMService.getInstance().update(po.toEntity());
@@ -183,6 +192,52 @@ public class ThirdpartService {
             return Integer.valueOf(0);
         }
         throw new SystemRuntimeException(ExceptionType.BUSINESS, "activeFlag格式不正确.");
+    }
+
+    public static Map<String, Object> normalizeWechatLogin(Map<String, Object> input) {
+        Map<String, Object> normalized = new HashMap<String, Object>();
+        Integer enabled = normalizeActiveFlag(input == null ? null : input.get("wechatLoginEnabled"));
+        normalized.put("wechatLoginEnabled", enabled);
+        if (!Integer.valueOf(1).equals(enabled)) {
+            normalized.put("wechatType", null);
+            normalized.put("wechatKey", null);
+            normalized.put("wechatScope", null);
+            return normalized;
+        }
+
+        String wechatType = trimToNull(input.get("wechatType"));
+        String wechatKey = trimToNull(input.get("wechatKey"));
+        String wechatScope = trimToNull(input.get("wechatScope"));
+        if (!WECHAT_TYPE_AGENT.equals(wechatType) && !WECHAT_TYPE_MP.equals(wechatType)) {
+            throw new SystemRuntimeException(ExceptionType.BUSINESS, "wechatType格式不正确.");
+        }
+        if (StringUtils.isBlank(wechatKey) || !SAFE_KEY.matcher(wechatKey).matches()) {
+            throw new SystemRuntimeException(ExceptionType.BUSINESS, "wechatKey格式不正确.");
+        }
+
+        normalized.put("wechatLoginEnabled", Integer.valueOf(1));
+        normalized.put("wechatType", wechatType);
+        normalized.put("wechatKey", wechatKey);
+        if (WECHAT_TYPE_MP.equals(wechatType)) {
+            if (StringUtils.isBlank(wechatScope)) {
+                wechatScope = WECHAT_SCOPE_BASE;
+            }
+            if (!WECHAT_SCOPE_BASE.equals(wechatScope) && !WECHAT_SCOPE_USERINFO.equals(wechatScope)) {
+                throw new SystemRuntimeException(ExceptionType.BUSINESS, "wechatScope格式不正确.");
+            }
+            normalized.put("wechatScope", wechatScope);
+        } else {
+            normalized.put("wechatScope", null);
+        }
+        return normalized;
+    }
+
+    private static void applyWechatLogin(DataPO po, Map<String, Object> input) {
+        Map<String, Object> wechat = normalizeWechatLogin(input);
+        po.set("wechatLoginEnabled", wechat.get("wechatLoginEnabled"));
+        po.set("wechatType", wechat.get("wechatType"));
+        po.set("wechatKey", wechat.get("wechatKey"));
+        po.set("wechatScope", wechat.get("wechatScope"));
     }
 
     static void prepareThirdpartPri(CmPri pri, String thirdpartKey, String thirdpartName) {
