@@ -2,6 +2,7 @@ package com.riversoft.module.oauth.wechat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,6 +109,37 @@ public class OAuthWechatLoginServiceTest {
         assertEquals("wechat_config_invalid", result.getReason());
         assertEquals(1, provider.authorizationCalls);
         assertEquals(0, provider.loginCalls);
+    }
+
+    @Test
+    public void returnsConfigErrorWhenProviderCannotLoginByCode() {
+        TestWechatOAuthProvider provider = new TestWechatOAuthProvider();
+        provider.loginFailure = new OAuthWechatConfigException("WxMp配置不完整.");
+        OAuthWechatLoginService service = new OAuthWechatLoginService(provider);
+        MockHttpServletRequest request = wechatRequest();
+        request.setParameter("code", "secret-code");
+
+        OAuthWechatLoginResult result = service.handle(request, new MockHttpServletResponse(), agentThirdpart());
+
+        assertEquals(OAuthWechatLoginStatus.ERROR, result.getStatus());
+        assertEquals("wechat_config_invalid", result.getReason());
+        assertEquals(0, provider.authorizationCalls);
+        assertEquals(1, provider.loginCalls);
+    }
+
+    @Test
+    public void rejectsIncompleteMpConfigBeforeWechatSdkCall() {
+        Map<String, Object> mpConfig = new HashMap<String, Object>();
+        mpConfig.put("mpKey", "service-mp");
+        mpConfig.put("appId", "wx-app");
+        mpConfig.put("visitorTable", "WX_VISITOR");
+
+        try {
+            RealWechatOAuthProvider.validateMpConfig(mpConfig);
+            fail("expected OAuthWechatConfigException");
+        } catch (OAuthWechatConfigException e) {
+            assertEquals("WxMp配置不完整: appSecret不能为空.", e.getMessage());
+        }
     }
 
     @Test

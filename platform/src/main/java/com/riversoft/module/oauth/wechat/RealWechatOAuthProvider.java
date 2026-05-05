@@ -60,6 +60,22 @@ public class RealWechatOAuthProvider implements WechatOAuthProvider {
         if (!(mpConfig instanceof Map)) {
             throw new OAuthWechatConfigException("WxMp配置不存在.");
         }
-        return (Map<String, Object>) mpConfig;
+        Map<String, Object> config = (Map<String, Object>) mpConfig;
+        validateMpConfig(config);
+        return config;
+    }
+
+    static void validateMpConfig(Map<String, Object> config) {
+        requireMpConfigValue(config, "mpKey");
+        requireMpConfigValue(config, "appId");
+        requireMpConfigValue(config, "appSecret");
+        requireMpConfigValue(config, "visitorTable");
+    }
+
+    private static void requireMpConfigValue(Map<String, Object> config, String key) {
+        Object value = config == null ? null : config.get(key);
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            throw new OAuthWechatConfigException("WxMp配置不完整: " + key + "不能为空.");
+        }
     }
 }
