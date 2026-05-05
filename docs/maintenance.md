@@ -189,13 +189,13 @@ docker compose exec -T bpmt-mariadb mariadb -uroot -p123456 -N \
   -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='bpmt_min';"
 ```
 
-`v1.5.4` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `176`，其中 Activiti 24 张、Quartz 11 张、OAuth 登录表 3 张。完整库 `database/bpmt.sql.gz` 的期望结果是 `380` 张表或视图，默认 `admin` 密码为 `admin`。
+`v1.6.0` 最小初始化库 `database/bpmt-min.sql.gz` 的期望结果是 `176`，其中 Activiti 24 张、Quartz 11 张、OAuth 登录表 3 张。完整库 `database/bpmt.sql.gz` 的期望结果是 `380` 张表或视图，默认 `admin` 密码为 `admin`。
 
-`v1.5.4` 是基于 `v1.5.3` 的 multi-arch 发布补丁版本。运行验收除常规入口、API、OAuth smoke 外，必须继承 `v1.5.1` issue #10 回归基线：使用完整库 `bpmt` 浏览器实点 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”，确认网络请求中不再出现 `_ORD_ID=null`。
+`v1.6.0` 运行验收除常规入口、API、OAuth smoke、HTTPS smoke 外，必须继承 `v1.5.1` issue #10 回归基线：使用完整库 `bpmt` 浏览器实点 `/flow/CommonFlowAction/taskList.shtml` 的“查看/处理”，确认网络请求中不再出现 `_ORD_ID=null`。
 
-`v1.5.4` 还需要补充 OAuth 登录态切换验收：已有 BPMT 登录态访问 `/oauth/authorize` 时应复用当前用户；当前用户无目标第三方系统权限时应显示 BPMT 内部提示页；用户取消授权时应返回第三方并携带 `access_denied`；用户选择切换账号时，应退出当前 BPMT 登录态，重新登录后回到原 OAuth 授权流程。
+`v1.6.0` 还需要补充 OAuth 登录态切换验收：已有 BPMT 登录态访问 `/oauth/authorize` 时应复用当前用户；当前用户无目标第三方系统权限时应显示 BPMT 内部提示页；用户取消授权时应返回第三方并携带 `access_denied`；用户选择切换账号时，应退出当前 BPMT 登录态，重新登录后回到原 OAuth 授权流程。
 
-`v1.5.4` 必须在非 80 端口上验证 OAuth 主流程，例如 `BPMT_HTTP_PORT=18080`。`docker/nginx/nginx.conf` 应使用 `proxy_set_header Host $http_host;`，确保 BPMT 生成的登录页、OAuth 授权页和第三方回调地址保留实际端口。
+`v1.6.0` 必须在非标准 HTTP/HTTPS 端口上验证 OAuth 主流程，例如 `BPMT_HTTP_PORT=18080`、`BPMT_HTTPS_PORT=18443`。`docker/nginx/nginx.conf` 应使用 `proxy_set_header Host $http_host;` 和公开 `X-Forwarded-*` 头，确保 BPMT 生成的登录页、OAuth 授权页和第三方回调地址保留实际端口和公开 scheme。
 
 检查 Web：
 
@@ -218,6 +218,25 @@ curl -fsSI http://127.0.0.1/api/docs/
 ```bash
 scripts/smoke-api.sh
 ```
+
+### HTTPS 验收
+
+v1.6.0 起，正式发布前必须验证内置 nginx HTTPS 入口。基础 `docker-compose.yml` 默认只发布 HTTP；启用 HTTPS 时必须同时加载 `docker-compose.https.yml`：
+
+```bash
+BPMT_HTTPS_ENABLED=1 BPMT_HTTPS_PORT=18443 BPMT_HTTP_PORT=18080 \
+  docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+curl -k -fsSI https://127.0.0.1:18443/
+curl -k -fsSI https://127.0.0.1:18443/ueditor/
+curl -k -fsSI https://127.0.0.1:18443/api/docs/
+curl -k -fsSI https://127.0.0.1:18443/api/openapi.json
+curl -fsSI http://127.0.0.1:18080/
+BPMT_API_BASE_URL=https://127.0.0.1:18443/api BPMT_API_CURL_INSECURE=1 scripts/smoke-api.sh
+```
+
+`curl -fsSI http://127.0.0.1:18080/` 期望返回 `301` 并跳转到 HTTPS。若测试 `BPMT_HTTP_REDIRECT=false`，HTTP 与 HTTPS 应同时代理业务。
+
+后端信任 `X-Forwarded-*` 头。生产部署不得把 `bpmt-web` 或 `bpmt-api` 直接暴露到不可信网络；上游网关必须覆盖并规范设置 `X-Forwarded-Proto`、`X-Forwarded-Host` 和 `X-Forwarded-Port`。
 
 API 业务接口默认使用以下环境变量：
 

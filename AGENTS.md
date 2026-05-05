@@ -24,11 +24,13 @@
 - `v1.5.1` 是基于 `v1.5.0` 修复 issue #10 工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题的补丁版本。
 - `v1.5.2` 是基于 `v1.5.1` 增强外部系统 OAuth 登录态切换体验的补丁版本。
 - `v1.5.3` 是基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
-- `v1.5.4` 是当前补丁版本，基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.5.4`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.5.4`
+- `v1.5.4` 是基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力的补丁版本。
+- `v1.6.0` 是当前版本，新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
+- HTTPS 访问地址：`https://127.0.0.1/`，需要 `BPMT_HTTPS_ENABLED=1`
 - 默认 API 文档：`http://127.0.0.1/api/docs/`
 - 默认 OpenAPI：`http://127.0.0.1/api/openapi.json`
 - `ROOT` 应用对应 BPMT `platform`
@@ -50,6 +52,7 @@
 - v1.4.0 API 规划和开发期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-02-bpmt-lite-v1.4.0-api-design.md` -> `docs/v1.4.0/*` -> `README.md` -> implementation。
 - v1.5.0 OAuth 登录开发期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-03-bpmt-lite-v1.5.0-oauth-login-design.md` -> `docs/v1.5.0/*` -> `README.md` -> implementation。
 - 涉及 Docker、数据库、初始化脚本、发布验收、公开文档的变更，必须同步更新对应文档，不能只改代码。
+- v1.6.0 HTTPS 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.0-https-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.0-https.md` -> `docs/v1.6.0/*` -> `README.md` -> implementation。
 
 ## 已验证的本地编译基线
 
@@ -117,6 +120,11 @@ mvn -s settings.local.xml -DskipTests compile
 - v1.4.0 API 方案使用独立 `api` 容器，不进入 `web` 容器内部。
 - Web 和 API 各自内嵌 Hazelcast，不单独引入 Hazelcast Server 容器。
 - Docker Compose 服务名和固定容器名统一使用 `bpmt-` 前缀：`bpmt-nginx`、`bpmt-web`、`bpmt-api`、`bpmt-mariadb`。
+- 默认 `docker-compose.yml` 只发布 HTTP；启用 HTTPS 时必须同时使用 `docker-compose.https.yml`，例如 `docker compose -f docker-compose.yml -f docker-compose.https.yml up -d`。
+- `certs/` 是运行证书目录，不提交真实证书和私钥。
+- HTTPS 启用时 HTTP 默认跳转 HTTPS，可通过 `BPMT_HTTP_REDIRECT=false` 关闭。
+- v1.6.0 起，后端公开 URL 统一通过 `Actions.Util.getContextPath()` 和 `Actions.Util.getFullURL()` 生成；不要在业务 Action 中手工拼接 HTTPS URL。
+- 后端会信任 `X-Forwarded-*` 头，生产部署不得把 `bpmt-web` 或 `bpmt-api` 直接暴露到不可信网络；上游网关必须覆盖并规范设置 `X-Forwarded-Proto`、`X-Forwarded-Host` 和 `X-Forwarded-Port`。
 - Web/API 通过 compose 网络和 `HAZELCAST_TCPIP_MEMBERS=bpmt-web,bpmt-api` 加入同一 Hazelcast 集群。
 - 缓存不能关闭，`HIBERNATE_CACHE` 应保持 `true`。
 - 快速体验允许只拉起容器而不导入业务数据。
@@ -624,6 +632,30 @@ v1.5.1 文档见：
 - 两个 `latest` tag 已同步到 `1.5.4` manifest digest。
 - 已强制 `--platform linux/amd64` 拉取 Web/API `1.5.4` 镜像验证通过。
 - 临时 compose 项目 `bpmt-v154-smoke` 使用最小库 `bpmt_min` 验证 `/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json`、API smoke、176 张表和 Hazelcast 双 member 均通过。
+
+## v1.6.0 HTTPS 支持状态
+
+截至 2026-05-05，v1.6.0 已进入 HTTPS 支持开发收口阶段，目标是让 `bpmt-lite` 的 Web、UEditor、OAuth、H5 和 API 都能在 HTTPS 公开入口下正确运行，同时保留默认 HTTP 快速启动体验。
+
+当前实现约定：
+
+- 基础 `docker-compose.yml` 默认只发布 HTTP，不占用 443。
+- 启用内置 HTTPS 时使用 `docker-compose.https.yml` 叠加 HTTPS 端口和 `certs/` 证书挂载。
+- `scripts/run.sh` 在 `BPMT_HTTPS_ENABLED=1` 时会生成或复用自签证书，并使用 `docker compose -f docker-compose.yml -f docker-compose.https.yml up -d`。
+- `scripts/generate-self-signed-cert.sh` 默认生成 `certs/fullchain.pem` 和 `certs/privkey.pem`，证书目录不提交 git。
+- `scripts/render-nginx-conf.sh` 支持 HTTP-only、HTTPS redirect、HTTPS no-redirect 三种 nginx 配置。
+- HTTP 到 HTTPS 默认 301，可用 `BPMT_HTTP_REDIRECT=false` 关闭。
+- 非标准端口必须通过 `BPMT_HTTP_PORT`、`BPMT_HTTPS_PORT` 写入 `X-Forwarded-Port`，redirect 也必须保留公开 HTTPS 端口。
+- 后端公开 URL 统一通过 `Actions.Util.getContextPath()` 和 `Actions.Util.getFullURL()` 读取可信 `X-Forwarded-*` 头生成。
+- `OAuthDirectFilter` 不信任公网 `/oauth/authorize` 请求自带的 `_full_url` 参数，只从当前 request URI 和 query string 派生转发 URL。
+- H5 运行主路径已去掉阻断 HTTPS 的 HTTP CDN 资源；微信官方脚本改用 HTTPS。
+- `scripts/smoke-api.sh` 支持 `BPMT_API_CURL_INSECURE=1`，用于自签证书 HTTPS API smoke。
+
+v1.6.0 文档见：
+
+- `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.0-https-design.md`
+- `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.0-https.md`
+- `docs/v1.6.0/https-acceptance.md`
 
 ## 原始项目参考源
 
