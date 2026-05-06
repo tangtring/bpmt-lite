@@ -64,6 +64,8 @@ scripts/verify-repo.sh
 - 空白检查：通过。`git diff --check` 无输出。
 - 本地 Web 镜像构建：通过。Docker 启动后显式切换 Java 8 执行 `scripts/build-image.sh`，Maven WAR、Docker build 和镜像内容校验均通过，生成 `ghcr.io/wodenwang/bpmt-lite:1.6.2`。
 - 本地 API 镜像构建：通过。显式切换 Java 8 执行 `scripts/build-api-image.sh`，Maven WAR、Docker build 和镜像内容校验均通过，生成 `ghcr.io/wodenwang/bpmt-lite-api:1.6.2`。
+- GHCR Web multi-arch 发布：通过。`ghcr.io/wodenwang/bpmt-lite:1.6.2` digest 为 `sha256:5889392bb1371d4e3323247967222cd642ffaaf8ec013ffb68354f3543313dcd`，包含 `linux/amd64` 与 `linux/arm64`。
+- GHCR API multi-arch 发布：通过。`ghcr.io/wodenwang/bpmt-lite-api:1.6.2` digest 为 `sha256:f2990e708d7349b2395863c7315ec11991a0fdd5b5c6facd56350d4def15fc91`，包含 `linux/amd64` 与 `linux/arm64`。
 
 ## 发布边界
 
