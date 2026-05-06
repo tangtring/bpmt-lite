@@ -53,11 +53,12 @@ public class ThirdpartJspTest {
 
         assertTrue(jsp.contains("<th colspan=\"2\">微信登录</th>"));
         assertTrue(jsp.contains("name=\"wechatLoginEnabled\""));
-        assertTrue(jsp.contains("name=\"wechatType\""));
+        assertTrue(jsp.contains("name=\"wechatType\" cmd=\"select[@com.riversoft.module.thirdpart.ThirdpartWechatType(请选择);null;240px]\""));
         assertTrue(jsp.contains("name=\"wechatKey\""));
-        assertTrue(jsp.contains("name=\"wechatScope\""));
-        assertTrue(jsp.contains("snsapi_base"));
-        assertTrue(jsp.contains("snsapi_userinfo"));
+        assertTrue(jsp.contains("name=\"wechatScope\" cmd=\"select[@com.riversoft.module.thirdpart.ThirdpartWechatScope;240px]\""));
+        assertTrue(jsp.contains("<th colspan=\"2\">访问控制</th>"));
+        assertFalse(jsp.contains("<select name=\"wechatType\">"));
+        assertFalse(jsp.contains("<select name=\"wechatScope\">"));
     }
 
     @Test

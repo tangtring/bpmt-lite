@@ -66,31 +66,27 @@
 			<th>启用微信登录</th>
 			<td><wcm:widget name="wechatLoginEnabled" cmd="radio[YES_NO]{required:true}" value="${editFlag?vo.wechatLoginEnabled:0}" /></td>
 		</tr>
-		<tr>
-			<th>微信类型</th>
-			<td>
-				<select name="wechatType">
-					<option value="" <c:if test="${empty vo.wechatType}">selected="selected"</c:if>></option>
-					<option value="agent" <c:if test="${vo.wechatType == 'agent'}">selected="selected"</c:if>>企业号 agent</option>
-					<option value="mp" <c:if test="${vo.wechatType == 'mp'}">selected="selected"</c:if>>服务号 mp</option>
-				</select>
-			</td>
-		</tr>
+			<tr>
+				<th>微信类型</th>
+				<td>
+					<wcm:widget name="wechatType" cmd="select[@com.riversoft.module.thirdpart.ThirdpartWechatType(请选择);null;240px]" value="${vo.wechatType}" />
+				</td>
+			</tr>
 		<tr>
 			<th>微信 Key</th>
 			<td><wcm:widget name="wechatKey" cmd="text" value="${vo.wechatKey}" /></td>
 		</tr>
-		<tr>
-			<th>服务号 Scope</th>
-			<td>
-				<select name="wechatScope">
-					<option value="snsapi_base" <c:if test="${!editFlag || empty vo.wechatScope || vo.wechatScope == 'snsapi_base'}">selected="selected"</c:if>>snsapi_base</option>
-					<option value="snsapi_userinfo" <c:if test="${vo.wechatScope == 'snsapi_userinfo'}">selected="selected"</c:if>>snsapi_userinfo</option>
-				</select>
-			</td>
-		</tr>
-		<tr>
-			<th>状态</th>
+			<tr>
+				<th>服务号 Scope</th>
+				<td>
+					<wcm:widget name="wechatScope" cmd="select[@com.riversoft.module.thirdpart.ThirdpartWechatScope;240px]" value="${editFlag && not empty vo.wechatScope ? vo.wechatScope : 'snsapi_base'}" />
+				</td>
+			</tr>
+			<tr>
+				<th colspan="2">访问控制</th>
+			</tr>
+			<tr>
+				<th>状态</th>
 			<td><wcm:widget name="activeFlag" cmd="radio[YES_NO]{required:true}" value="${editFlag?vo.activeFlag:1}" /></td>
 		</tr>
 		<tr>
