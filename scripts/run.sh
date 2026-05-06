@@ -2,7 +2,7 @@
 set -eu
 
 MODE="${1:-full}"
-REF="${BPMT_REF:-v1.6.1}"
+REF="${BPMT_REF:-v1.6.2}"
 REMOTE_ASSETS=0
 RAW_BASE_URL="${BPMT_RAW_BASE_URL:-}"
 SQL_BASE_URL="${BPMT_SQL_BASE_URL:-}"
@@ -64,13 +64,14 @@ esac
 if [ "$REMOTE_ASSETS" = "1" ]; then
   download "$RAW_BASE_URL/docker-compose.yml" docker-compose.yml
   download "$RAW_BASE_URL/scripts/init-db.sh" init-db.sh
+  download "$RAW_BASE_URL/scripts/upgrade.sh" upgrade.sh
   download "$RAW_BASE_URL/scripts/render-nginx-conf.sh" render-nginx-conf.sh
   download "$RAW_BASE_URL/scripts/generate-self-signed-cert.sh" generate-self-signed-cert.sh
   download "$RAW_BASE_URL/docker/nginx/nginx.conf.template" docker/nginx/nginx.conf.template
   if [ "$https_enabled" = "1" ]; then
     download "$RAW_BASE_URL/docker-compose.https.yml" docker-compose.https.yml
   fi
-  chmod +x init-db.sh render-nginx-conf.sh generate-self-signed-cert.sh
+  chmod +x init-db.sh upgrade.sh render-nginx-conf.sh generate-self-signed-cert.sh
   init_db_script="./init-db.sh"
   render_script="./render-nginx-conf.sh"
   cert_script="./generate-self-signed-cert.sh"
@@ -97,6 +98,13 @@ if [ "$https_enabled" = "1" ]; then
 fi
 
 sh "$render_script"
+
+mkdir -p .bpmt-lite
+{
+  echo "version=$REF"
+  echo "database=$db_name"
+  echo "installed_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+} > .bpmt-lite/version
 
 if [ "${BPMT_SKIP_UP:-}" = "1" ] || [ "${BPMT_SKIP_UP:-}" = "true" ]; then
   echo "Prepared docker-compose.yml, database SQL, and nginx config for $db_name."
