@@ -62,7 +62,8 @@ scripts/verify-repo.sh
 - 升级脚本 dry run：通过。使用 fake `docker` 验证 `upgrade.sh v1.6.2` 会下载 `docker-compose-v1.6.2.yml`，写入 `.env` 的 `BPMT_IMAGE_TAG=latest` 与 `BPMT_API_IMAGE_TAG=latest`，并只调用 Web/API 镜像 pull 和 `docker compose --env-file .env up -d --no-deps bpmt-web bpmt-api`。
 - 仓库检查：通过。`scripts/verify-repo.sh` 输出 multi-arch 脚本检查和 repository hygiene 检查均 OK。
 - 空白检查：通过。`git diff --check` 无输出。
-- 本地 Web 镜像构建：未完成。首次执行被 Java 25 拦截；显式切换 Java 8 后，Maven WAR 和 Docker context 准备完成，但 Docker daemon 不可用，失败于 `Cannot connect to the Docker daemon at unix:///Users/wenzhewang/.docker/run/docker.sock`。Docker 启动后需重跑 `scripts/build-image.sh` 和 `scripts/build-api-image.sh`。
+- 本地 Web 镜像构建：通过。Docker 启动后显式切换 Java 8 执行 `scripts/build-image.sh`，Maven WAR、Docker build 和镜像内容校验均通过，生成 `ghcr.io/wodenwang/bpmt-lite:1.6.2`。
+- 本地 API 镜像构建：通过。显式切换 Java 8 执行 `scripts/build-api-image.sh`，Maven WAR、Docker build 和镜像内容校验均通过，生成 `ghcr.io/wodenwang/bpmt-lite-api:1.6.2`。
 
 ## 发布边界
 
