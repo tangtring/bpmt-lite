@@ -34,12 +34,35 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
 mvn -s settings.local.xml -pl platform -Dtest=OAuthActionTest test
 mvn -s settings.local.xml -pl platform -Dtest=ThirdpartJspTest,ThirdpartActionTest,ThirdpartServiceTest test
+mvn -s settings.local.xml -DskipTests compile
+mvn -s settings.local.xml -DskipTests install
+mvn -U -s settings.local.xml -pl api test
+docker compose config
 git diff --check
 sh -n scripts/install.sh
 sh -n scripts/run.sh
 sh -n scripts/init-db.sh
 sh -n scripts/upgrade.sh
+scripts/verify-repo.sh
 ```
+
+## 本地验收记录
+
+执行时间：2026-05-06。
+
+- GitHub open issue 核对：通过。当前 open issue 为 #12 和 #13，本版本均已覆盖。
+- OAuth 无权限提示焦点测试：通过。`OAuthActionTest` 28 tests，0 failures，0 errors。
+- 第三方系统管理页焦点测试：通过。`ThirdpartJspTest`、`ThirdpartActionTest`、`ThirdpartServiceTest` 合计 29 tests，0 failures，0 errors。
+- 版本切换后平台焦点回归：通过。`OAuthActionTest`、`ThirdpartJspTest`、`ThirdpartActionTest`、`ThirdpartServiceTest` 合计 57 tests，0 failures，0 errors。
+- 全仓编译：通过。`mvn -s settings.local.xml -DskipTests compile`，BUILD SUCCESS。
+- API 单测：通过。先执行 `mvn -s settings.local.xml -DskipTests install` 安装当前 `1.6.2` reactor 产物，再执行 `mvn -U -s settings.local.xml -pl api test`，39 tests，0 failures，0 errors。
+- Compose 配置检查：通过。`docker compose config` 可生成配置。
+- 脚本语法检查：通过。`install.sh`、`run.sh`、`init-db.sh`、`upgrade.sh` 均通过 `sh -n`。
+- 安装脚本本地 raw 验证：通过。使用 `file://` raw 路径和 `BPMT_SKIP_UP=1` 验证默认完整库安装会生成 `db/init/bpmt.sql`，并带出 `upgrade.sh` 与 `.bpmt-lite/version`；`min` 参数另行验证可生成 `db/init/bpmt-min.sql`。
+- 升级脚本 dry run：通过。使用 fake `docker` 验证 `upgrade.sh v1.6.2` 会下载 `docker-compose-v1.6.2.yml`，写入 `.env` 的 `BPMT_IMAGE_TAG=latest` 与 `BPMT_API_IMAGE_TAG=latest`，并只调用 Web/API 镜像 pull 和 `docker compose --env-file .env up -d --no-deps bpmt-web bpmt-api`。
+- 仓库检查：通过。`scripts/verify-repo.sh` 输出 multi-arch 脚本检查和 repository hygiene 检查均 OK。
+- 空白检查：通过。`git diff --check` 无输出。
+- 本地 Web 镜像构建：未完成。首次执行被 Java 25 拦截；显式切换 Java 8 后，Maven WAR 和 Docker context 准备完成，但 Docker daemon 不可用，失败于 `Cannot connect to the Docker daemon at unix:///Users/wenzhewang/.docker/run/docker.sock`。Docker 启动后需重跑 `scripts/build-image.sh` 和 `scripts/build-api-image.sh`。
 
 ## 发布边界
 
