@@ -259,6 +259,31 @@ fake provider 只由 smoke 临时启用，退出时恢复真实 provider。
 
 真实微信只作为部署后人工验收项：企业号配置 `WECHAT_TYPE=agent` 与 `WECHAT_KEY`；服务号配置 `WECHAT_TYPE=mp`、`WECHAT_KEY`、`WECHAT_SCOPE`。日志只能记录 requestId、clientId、thirdpartKey、wechatType、userId、result、reason，禁止记录 OAuth code、微信 code、access token、client secret 或用户密码。
 
+### v1.6.2 安装与升级脚本验收
+
+从零安装入口为 `scripts/install.sh`，默认使用完整初始化库，并在运行目录带出 `run.sh` 与 `upgrade.sh`：
+
+```bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.2/scripts/install.sh | bash
+```
+
+已有运行目录升级入口为：
+
+```bash
+cd bpmt-lite
+sh ./upgrade.sh
+```
+
+`upgrade.sh` 必须遵守以下约束：
+
+- 默认跟随 GitHub 最新 release/tag。
+- 只拉取 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`。
+- 不自动拉取或升级 `mariadb`、`nginx` 等第三方容器。
+- 不覆盖当前 `docker-compose.yml`。
+- 可以下载目标版本参考 compose，例如 `docker-compose-v1.6.2.yml`。
+- 安装和升级状态只记录在 `.bpmt-lite/`，不得写入业务数据库。
+- 版本间 SQL 升级脚本由目标版本 `database/upgrade/manifest.txt` 描述。
+
 API 业务接口默认使用以下环境变量：
 
 ```text

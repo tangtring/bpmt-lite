@@ -1,55 +1,36 @@
 # bpmt-lite
 
-`bpmt-lite` 是 BPMT 低代码平台的简化发行工程。BPMT 表示 BPM + table，核心能力是自定义工作流和动态表格。
+## 项目介绍
 
-本项目只整理发行工程：代码结构、打包方式、配置方式、Docker 运行方式和初始化数据。不升级 Java/Tomcat/MariaDB 技术栈，不重写业务功能。
+`bpmt-lite` 是 BPMT 低代码平台的简化发行工程。BPMT 表示 BPM + table，核心能力是自定义工作流、动态表格、H5 业务视图、开放 API 和外部系统 OAuth 登录。
 
-## 当前版本
+本仓只处理遗留 BPMT 的发行工程：代码结构、打包方式、配置方式、Docker 运行方式、初始化数据和升级脚本。不升级 Java/Tomcat/MariaDB 技术栈，不重写业务功能。
 
-`v1.6.1` 为当前版本，基于 `v1.6.0` 增强微信生态下第三方 OAuth 登录态传导。外部系统仍按标准 `/oauth/authorize` 发起；微信内、无 BPMT 登录态、且第三方启用微信登录绑定时，BPMT 先走企业号或服务号微信 OAuth，成功后回到原 authorize 并签发标准 OAuth code，第三方仍通过原 `redirect_uri?code=...&state=...` 接收结果。已有数据库升级需执行 `database/v1.6.1-wechat-oauth-thirdpart.sql`；默认关闭，未配置第三方行为与 `v1.6.0` 一致。`v1.6.0` 的 `nginx` HTTPS 入口支持、`v1.5.4` 的 Web/API multi-arch 发布能力、`v1.5.3` 的非 80 端口 OAuth 回跳修复、`v1.5.2` 的外部系统 OAuth 登录态切换体验、`v1.5.1` 的工作流待办“查看/处理”跳转修复继续保留。
+当前版本：`v1.6.2`
 
-`v1.5.0` 新增外部系统 OAuth 登录能力。BPMT 可以作为 OAuth2 Authorization Code 服务端，向第三方 Web 系统提供统一登录入口。
-
-`v1.4.1` 是上一版 API 增强版本，新增 `nginx` 单入口、API 模块化路径重整，以及数据库操作模块接口。
-
-`v1.3.0` 是 H5 修复版本，按保守策略修复移动端登录、首页、菜单、业务视图入口、工作流意见编码等阻断问题；原 AmazeUI H5 页面结构保持不变。
-
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.1`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.1`
+- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.2`
+- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.2`
+- 同步镜像：`ghcr.io/wodenwang/bpmt-lite:latest`、`ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
-- API 文档地址：`http://127.0.0.1/api/docs/`
-- OpenAPI 地址：`http://127.0.0.1/api/openapi.json`
-- Web 应用：Tomcat `ROOT`
-- 附带应用：`/ueditor`
-- 默认数据库名：`bpmt`
-- 最小数据库名：`bpmt_min`
-- 默认登录账号：`admin/admin`
+- API 文档：`http://127.0.0.1/api/docs/`
+- OpenAPI：`http://127.0.0.1/api/openapi.json`
+- 默认账号：`admin/admin`
 
 ## Quick Start
 
-只想先把系统跑起来，不需要 clone 项目。当前公开仓库已经包含初始化库和一键脚本。
-
-如果只是快速体验，推荐先使用最小库启动：
+不需要 clone 项目，直接执行一条命令完成安装、初始化数据库并启动服务：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.2/scripts/install.sh | bash
 ```
 
-说明：一行命令会创建 `bpmt-lite/` 运行目录，默认使用最小库 `bpmt_min` 启动。`install.sh` 默认拉取当前 release 资源（当前默认 `v1.6.1`）。如需切换版本，可显式设置 `BPMT_REF`。
+脚本会创建 `bpmt-lite/` 运行目录，下载 `docker-compose.yml`、初始化脚本、升级脚本、nginx 配置模板和默认数据库，并执行 `docker compose up -d`。
 
 访问：
 
 ```text
 http://127.0.0.1/
 ```
-
-移动端 H5：
-
-```text
-http://127.0.0.1/login.jsp?_action_mode=h5
-```
-
-`v1.3.0` 起，登录、首页、菜单、首页面板，以及流程、动态表、报表的核心浏览路径纳入移动端验收范围。
 
 登录：
 
@@ -58,107 +39,59 @@ http://127.0.0.1/login.jsp?_action_mode=h5
 密码：admin
 ```
 
-最小库包含 176 张表和最小系统数据，适合快速体验、自动化验收和 issue 复现。
-
-如果要使用完整业务库，执行：
+启用本地 HTTPS：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash -s -- full
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.2/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
 ```
 
-### HTTPS 本地体验
-
-默认仍可使用 HTTP 快速启动。需要本地 HTTPS 时：
+升级到最新版本：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
+cd bpmt-lite
+sh ./upgrade.sh
 ```
 
-脚本会在运行目录生成本地自签证书：
+`upgrade.sh` 会根据 GitHub 最新 release/tag 下载参考 compose 文件，例如 `docker-compose-v1.6.2.yml`；不会覆盖当前 `docker-compose.yml`。升级时只拉取 BPMT Web/API 的 `latest` 镜像并重启这两个服务，不自动升级 `mariadb`、`nginx` 等第三方容器。升级状态记录在 `.bpmt-lite/` 下，不写入业务数据库。
 
-```text
-certs/fullchain.pem
-certs/privkey.pem
-```
-
-访问地址：
-
-```text
-https://127.0.0.1/
-```
-
-自签证书会触发浏览器安全提示，这是本地体验的预期行为。生产环境请把正式证书替换到同一路径后重新启动。
-
-如果在已 clone 的源码目录中手工使用 compose 启 HTTPS，需要先准备证书并渲染 nginx 配置，再加载 HTTPS overlay：
-
-```bash
-BPMT_HTTPS_ENABLED=1 sh scripts/generate-self-signed-cert.sh
-BPMT_HTTPS_ENABLED=1 sh scripts/render-nginx-conf.sh
-BPMT_HTTPS_ENABLED=1 docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
-```
-
-## 完整库启动
-
-`v1.6.1` 提供完整初始化库压缩包 `database/bpmt.sql.gz`，数据库名为 `bpmt`。初始化脚本会自动解压到 `db/init/bpmt.sql`。
-
-完整库启动命令：
-
-```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash -s -- full
-```
-
-如果你本机已有可导入的完整 SQL，也可以直接放到：
-
-```text
-bpmt-lite/db/init/bpmt.sql
-```
-
-然后启动：
-
-```bash
-docker compose up -d
-```
-
-## 数据库选择
-
-`bpmt` 和 `bpmt_min` 可以共存在同一个 MariaDB 容器里，互不覆盖。
-
-| 数据库 | SQL 文件 | 用途 |
-| --- | --- | --- |
-| `bpmt` | `db/init/bpmt.sql` | 完整业务数据，本地试运行，由 `database/bpmt.sql.gz` 解压生成 |
-| `bpmt_min` | `db/init/bpmt-min.sql` | 最小数据，快速体验和验收，由 `database/bpmt-min.sql.gz` 解压生成 |
-
-Web 应用连接哪个库由 `DB_NAME` 决定。
-
-切到最小库：
-
-```bash
-DB_NAME=bpmt_min docker compose up -d bpmt-web
-```
-
-切回默认完整库：
-
-```bash
-DB_NAME=bpmt docker compose up -d bpmt-web
-```
-
-注意：MariaDB 官方镜像只会在首次创建 `db/data` 时自动执行 `db/init/*.sql`。如果已经启动过，再新增或替换 SQL 文件不会自动重新导入。
-
-## 常用操作
-
-查看容器状态：
+常用检查：
 
 ```bash
 docker compose ps
+curl -fsSI http://127.0.0.1/
+curl -fsSI http://127.0.0.1/ueditor/
+curl -fsSI http://127.0.0.1/api/docs/
+curl -fsSI http://127.0.0.1/api/openapi.json
 ```
 
-停止服务：
+## 文件结构
 
-```bash
-docker compose down
-```
+安装后的 `bpmt-lite/` 运行目录主要包含：
 
-重新初始化数据库前先确认数据已备份，然后删除本地数据目录：
+| 路径 | 说明 |
+| --- | --- |
+| `docker-compose.yml` | 当前运行使用的 Docker Compose 配置，升级脚本不会覆盖 |
+| `docker-compose-v*.yml` | 升级时下载的目标版本参考配置，仅供对照 |
+| `.env` | 本地运行环境变量，升级脚本会把 Web/API 镜像 tag 设为 `latest` |
+| `.bpmt-lite/` | 安装与升级状态记录、升级日志、临时 manifest 和备份文件 |
+| `run.sh` | 运行目录内的一键启动脚本 |
+| `upgrade.sh` | 运行目录内的升级脚本 |
+| `init-db.sh` | 初始化 SQL 准备脚本 |
+| `db/init/` | MariaDB 首次启动时自动导入的初始化 SQL |
+| `db/data/` | MariaDB 数据目录，不提交 git |
+| `db/logs/` | MariaDB 日志目录，不提交 git |
+| `docker/nginx/` | nginx 配置模板和渲染后的运行配置 |
+| `certs/` | HTTPS 证书目录，生产环境放置正式证书 |
+| `config/overrides/` | properties 覆盖目录，同名 key 覆盖容器默认配置 |
+| `runtime/attachment/` | BPMT 附件目录 |
+| `runtime/download/` | BPMT 下载目录 |
+| `runtime/ueditor-upload/` | UEditor 上传目录 |
+| `runtime/platform-logs/` | Web 容器 BPMT 平台日志 |
+| `runtime/tomcat-logs/` | Web 容器 Tomcat 日志 |
+| `runtime/api-platform-logs/` | API 容器 BPMT 平台日志 |
+| `runtime/api-tomcat-logs/` | API 容器 Tomcat 日志 |
+
+MariaDB 官方镜像只会在首次创建 `db/data/` 时导入 `db/init/*.sql`。已经启动过的环境如果要重新初始化数据库，先确认数据已备份，再执行：
 
 ```bash
 docker compose down
@@ -166,222 +99,42 @@ rm -rf db/data
 docker compose up -d
 ```
 
-如果曾经用旧版 `run.sh` 启动并出现 nginx 配置挂载错误，先清掉 Docker 自动创建的错误目录，再重新下载脚本启动：
+## 版本历史
 
-```bash
-docker compose down
-rm -rf docker/nginx/nginx.conf
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.1/scripts/install.sh | bash -s -- full
-```
-
-检查入口：
-
-```bash
-curl -fsSI http://127.0.0.1/
-curl -fsSI http://127.0.0.1/ueditor/
-curl -fsSI http://127.0.0.1/api/openapi.json
-curl -fsSI http://127.0.0.1/api/docs/
-```
-
-期望返回 `HTTP/1.1 200`。
-
-API 业务接口默认需要签名。维护者本地验收可执行：
-
-```bash
-scripts/smoke-api.sh
-```
-
-## API 使用
-
-`v1.6.1` 继续使用 `nginx` 对外统一入口，API 默认路径为 `http://127.0.0.1/api/`。启用 HTTPS 后，API 默认路径变为 `https://127.0.0.1/api/`。API 能力沿用 `v1.4.1`：动态表模块只管理结构，不管理业务数据，不提供删除接口。本版本的 Web/API 默认镜像继续使用 multi-arch 发布，支持常见 x86_64 Linux 服务器和 Apple Silicon/ARM64 环境。
-
-API 文档有两种形态：
-
-| 入口 | 用途 |
-| --- | --- |
-| `http://127.0.0.1/api/docs/` | Web 文档，适合人工阅读和调试 |
-| `http://127.0.0.1/api/openapi.json` | OpenAPI JSON，适合 AI agent、N8N、飞书集成平台和后续 skill 封装 |
-| [docs/v1.4.1/api-reference.md](docs/v1.4.1/api-reference.md) | Markdown 归档版 API 文档 |
-| [docs/v1.4.1/openapi.json](docs/v1.4.1/openapi.json) | OpenAPI 归档快照 |
-
-首批接口：
-
-| 方法 | 路径 | 说明 |
+| 版本 | 说明 | 文档 |
 | --- | --- | --- |
-| `GET` | `/api/v1/dynamic-tables` | 查询动态表结构列表 |
-| `POST` | `/api/v1/dynamic-tables` | 创建动态表结构 |
-| `GET` | `/api/v1/dynamic-tables/{name}` | 查询单个动态表结构 |
-| `PUT` | `/api/v1/dynamic-tables/{name}` | 调整动态表结构 |
-| `POST` | `/api/v1/dynamic-tables/{name}/ddl:sync` | 同步动态表 DDL |
-| `GET` | `/api/v1/dynamic-tables/templates` | 查询动态表模板列表 |
-| `GET` | `/api/v1/dynamic-tables/templates/{templateCode}` | 查询模板详情 |
-| `POST` | `/api/v1/dynamic-tables/templates/{templateCode}:create-table` | 按模板建表 |
-| `POST` | `/api/v1/database-operations/query` | SQL 查询（SELECT） |
-| `POST` | `/api/v1/database-operations/find` | SQL 单行查询（SELECT） |
-| `POST` | `/api/v1/database-operations/save` | SQL 保存（INSERT） |
-| `POST` | `/api/v1/database-operations/exec` | SQL 执行（UPDATE/DELETE） |
-
-业务 API 使用 HMAC-SHA256 签名，请求头为 `X-BPMT-App-Key`、`X-BPMT-Timestamp`、`X-BPMT-Nonce`、`X-BPMT-Signature`。签名 path 必须包含公开 context path，例如 `/api/v1/dynamic-tables`。本地默认 `appKey` 为 `bpmt-api`，默认 `appSecret` 为 `bpmt-api-secret`，正式部署必须覆盖。
-
-API 和 Web 各自内嵌 Hazelcast，并通过 compose 网络组成同一集群；缓存保持开启。动态表结构写接口会同时更新数据库 DDL 和 BPMT 元数据表，因此调用前应明确目标表结构。
-
-## 外部系统 OAuth 登录
-
-`v1.5.0` 增加外部系统 OAuth 登录能力，BPMT 作为 OAuth2 Authorization Code 服务端，复用现有 BPMT 用户、登录页和权限体系。该能力主流程完全在 `bpmt-web/platform` 中实现，不改 `bpmt-api`，不提供 OIDC、`refresh_token` 或 `userid + thirdpartKey` 独立权限校验 API。
-
-OAuth 端点：
-
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| `GET` | `/oauth/authorize` | 浏览器授权入口，未登录时回 BPMT 登录页，登录后继续 authorize |
-| `POST` | `/oauth/token` | 使用一次性 code 换取不透明 access token 和 `userid` |
-| `GET` | `/oauth/userinfo` | 使用 `Authorization: Bearer <access_token>` 读取当前用户基础信息 |
-
-相关表：
-
-| 表 | 说明 |
-| --- | --- |
-| `CM_THIRDPART` | 外部系统主数据、OAuth client、回调白名单、入口 URL 和 `PRI_KEY` 权限点 |
-| `CM_THIRDPART_AUTH_CODE` | 授权码运行态；code 只保存 hash，默认 5 分钟过期且只能使用一次 |
-| `CM_THIRDPART_ACCESS_TOKEN` | token 运行态；access token 只保存 hash，默认 2 小时过期 |
-
-三张 OAuth 表已经进入默认初始化 SQL：`database/bpmt.sql.gz` 完整库和 `database/bpmt-min.sql.gz` 最小库都会创建这些表。Docker 默认不会开启 Hibernate 自动建表，因此升级已有数据库时需要自行执行 `database/v1.5.0-oauth-tables.sql`。
-
-外部系统管理入口在后台菜单 `系统开发 -> 第三方系统`，初始化数据会把该入口放在 `用户菜单` 下方。外部系统访问权限在 `权限组管理 -> 第三方系统权限` 中分配。
-
-`/oauth/token` 和 `/oauth/userinfo` 使用 OAuth JSON 响应，不使用 API 的 `success/data/error` 包装；`/oauth/authorize` 是浏览器跳转或错误页。菜单第三方 URL / iframe 只是辅助入口：BPMT 只负责打开第三方页面，第三方页面没有自己的登录态时，应自行跳转 `/oauth/authorize` 发起 OAuth。
-
-`v1.6.0` 继续保留 OAuth 登录态切换体验：第三方系统没有自身登录态时仍跳转 BPMT `/oauth/authorize`；如果当前浏览器已有 BPMT 登录态，BPMT 会复用当前用户，不会强制显示登录页。若当前账号没有目标第三方系统权限，BPMT 会显示提示页，允许用户退出当前账号并重新登录其他账号，或取消并返回第三方系统。
-
-`v1.6.0` 继承 `nginx` 反向代理转发的 `Host` 头修复，并进一步通过 `X-Forwarded-*` 头生成公开 URL。使用 `BPMT_HTTP_PORT=18080`、`BPMT_HTTPS_PORT=18443` 等非标准端口运行时，登录页、OAuth 授权页和第三方回调地址会保留实际端口和公开 scheme。
-
-`v1.6.1` 在微信生态下增强第三方 OAuth 登录态传导：外部系统仍只需要跳转标准 `/oauth/authorize`。当请求来自微信内、当前没有 BPMT 登录态、且目标第三方系统开启微信登录绑定时，BPMT 会先按该第三方绑定的企业号或服务号配置发起微信 OAuth；微信登录成功后回到原 authorize 请求，继续按 BPMT 权限体系签发标准 OAuth code，并通过原 `redirect_uri?code=...&state=...` 回调第三方。已有数据库升级需执行 `database/v1.6.1-wechat-oauth-thirdpart.sql` 补齐第三方微信登录配置字段；默认关闭，未配置第三方行为与 `v1.6.0` 一致。
-
-OAuth demo 项目见：[bpmt-oauth-demo](https://github.com/wodenwang/bpmt-oauth-demo)。
-
-参考文档：
-
-- [docs/v1.5.0/oauth-login-reference.md](docs/v1.5.0/oauth-login-reference.md)
-- [docs/v1.5.0/oauth-login-acceptance.md](docs/v1.5.0/oauth-login-acceptance.md)
-- [docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)
-
-## 常用配置
-
-默认 `docker-compose.yml` 只保留快速启动需要的常用项。
-
-| 配置 | 默认值 | 说明 |
-| --- | --- | --- |
-| `BPMT_HTTP_PORT` | `80` | Nginx 对外访问端口 |
-| `BPMT_HTTPS_ENABLED` | `0` | 是否启用内置 nginx HTTPS 入口 |
-| `BPMT_HTTPS_PORT` | `443` | HTTPS 对外访问端口，启用 HTTPS 时通过 `docker-compose.https.yml` 发布 |
-| `BPMT_HTTP_REDIRECT` | `true` | HTTPS 启用时是否把 HTTP 默认 301 跳转到 HTTPS |
-| `BPMT_UPSTREAM_TLS_ENABLED` | `0` | 由可信上游终止 TLS 并转发到本 nginx HTTP 入口时设为 `1` |
-| `BPMT_UPSTREAM_HTTPS_PORT` | `BPMT_HTTPS_PORT` | 可信上游对外 HTTPS 端口 |
-| `BPMT_TLS_HOSTS` | `localhost` | 自签证书 SAN 域名，逗号分隔 |
-| `BPMT_TLS_IPS` | `127.0.0.1` | 自签证书 SAN IP，逗号分隔 |
-| `BPMT_DB_PORT` | `3306` | MariaDB 暴露到宿主机的端口 |
-| `BPMT_IMAGE_TAG` | `1.6.1` | Web 镜像 tag |
-| `BPMT_API_IMAGE_TAG` | `1.6.1` | API 镜像 tag |
-| `DB_HOST` | `bpmt-mariadb` | Web/API 容器访问数据库的主机名 |
-| `DB_NAME` | `bpmt` | Web 应用连接的数据库 |
-| `DB_USER` | `root` | 数据库用户 |
-| `DB_PASSWORD` | `123456` | 数据库密码 |
-| `BPMT_API_APP_KEY` | `bpmt-api` | API appKey |
-| `BPMT_API_APP_SECRET` | `bpmt-api-secret` | API appSecret |
-| `BPMT_API_ACT_AS` | `admin` | API 固定技术用户，未配置或用户不可用时兜底 `admin` |
-| `BPMT_API_DBOPS_EXECUTE_ENABLED` | `true` | 是否开启 `database-operations` 写操作（`save/exec`） |
-| `BPMT_HAZELCAST_PASSWORD` | `bpmt` | Web/API 内嵌 Hazelcast 集群密码 |
-| `LOG_PATH` | `/usr/local/tomcat/webapps/logs` | 容器内 BPMT 业务日志目录 |
-
-示例：把统一入口端口改成 18080。
-
-```bash
-BPMT_HTTP_PORT=18080 docker compose up -d
-```
-
-示例：使用非标准端口启用 HTTPS。
-
-```bash
-BPMT_HTTPS_ENABLED=1 BPMT_HTTP_PORT=18080 BPMT_HTTPS_PORT=18443 sh scripts/generate-self-signed-cert.sh
-BPMT_HTTPS_ENABLED=1 BPMT_HTTP_PORT=18080 BPMT_HTTPS_PORT=18443 sh scripts/render-nginx-conf.sh
-BPMT_HTTPS_ENABLED=1 BPMT_HTTP_PORT=18080 BPMT_HTTPS_PORT=18443 \
-  docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
-```
-
-示例：由可信上游网关终止 TLS，再转发到本 nginx HTTP 入口。
-
-```bash
-BPMT_UPSTREAM_TLS_ENABLED=1 BPMT_UPSTREAM_HTTPS_PORT=443 sh scripts/render-nginx-conf.sh
-docker compose up -d
-```
-
-后端会信任 `X-Forwarded-Proto`、`X-Forwarded-Host`、`X-Forwarded-Port` 来生成公开 URL。生产部署不要把 `bpmt-web` 或 `bpmt-api` 直接暴露到不可信网络；如果前面还有上游网关，必须由上游覆盖并规范设置这些代理头。
-
-高级配置通过 `config/overrides/*.properties` 覆盖。覆盖文件会追加到容器启动时生成的同名 properties 文件后面，因此同名 key 以覆盖文件为准。
-
-## 运行目录
-
-```text
-db/init/                 初始化 SQL 目录，不提交私有 SQL
-db/data/                 MariaDB 数据目录，不提交 git
-db/logs/                 MariaDB 日志目录，不提交 git
-runtime/attachment/      BPMT 附件目录，不提交 git
-runtime/download/        BPMT 下载目录，不提交 git
-runtime/ueditor-upload/  UEditor 上传目录，不提交 git
-runtime/platform-logs/   BPMT 平台日志目录，不提交 git
-runtime/tomcat-logs/     Tomcat 日志目录，不提交 git
-runtime/api-platform-logs/ API 平台日志目录，不提交 git
-runtime/api-tomcat-logs/   API Tomcat 日志目录，不提交 git
-config/overrides/        properties 覆盖文件目录，不提交具体覆盖文件
-```
-
-## 维护者构建
-
-维护者需要 Java 8、Maven、Docker，以及可访问历史依赖的 Maven 仓库。
-
-```bash
-cp settings.example.xml settings.local.xml
-scripts/build-image.sh
-scripts/build-api-image.sh
-```
-
-`scripts/build-image.sh` 会构建本地 Web 镜像，并验证 `ROOT`、`ueditor`、entrypoint 和 CJK 字体。`scripts/build-api-image.sh` 会构建本地 API 镜像，并验证 `/api`、`openapi.json`、`docs/index.html` 和 entrypoint。
-
-`v1.5.4` 起正式发布 GHCR 镜像时使用 multi-arch 入口：
-
-```bash
-scripts/build-multiarch-images.sh
-```
-
-该脚本默认同时推送 `linux/amd64` 和 `linux/arm64` 的 Web/API 镜像，并同步 `latest`。更多维护和发布细节见 [docs/maintenance.md](docs/maintenance.md)。
+| `v1.6.2` | 修复第三方系统管理界面和 OAuth 无权限提示，新增安装/升级脚本，重构 README。 | [release](docs/release-v1.6.2.md) |
+| `v1.6.1` | 增强微信生态第三方 OAuth 登录态传导。 | [release](docs/release-v1.6.1.md) |
+| `v1.6.0` | 新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。 | [release](docs/release-v1.6.0.md) |
+| `v1.5.4` | 补齐 Web/API 镜像 multi-arch 发布能力。 | [release](docs/release-v1.5.4.md) |
+| `v1.5.3` | 修复 nginx 转发非 80 端口时 OAuth 回跳地址丢端口的问题。 | [release](docs/release-v1.5.3.md) |
+| `v1.5.2` | 增强外部系统 OAuth 登录态切换体验。 | [release](docs/release-v1.5.2.md) |
+| `v1.5.1` | 修复工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题。 | [release](docs/release-v1.5.1.md) |
+| `v1.5.0` | 新增外部系统 OAuth 登录能力。 | [release](docs/release-v1.5.0.md) |
+| `v1.4.1` | 新增 nginx 单入口、API 模块化路径重整和数据库操作模块接口。 | [API](docs/v1.4.1/api-reference.md) |
+| `v1.4.0` | 新增独立 `api` 子项目和独立 API Docker 容器。 | [release](docs/release-v1.4.0.md) |
+| `v1.3.0` | 修复移动端 H5 登录、首页、菜单和核心业务视图阻断问题。 | [release](docs/release-v1.3.0.md) |
+| `v1.2.0` | 整理初始化数据、修复早期 Docker 运行问题并重构入门文档。 | [roadmap](docs/v1.2.0/roadmap.md) |
+| `v1.1.0` | 第二个 Docker 化版本，收敛 compose 配置和本地构建入口。 | [release](docs/release-v1.1.0.md) |
+| `v1.0.0` | 首个正式 Docker 化版本。 | [release](docs/release-v1.0.0.md) |
 
 ## 文档
 
-- 低代码操作文档：更详细的表单、流程、动态表和日常使用说明见 [bpmt-doc](https://github.com/wodenwang/bpmt-doc)
-- 初始化数据库设计：[docs/v1.2.0/database-init.md](docs/v1.2.0/database-init.md)
-- v1.2.0 规划：[docs/v1.2.0/roadmap.md](docs/v1.2.0/roadmap.md)
-- 发布验收清单：[docs/v1.2.0/release-checklist.md](docs/v1.2.0/release-checklist.md)
-- v1.3.0 发布记录：[docs/release-v1.3.0.md](docs/release-v1.3.0.md)
-- v1.3.0 H5 验收清单：[docs/v1.3.0/h5-acceptance.md](docs/v1.3.0/h5-acceptance.md)
-- v1.4.1 API 开发规范：[docs/v1.4.0/api-guidelines.md](docs/v1.4.0/api-guidelines.md)
-- v1.4.1 API 验收清单：[docs/v1.4.1/api-acceptance.md](docs/v1.4.1/api-acceptance.md)
-- v1.4.1 API Markdown 归档：[docs/v1.4.1/api-reference.md](docs/v1.4.1/api-reference.md)
-- v1.4.1 OpenAPI 归档：[docs/v1.4.1/openapi.json](docs/v1.4.1/openapi.json)
-- v1.5.0 发布记录：[docs/release-v1.5.0.md](docs/release-v1.5.0.md)
-- v1.5.0 OAuth 登录参考：[docs/v1.5.0/oauth-login-reference.md](docs/v1.5.0/oauth-login-reference.md)
-- v1.5.0 OAuth 验收清单：[docs/v1.5.0/oauth-login-acceptance.md](docs/v1.5.0/oauth-login-acceptance.md)
-- v1.5.1 发布记录：[docs/release-v1.5.1.md](docs/release-v1.5.1.md)
-- v1.5.3 发布记录：[docs/release-v1.5.3.md](docs/release-v1.5.3.md)
-- v1.5.3 OAuth 登录态切换验收：[docs/v1.5.3/oauth-session-switch-acceptance.md](docs/v1.5.3/oauth-session-switch-acceptance.md)
-- v1.5.4 发布记录：[docs/release-v1.5.4.md](docs/release-v1.5.4.md)
-- v1.5.4 multi-arch 发布修复：[docs/v1.5.4/multi-arch-release.md](docs/v1.5.4/multi-arch-release.md)
-- v1.6.0 HTTPS 验收清单：[docs/v1.6.0/https-acceptance.md](docs/v1.6.0/https-acceptance.md)
-- v1.6.1 发布记录：[docs/release-v1.6.1.md](docs/release-v1.6.1.md)
-- v1.6.1 微信 OAuth 验收：[docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)
-- 维护说明：[docs/maintenance.md](docs/maintenance.md)
+- [bpmt-doc](https://github.com/wodenwang/bpmt-doc)：面向低代码用户的 SOP 文档项目。
+- [维护说明](docs/maintenance.md)：维护者构建、验证、镜像发布和升级策略。
+- [API 文档](docs/v1.4.1/api-reference.md)：动态表结构 API 与数据库操作 API 的 Markdown 归档。
+- [OpenAPI 快照](docs/v1.4.1/openapi.json)：给 AI agent、N8N、飞书集成平台使用的接口契约。
+- [第三方 OAuth 登录](docs/v1.5.0/oauth-login-reference.md)：BPMT 作为 OAuth2 Authorization Code 服务端的接入说明。
+- [HTTPS 验收](docs/v1.6.0/https-acceptance.md)：内置 nginx HTTPS 和可信上游 TLS 的验证记录。
+- [微信生态 OAuth 登录](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)：企业号/服务号登录态传导的验收记录。
+- [v1.6.2 设计说明](docs/superpowers/specs/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues-design.md)：本版本需求边界和方案。
+- [v1.6.2 执行计划](docs/superpowers/plans/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues.md)：本版本实施步骤和验证清单。
 
 ## 许可证与作者
 
-未来版本计划使用 MIT 许可证。主要作者记录为 `wodenwang` 和 `borballzhai`。
+本项目采用 [MIT License](LICENSE)。
 
-本项目沟通和文档统一使用简体中文；代码、命令、配置键名、Maven 坐标、镜像名等技术标识保持原样。
+作者：
+
+- [wodenwang](https://github.com/wodenwang)
+- [borball](https://github.com/borball)

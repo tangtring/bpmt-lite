@@ -26,9 +26,10 @@
 - `v1.5.3` 是基于 `v1.5.2` 修复 `nginx` 转发非 80 端口时 OAuth 回跳地址丢端口的问题。
 - `v1.5.4` 是基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力的补丁版本。
 - `v1.6.0` 是新增 HTTPS 入口支持的发布版本，支持内置 nginx TLS 和可信上游 TLS。
-- `v1.6.1` 是当前版本，基于 `v1.6.0` 增强微信生态第三方 OAuth 登录态传导的补丁版本。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.1`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.1`
+- `v1.6.1` 是基于 `v1.6.0` 增强微信生态第三方 OAuth 登录态传导的补丁版本。
+- `v1.6.2` 是当前版本，修复第三方系统管理界面和 OAuth 无权限提示，并新增安装/升级脚本。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.2`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.2`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - HTTPS 访问地址：`https://127.0.0.1/`，需要 `BPMT_HTTPS_ENABLED=1`
@@ -55,6 +56,7 @@
 - 涉及 Docker、数据库、初始化脚本、发布验收、公开文档的变更，必须同步更新对应文档，不能只改代码。
 - v1.6.0 HTTPS 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.0-https-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.0-https.md` -> `docs/v1.6.0/*` -> `README.md` -> implementation。
 - v1.6.1 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.1-wechat-oauth-thirdpart-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.1-wechat-oauth-thirdpart.md` -> `docs/v1.6.1/*` -> `README.md` -> implementation。
+- v1.6.2 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues-design.md` -> `docs/superpowers/plans/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues.md` -> `docs/release-v1.6.2.md` -> `README.md` -> implementation。
 
 ## 已验证的本地编译基线
 
@@ -132,7 +134,11 @@ mvn -s settings.local.xml -DskipTests compile
 - 快速体验允许只拉起容器而不导入业务数据。
 - 若要得到完整初始化业务数据，使用 `scripts/init-db.sh` 从 `database/bpmt.sql.gz` 解压生成 `db/init/bpmt.sql`。
 - 若要得到最小初始化库，使用 `scripts/init-db.sh min` 从 `database/bpmt-min.sql.gz` 解压生成 `db/init/bpmt-min.sql`。
+- `scripts/install.sh` 是面向使用者的从零安装入口，负责创建运行目录并带出 `run.sh`、`upgrade.sh`。
 - `scripts/run.sh` 是面向使用者的一键运行入口，负责下载 compose、下载初始化脚本、解压 SQL 并启动服务；默认完整库，`min` 参数使用最小库。
+- `scripts/upgrade.sh` 是运行目录内的升级入口；默认跟随 GitHub 最新 release/tag，拉取 Web/API `latest` 镜像，执行版本间 SQL 升级脚本，下载目标版本 compose 参考文件，不覆盖当前 `docker-compose.yml`。
+- 升级状态必须记录在项目运行目录 `.bpmt-lite/`，不得写入 BPMT 业务数据库。
+- 升级脚本不得自动升级或替换第三方容器镜像，例如 `mariadb`、`nginx`。
 - MariaDB 只会在首次创建 `db/data` 时自动导入 `db/init/*.sql`。
 - 如果已经启动过，再替换初始化 SQL 不会自动重新导入。
 - 需要重新初始化数据库时，先确认数据已备份，再执行：
@@ -346,7 +352,7 @@ docker compose ps
 - 第五阶段清理品牌信息：
   - 默认 logo 替换为透明底纯色 `BPMT` PNG
   - 默认 copyright 去掉 `Riversoft Designs`
-  - 未来许可证考虑 MIT，主要作者为 `wodenwang` 和 `borballzhai`
+  - 当前许可证为 MIT，主要作者为 `wodenwang` 和 `borball`
 - 发布验收 gate 已推进：
   - `scripts/verify-repo.sh`、`docker compose config`、`mvn -s settings.local.xml -DskipTests compile` 已通过
   - `scripts/build-image.sh` 已通过
