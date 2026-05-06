@@ -309,6 +309,7 @@ public class OAuthAction {
         context.put("thirdpartKey", stringValue(thirdpart.get("thirdpartKey")));
         context.put("thirdpartName", stringValue(thirdpart.get("thirdpartName")));
         context.put("userId", userId);
+        context.put("message", accessDeniedUserMessage(userId));
         context.put("redirectUri", redirectUri);
         context.put("state", validStateForRedirect(state));
         context.put("returnUrl", Actions.Util.getFullURL(request));
@@ -371,18 +372,15 @@ public class OAuthAction {
         return url.toString();
     }
 
-    private String accessDeniedDescription(Map<String, Object> thirdpart) {
-        if (thirdpart == null) {
-            return "无权限访问第三方系统。";
+    private String accessDeniedDescription(Map<String, Object> context) {
+        if (context == null) {
+            return "用户[]不具备访问本应用权限。";
         }
-        String name = stringValue(thirdpart.get("thirdpartName"));
-        if (StringUtils.isBlank(name)) {
-            name = stringValue(thirdpart.get("thirdpartKey"));
-        }
-        if (StringUtils.isBlank(name)) {
-            return "无权限访问第三方系统。";
-        }
-        return "无权限访问[" + name + "]第三方系统。";
+        return accessDeniedUserMessage(stringValue(context.get("userId")));
+    }
+
+    private String accessDeniedUserMessage(String userId) {
+        return "用户[" + stringValue(userId) + "]不具备访问本应用权限。";
     }
 
     private String bearerToken(HttpServletRequest request) {

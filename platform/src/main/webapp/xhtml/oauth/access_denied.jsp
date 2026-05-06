@@ -39,9 +39,13 @@ if (oauthAccessDenied == null) {
     oauthAccessDenied = (Map) session.getAttribute("OAUTH_ACCESS_DENIED_CONTEXT");
 }
 String userId = oauthAccessDenied == null || oauthAccessDenied.get("userId") == null ? "" : String.valueOf(oauthAccessDenied.get("userId"));
+String clientId = oauthAccessDenied == null || oauthAccessDenied.get("clientId") == null ? "" : String.valueOf(oauthAccessDenied.get("clientId"));
+String thirdpartKey = oauthAccessDenied == null || oauthAccessDenied.get("thirdpartKey") == null ? "" : String.valueOf(oauthAccessDenied.get("thirdpartKey"));
 String thirdpartName = oauthAccessDenied == null || oauthAccessDenied.get("thirdpartName") == null ? "目标外部系统" : String.valueOf(oauthAccessDenied.get("thirdpartName"));
 String requestId = oauthAccessDenied == null || oauthAccessDenied.get("requestId") == null ? "" : String.valueOf(oauthAccessDenied.get("requestId"));
 String escapedUserId = escapeHtml(userId);
+String escapedClientId = escapeHtml(clientId);
+String escapedThirdpartKey = escapeHtml(thirdpartKey);
 String escapedThirdpartName = escapeHtml(thirdpartName);
 String escapedRequestId = escapeHtml(requestId);
 String cp = request.getContextPath();
@@ -100,7 +104,10 @@ body {
 <body>
 <div class="oauth-denied">
     <h1>当前账号无权访问外部系统</h1>
-    <p>当前 BPMT 账号 <strong><%= escapedUserId %></strong> 没有访问 <strong><%= escapedThirdpartName %></strong> 的权限。</p>
+    <p class="lead"><strong>用户[<%= escapedUserId %>]不具备访问本应用权限。</strong></p>
+    <p>目标应用：<strong><%= escapedThirdpartName %></strong></p>
+    <p>系统标识：<strong><%= escapedThirdpartKey %></strong></p>
+    <p>Client ID：<strong><%= escapedClientId %></strong></p>
     <p>你可以退出当前 BPMT 账号并重新登录其他账号，也可以取消本次登录并返回第三方系统。</p>
     <div class="oauth-actions">
         <form action="<%= cp %>/oauth/OAuthAction/switchAccount.shtml" method="post">

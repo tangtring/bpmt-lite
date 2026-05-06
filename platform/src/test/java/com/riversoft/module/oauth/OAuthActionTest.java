@@ -55,6 +55,21 @@ public class OAuthActionTest {
     }
 
     @Test
+    public void accessDeniedJspShowsClearUserAndClientContext() throws Exception {
+        String jsp = readAccessDeniedJsp();
+
+        assertTrue(jsp.contains("用户[<%= escapedUserId %>]不具备访问本应用权限。"));
+        assertTrue(jsp.contains("目标应用"));
+        assertTrue(jsp.contains("<%= escapedThirdpartName %>"));
+        assertTrue(jsp.contains("Client ID"));
+        assertTrue(jsp.contains("<%= escapedClientId %>"));
+        assertTrue(jsp.contains("系统标识"));
+        assertTrue(jsp.contains("<%= escapedThirdpartKey %>"));
+        assertFalse(jsp.contains("<%= clientSecret %>"));
+        assertFalse(jsp.contains("<%= accessToken %>"));
+    }
+
+    @Test
     public void authorizeWithoutLoginStoresReturnUrl() {
         TestOAuthAction action = new TestOAuthAction();
         action.loggedIn = false;
@@ -184,6 +199,7 @@ public class OAuthActionTest {
         assertEquals("app-a", context.get("thirdpartKey"));
         assertEquals("演示系统", context.get("thirdpartName"));
         assertEquals("oauth_no_pri", context.get("userId"));
+        assertEquals("用户[oauth_no_pri]不具备访问本应用权限。", context.get("message"));
         assertEquals("http://client.example/callback", context.get("redirectUri"));
         assertEquals("s-1", context.get("state"));
         assertEquals(
@@ -202,7 +218,7 @@ public class OAuthActionTest {
         action.cancelAccessDenied(request, response);
 
         assertEquals(
-                "http://client.example/callback?error=access_denied&error_description=%E6%97%A0%E6%9D%83%E9%99%90%E8%AE%BF%E9%97%AE%5B%E6%BC%94%E7%A4%BA%E7%B3%BB%E7%BB%9F%5D%E7%AC%AC%E4%B8%89%E6%96%B9%E7%B3%BB%E7%BB%9F%E3%80%82&state=s-1",
+                "http://client.example/callback?error=access_denied&error_description=%E7%94%A8%E6%88%B7%5Boauth_no_pri%5D%E4%B8%8D%E5%85%B7%E5%A4%87%E8%AE%BF%E9%97%AE%E6%9C%AC%E5%BA%94%E7%94%A8%E6%9D%83%E9%99%90%E3%80%82&state=s-1",
                 response.getRedirectedUrl());
         assertFalse(action.logoutCalled);
         assertNull(request.getSession().getAttribute(OAuthSessionKeys.ACCESS_DENIED_CONTEXT));
