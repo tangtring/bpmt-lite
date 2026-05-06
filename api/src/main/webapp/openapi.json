@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "BPMT Lite v1.6.1 API",
-    "version": "1.6.1",
-    "description": "BPMT Lite v1.6.1 API. The API surface remains compatible with v1.4.1 and exposes structure-only dynamic table management plus database-operations module endpoints. Table delete and other destructive operations are intentionally not exposed. Auth uses appKey/appSecret based HMAC headers from container environment variables. Signature canonical string is METHOD, PATH, NORMALIZED_QUERY, TIMESTAMP, NONCE, SHA256_HEX(BODY), joined by newline. PATH must be the public request URI such as /api/v1/dynamic-tables. NORMALIZED_QUERY sorts decoded query pairs by name and value, then URL-encodes them with spaces as %20."
+    "title": "BPMT Lite v1.6.2 API",
+    "version": "1.6.2",
+    "description": "BPMT Lite v1.6.2 API. The API surface remains compatible with v1.4.1 and exposes structure-only dynamic table management plus database-operations module endpoints. Table delete and other destructive operations are intentionally not exposed. Auth uses appKey/appSecret based HMAC headers from container environment variables. Signature canonical string is METHOD, PATH, NORMALIZED_QUERY, TIMESTAMP, NONCE, SHA256_HEX(BODY), joined by newline. PATH must be the public request URI such as /api/v1/dynamic-tables. NORMALIZED_QUERY sorts decoded query pairs by name and value, then URL-encodes them with spaces as %20."
   },
   "servers": [
     {
