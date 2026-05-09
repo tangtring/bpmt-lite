@@ -24,6 +24,8 @@ config/overrides/*
 !config/overrides/.gitkeep
 !config/overrides/*.example
 
+docs/ops/local-secrets.md
+
 certs/
 
 *.log

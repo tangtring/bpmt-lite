@@ -679,6 +679,18 @@ v1.6.0 文档见：
 - `docs/v1.6.0/https-acceptance.md`
 - `docs/release-v1.6.0.md`
 
+## 线上测试环境交接
+
+线上测试环境的非敏感入口、Docker 部署结构、OAuth demo 配置线索和 2026-05-05 微信 OAuth 登录问题结论已记录在：
+
+- `docs/ops/online-test-environment.md`
+
+敏感信息不写入可提交文档。SSH 密码等仅保存在本机忽略文件：
+
+- `docs/ops/local-secrets.md`
+
+后续 agent 跟进线上问题时，应先读 `docs/ops/online-test-environment.md`，再按实时环境验证。不要把本机敏感文件内容提交到 Git 或复制到公开文档。
+
 ## 原始项目参考源
 
 当本仓出现历史源码缺失、H5 页面包含关系不清、旧模板路径不一致等问题时，可以参考稳定运行时目录和原始 BPMT 项目，但不能直接整包覆盖本仓：
