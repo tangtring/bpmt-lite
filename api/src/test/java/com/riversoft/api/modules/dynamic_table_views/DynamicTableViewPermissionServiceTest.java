@@ -90,6 +90,91 @@ public class DynamicTableViewPermissionServiceTest {
     }
 
     @Test
+    public void createsKeepsAndDeletesComputedAndFormFieldPermissionsByStableKey() {
+        DynamicTableViewSnapshot createTarget = snapshotWithComputedAndFormFields(null);
+        DynamicTableViewResponse.WritePlan createPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, createTarget);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.computed_total.view",
+                createTarget.getFields().getComputedFields().get(0).getPermissions().getView());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.computed_total.create",
+                createTarget.getFields().getComputedFields().get(0).getPermissions().getCreate());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.computed_total.update",
+                createTarget.getFields().getComputedFields().get(0).getPermissions().getUpdate());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.form_note.view",
+                createTarget.getFields().getFormFields().get(0).getPermissions().getView());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.form_note.create",
+                createTarget.getFields().getFormFields().get(0).getPermissions().getCreate());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.form_note.update",
+                createTarget.getFields().getFormFields().get(0).getPermissions().getUpdate());
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.computed_total.view"));
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.computed_total.create"));
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.computed_total.update"));
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.form_note.view"));
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.form_note.create"));
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.form_note.update"));
+
+        DynamicTableViewSnapshot oldKeepTarget = snapshotWithComputedAndFormFields(null);
+        DynamicTableViewResponse.WritePlan oldKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW",
+                        snapshotWithComputedAndFormFields("old"), oldKeepTarget);
+
+        assertEquals("pri-old-computed-view",
+                oldKeepTarget.getFields().getComputedFields().get(0).getPermissions().getView());
+        assertEquals("pri-old-computed-create",
+                oldKeepTarget.getFields().getComputedFields().get(0).getPermissions().getCreate());
+        assertEquals("pri-old-computed-update",
+                oldKeepTarget.getFields().getComputedFields().get(0).getPermissions().getUpdate());
+        assertEquals("pri-old-form-view",
+                oldKeepTarget.getFields().getFormFields().get(0).getPermissions().getView());
+        assertEquals("pri-old-form-create",
+                oldKeepTarget.getFields().getFormFields().get(0).getPermissions().getCreate());
+        assertEquals("pri-old-form-update",
+                oldKeepTarget.getFields().getFormFields().get(0).getPermissions().getUpdate());
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-computed-view"));
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-computed-create"));
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-computed-update"));
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-form-view"));
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-form-create"));
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-form-update"));
+
+        DynamicTableViewSnapshot targetKeep = snapshotWithComputedAndFormFields("target");
+        DynamicTableViewResponse.WritePlan targetKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW",
+                        snapshotWithComputedAndFormFields("old"), targetKeep);
+
+        assertEquals("pri-target-computed-view",
+                targetKeep.getFields().getComputedFields().get(0).getPermissions().getView());
+        assertEquals("pri-target-computed-create",
+                targetKeep.getFields().getComputedFields().get(0).getPermissions().getCreate());
+        assertEquals("pri-target-computed-update",
+                targetKeep.getFields().getComputedFields().get(0).getPermissions().getUpdate());
+        assertEquals("pri-target-form-view",
+                targetKeep.getFields().getFormFields().get(0).getPermissions().getView());
+        assertEquals("pri-target-form-create",
+                targetKeep.getFields().getFormFields().get(0).getPermissions().getCreate());
+        assertEquals("pri-target-form-update",
+                targetKeep.getFields().getFormFields().get(0).getPermissions().getUpdate());
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-computed-view"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-computed-create"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-computed-update"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-form-view"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-form-create"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-form-update"));
+
+        DynamicTableViewResponse.WritePlan deletePlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW",
+                        snapshotWithComputedAndFormFields("old"), new DynamicTableViewSnapshot());
+
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-computed-view"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-computed-create"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-computed-update"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-form-view"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-form-create"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-form-update"));
+    }
+
+    @Test
     public void keepsTargetPermissionBeforeOldPermission() {
         DynamicTableViewSnapshot oldSnapshot = snapshotWithField("CUSTOMER_ID", "pri-old-view");
         DynamicTableViewSnapshot target = snapshotWithField("CUSTOMER_ID", "pri-target-view");
@@ -449,6 +534,26 @@ public class DynamicTableViewPermissionServiceTest {
         field.getPermissions().setView(viewPermission);
         snapshot.getFields().getSystemFields().add(field);
         return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithComputedAndFormFields(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.Field computedField = fieldWithKey("computed_total", "computed", permissionSuffix);
+        DynamicTableViewSnapshot.Field formField = fieldWithKey("form_note", "form", permissionSuffix);
+        snapshot.getFields().getComputedFields().add(computedField);
+        snapshot.getFields().getFormFields().add(formField);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot.Field fieldWithKey(String key, String permissionPrefix, String permissionSuffix) {
+        DynamicTableViewSnapshot.Field field = new DynamicTableViewSnapshot.Field();
+        field.setKey(key);
+        if (permissionSuffix != null) {
+            field.getPermissions().setView("pri-" + permissionSuffix + "-" + permissionPrefix + "-view");
+            field.getPermissions().setCreate("pri-" + permissionSuffix + "-" + permissionPrefix + "-create");
+            field.getPermissions().setUpdate("pri-" + permissionSuffix + "-" + permissionPrefix + "-update");
+        }
+        return field;
     }
 
     private DynamicTableViewSnapshot.NormalQuery normalQuery(String key, String viewPermission) {
