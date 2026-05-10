@@ -352,16 +352,18 @@ public class DynamicTableViewDefaults {
 
     private List<DynamicTableViewSnapshot.SystemButton> defaultSystemButtons() {
         List<DynamicTableViewSnapshot.SystemButton> buttons = new ArrayList<DynamicTableViewSnapshot.SystemButton>();
-        buttons.add(systemButton("CREATE"));
-        buttons.add(systemButton("EDIT"));
-        buttons.add(systemButton("DELETE"));
-        buttons.add(systemButton("VIEW"));
+        buttons.add(systemButton("show", "查看", "item"));
+        buttons.add(systemButton("edit", "编辑", "item"));
+        buttons.add(systemButton("del", "删除", "item"));
+        buttons.add(systemButton("create", "新增", "item"));
         return buttons;
     }
 
-    private DynamicTableViewSnapshot.SystemButton systemButton(String name) {
+    private DynamicTableViewSnapshot.SystemButton systemButton(String name, String displayName, String type) {
         DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
         button.setName(name);
+        button.setDisplayName(displayName);
+        button.setType(type);
         return button;
     }
 

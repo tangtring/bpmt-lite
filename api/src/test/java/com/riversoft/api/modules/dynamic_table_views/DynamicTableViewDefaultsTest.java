@@ -66,6 +66,19 @@ public class DynamicTableViewDefaultsTest {
         assertEquals(Boolean.TRUE, largeStringSnapshot.getFields().getSystemFields().get(0).getWholeLine());
     }
 
+    @Test
+    public void normalizeDefaultsSystemButtonsToDynStorageNames() {
+        DynamicTableViewSnapshot snapshot = snapshotWithFields();
+        snapshot.getButtons().setSystem(null);
+
+        new DynamicTableViewDefaults().normalize(snapshot, new DefaultsRepository());
+
+        assertEquals("show", snapshot.getButtons().getSystem().get(0).getName());
+        assertEquals("edit", snapshot.getButtons().getSystem().get(1).getName());
+        assertEquals("del", snapshot.getButtons().getSystem().get(2).getName());
+        assertEquals("create", snapshot.getButtons().getSystem().get(3).getName());
+    }
+
     private DynamicTableViewSnapshot snapshotWithFields() {
         return snapshotWithFields(field("NAME"));
     }

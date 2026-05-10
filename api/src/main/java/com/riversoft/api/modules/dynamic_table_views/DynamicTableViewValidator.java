@@ -289,7 +289,7 @@ public class DynamicTableViewValidator {
     }
 
     private void validateButtons(DynamicTableViewSnapshot.Buttons buttons, DynamicTableViewValidationResult result) {
-        Set<String> allowed = setOf("CREATE", "EDIT", "DELETE", "VIEW", "IMPORT", "EXPORT", "BACK", "COPY");
+        Set<String> allowed = setOf("show", "edit", "del", "create", "upload", "download", "delAll");
         List<DynamicTableViewSnapshot.SystemButton> system = buttons.getSystem();
         for (int i = 0; i < system.size(); i++) {
             DynamicTableViewSnapshot.SystemButton button = system.get(i);
@@ -322,6 +322,18 @@ public class DynamicTableViewValidator {
         set.add(f);
         set.add(g);
         set.add(h);
+        return set;
+    }
+
+    private Set<String> setOf(String a, String b, String c, String d, String e, String f, String g) {
+        Set<String> set = new HashSet<String>();
+        set.add(a);
+        set.add(b);
+        set.add(c);
+        set.add(d);
+        set.add(e);
+        set.add(f);
+        set.add(g);
         return set;
     }
 

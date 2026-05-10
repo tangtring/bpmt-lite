@@ -110,6 +110,34 @@ public class DynamicTableViewValidatorTest {
         assertError(result, "processors.before[0].exec.type", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
     }
 
+    @Test
+    public void validateAcceptsExistingDynSystemButtonNames() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getButtons().setSystem(java.util.Arrays.asList(
+                systemButton("show"),
+                systemButton("edit"),
+                systemButton("del"),
+                systemButton("create"),
+                systemButton("upload"),
+                systemButton("download"),
+                systemButton("delAll")));
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertTrue(result.isValid());
+    }
+
+    @Test
+    public void validateRejectsNonDynSystemButtonName() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getButtons().setSystem(Collections.singletonList(systemButton("CREATE")));
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "buttons.system[0].name", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+    }
+
     private DynamicTableViewSnapshot minimalSnapshot() {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         snapshot.setBase(new DynamicTableViewSnapshot.Base());
@@ -131,6 +159,12 @@ public class DynamicTableViewValidatorTest {
         snapshot.getFields().getSystemFields().add(id);
         snapshot.getFields().getListOrder().add("ID");
         return snapshot;
+    }
+
+    private DynamicTableViewSnapshot.SystemButton systemButton(String name) {
+        DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
+        button.setName(name);
+        return button;
     }
 
     private void assertError(DynamicTableViewValidationResult result, String path, String code) {
