@@ -1,5 +1,6 @@
 package com.riversoft.api.modules.dynamic_table_views;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -301,7 +302,7 @@ public class DynamicTableViewValidator {
     }
 
     private void validateTabs(DynamicTableViewSnapshot.Subviews subviews, DynamicTableViewValidationResult result) {
-        Set<String> allowed = setOf("detail", "log", "flow", "file", "comment", "history");
+        Set<String> allowed = Collections.singleton("log");
         List<DynamicTableViewSnapshot.SystemTab> systemTabs = subviews.getSystemTabs();
         for (int i = 0; i < systemTabs.size(); i++) {
             DynamicTableViewSnapshot.SystemTab tab = systemTabs.get(i);

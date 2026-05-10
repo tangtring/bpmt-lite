@@ -160,6 +160,28 @@ public class DynamicTableViewValidatorTest {
         assertError(result, "base.logTableName", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
     }
 
+    @Test
+    public void validateAcceptsExistingDynSystemTabLog() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getSubviews().setSystemTabs(Collections.singletonList(systemTab("log")));
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertTrue(result.isValid());
+    }
+
+    @Test
+    public void validateRejectsNonDynSystemTabNames() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getSubviews().setSystemTabs(java.util.Arrays.asList(systemTab("detail"), systemTab("unknown")));
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "subviews.systemTabs[0].name", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+        assertError(result, "subviews.systemTabs[1].name", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+    }
+
     private DynamicTableViewSnapshot minimalSnapshot() {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         snapshot.setBase(new DynamicTableViewSnapshot.Base());
@@ -187,6 +209,12 @@ public class DynamicTableViewValidatorTest {
         DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
         button.setName(name);
         return button;
+    }
+
+    private DynamicTableViewSnapshot.SystemTab systemTab(String name) {
+        DynamicTableViewSnapshot.SystemTab tab = new DynamicTableViewSnapshot.SystemTab();
+        tab.setName(name);
+        return tab;
     }
 
     private void assertError(DynamicTableViewValidationResult result, String path, String code) {
