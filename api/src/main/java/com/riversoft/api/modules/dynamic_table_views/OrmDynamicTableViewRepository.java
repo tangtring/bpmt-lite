@@ -107,13 +107,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
     }
 
     public void replaceViewConfig(final String viewKey, final Map<String, Object> tableMap) {
-        inTransaction(new TransactionCallbackWithoutResult() {
-            @Override
-            protected void doInTransactionWithoutResult(TransactionStatus status) {
-                removeDynamicTableConfig(viewKey);
-                saveViewConfig(viewKey, tableMap);
-            }
-        });
+        throw new UnsupportedOperationException("replaceViewConfig requires VwUrl and WritePlan.");
     }
 
     public void replaceViewConfig(final VwUrl url,

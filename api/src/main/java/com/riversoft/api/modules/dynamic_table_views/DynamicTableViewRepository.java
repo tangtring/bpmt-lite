@@ -33,8 +33,7 @@ interface DynamicTableViewRepository {
     }
 
     default void replaceViewConfig(String viewKey, Map<String, Object> tableMap) {
-        removeDynamicTableConfig(viewKey);
-        saveViewConfig(viewKey, tableMap);
+        throw new UnsupportedOperationException("replaceViewConfig must be implemented with a transaction boundary.");
     }
 
     default void replaceViewConfig(VwUrl url,
