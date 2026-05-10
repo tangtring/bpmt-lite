@@ -39,6 +39,24 @@ public class DynamicTableViewSnapshotTest {
     }
 
     @Test
+    public void initializesPermissionsForNonFieldConfigBlocks() {
+        String json = "{\"fields\":{\"sectionLines\":[{\"key\":\"basic\"}]},"
+                + "\"queries\":{\"normal\":[{\"key\":\"customerName\"}],\"advanced\":[{\"key\":\"overdue\"}]},"
+                + "\"variables\":{\"prepared\":[{\"key\":\"currentUser\"}],\"parents\":[{\"key\":\"parentOrder\"}]},"
+                + "\"processors\":{\"before\":[{\"key\":\"prepareVo\"}],\"after\":[{\"key\":\"syncLog\"}]}}";
+
+        DynamicTableViewSnapshot snapshot = ApiJson.fromJson(new java.io.ByteArrayInputStream(json.getBytes()), DynamicTableViewSnapshot.class);
+
+        assertNotNull(snapshot.getFields().getSectionLines().get(0).getPermissions());
+        assertNotNull(snapshot.getQueries().getNormal().get(0).getPermissions());
+        assertNotNull(snapshot.getQueries().getAdvanced().get(0).getPermissions());
+        assertNotNull(snapshot.getVariables().getPrepared().get(0).getPermissions());
+        assertNotNull(snapshot.getVariables().getParents().get(0).getPermissions());
+        assertNotNull(snapshot.getProcessors().getBefore().get(0).getPermissions());
+        assertNotNull(snapshot.getProcessors().getAfter().get(0).getPermissions());
+    }
+
+    @Test
     public void sectionParserAcceptsOnlyConfiguredBlocks() {
         assertEquals(DynamicTableViewSection.FIELDS, DynamicTableViewSection.parse("fields"));
         assertEquals(DynamicTableViewSection.FIELDS, DynamicTableViewSection.parse(" fields "));

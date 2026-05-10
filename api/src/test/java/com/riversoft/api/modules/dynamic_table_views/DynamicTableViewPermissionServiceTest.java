@@ -87,6 +87,64 @@ public class DynamicTableViewPermissionServiceTest {
         assertEquals("dyn.CRM_CUSTOMER_VIEW.weixin.view", target.getWeixin().getPermissions().getView());
     }
 
+    @Test
+    public void preservesExistingNormalQueryPermissionByStableKey() {
+        DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
+        oldSnapshot.getQueries().getNormal().add(normalQuery("customerName", "pri-old-query"));
+        DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
+        target.getQueries().getNormal().add(normalQuery("customerName", null));
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertEquals("pri-old-query", target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-query"));
+    }
+
+    @Test
+    public void generatesBeforeProcessorPermissionWhenAgentOmitsIt() {
+        DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.Processor processor = new DynamicTableViewSnapshot.Processor();
+        processor.setKey("prepareVo");
+        target.getProcessors().getBefore().add(processor);
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view",
+                target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view"));
+    }
+
+    @Test
+    public void keepsTargetPreparedVariablePermissionBeforeOldPermission() {
+        DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
+        oldSnapshot.getVariables().getPrepared().add(preparedVariable("currentUser", "pri-old-variable"));
+        DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
+        target.getVariables().getPrepared().add(preparedVariable("currentUser", "pri-target-variable"));
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertEquals("pri-target-variable", target.getVariables().getPrepared().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-variable"));
+    }
+
+    @Test
+    public void deletesOldAdvancedQueryPermissionWhenStableKeyRemoved() {
+        DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.AdvancedQuery query = new DynamicTableViewSnapshot.AdvancedQuery();
+        query.setKey("overdue");
+        query.getPermissions().setView("pri-old-advanced-query");
+        oldSnapshot.getQueries().getAdvanced().add(query);
+        DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-advanced-query"));
+    }
+
     private DynamicTableViewSnapshot snapshotWithField(String name, String viewPermission) {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         DynamicTableViewSnapshot.Field field = new DynamicTableViewSnapshot.Field();
@@ -94,5 +152,19 @@ public class DynamicTableViewPermissionServiceTest {
         field.getPermissions().setView(viewPermission);
         snapshot.getFields().getSystemFields().add(field);
         return snapshot;
+    }
+
+    private DynamicTableViewSnapshot.NormalQuery normalQuery(String key, String viewPermission) {
+        DynamicTableViewSnapshot.NormalQuery query = new DynamicTableViewSnapshot.NormalQuery();
+        query.setKey(key);
+        query.getPermissions().setView(viewPermission);
+        return query;
+    }
+
+    private DynamicTableViewSnapshot.PreparedVariable preparedVariable(String key, String viewPermission) {
+        DynamicTableViewSnapshot.PreparedVariable variable = new DynamicTableViewSnapshot.PreparedVariable();
+        variable.setKey(key);
+        variable.getPermissions().setView(viewPermission);
+        return variable;
     }
 }

@@ -450,6 +450,7 @@ public class DynamicTableViewSnapshot {
         private String key;
         private String displayName;
         private String style;
+        private PermissionSet permissions = new PermissionSet();
 
         public String getKey() {
             return key;
@@ -473,6 +474,14 @@ public class DynamicTableViewSnapshot {
 
         public void setStyle(String style) {
             this.style = style;
+        }
+
+        public PermissionSet getPermissions() {
+            return permissions;
+        }
+
+        public void setPermissions(PermissionSet permissions) {
+            this.permissions = permissions;
         }
     }
 
@@ -504,6 +513,7 @@ public class DynamicTableViewSnapshot {
         private String widget;
         private ScriptValue widgetParam;
         private String defaultValue;
+        private PermissionSet permissions = new PermissionSet();
 
         public String getKey() {
             return key;
@@ -552,6 +562,14 @@ public class DynamicTableViewSnapshot {
         public void setDefaultValue(String defaultValue) {
             this.defaultValue = defaultValue;
         }
+
+        public PermissionSet getPermissions() {
+            return permissions;
+        }
+
+        public void setPermissions(PermissionSet permissions) {
+            this.permissions = permissions;
+        }
     }
 
     public static class AdvancedQuery {
@@ -563,6 +581,7 @@ public class DynamicTableViewSnapshot {
         private String defaultValue;
         private ScriptValue sql;
         private String description;
+        private PermissionSet permissions = new PermissionSet();
 
         public String getKey() {
             return key;
@@ -626,6 +645,14 @@ public class DynamicTableViewSnapshot {
 
         public void setDescription(String description) {
             this.description = description;
+        }
+
+        public PermissionSet getPermissions() {
+            return permissions;
+        }
+
+        public void setPermissions(PermissionSet permissions) {
+            this.permissions = permissions;
         }
     }
 
@@ -694,6 +721,7 @@ public class DynamicTableViewSnapshot {
         private String var;
         private String description;
         private ScriptValue exec;
+        private PermissionSet permissions = new PermissionSet();
 
         public String getKey() {
             return key;
@@ -726,6 +754,14 @@ public class DynamicTableViewSnapshot {
         public void setExec(ScriptValue exec) {
             this.exec = exec;
         }
+
+        public PermissionSet getPermissions() {
+            return permissions;
+        }
+
+        public void setPermissions(PermissionSet permissions) {
+            this.permissions = permissions;
+        }
     }
 
     public static class ParentVariable {
@@ -734,6 +770,7 @@ public class DynamicTableViewSnapshot {
         private String var;
         private String description;
         private List<Foreign> foreigns = new ArrayList<Foreign>();
+        private PermissionSet permissions = new PermissionSet();
 
         public String getKey() {
             return key;
@@ -773,6 +810,14 @@ public class DynamicTableViewSnapshot {
 
         public void setForeigns(List<Foreign> foreigns) {
             this.foreigns = foreigns;
+        }
+
+        public PermissionSet getPermissions() {
+            return permissions;
+        }
+
+        public void setPermissions(PermissionSet permissions) {
+            this.permissions = permissions;
         }
     }
 
@@ -831,6 +876,7 @@ public class DynamicTableViewSnapshot {
         private String key;
         private String description;
         private ScriptValue exec;
+        private PermissionSet permissions = new PermissionSet();
 
         public String getKey() {
             return key;
@@ -854,6 +900,14 @@ public class DynamicTableViewSnapshot {
 
         public void setExec(ScriptValue exec) {
             this.exec = exec;
+        }
+
+        public PermissionSet getPermissions() {
+            return permissions;
+        }
+
+        public void setPermissions(PermissionSet permissions) {
+            this.permissions = permissions;
         }
     }
 

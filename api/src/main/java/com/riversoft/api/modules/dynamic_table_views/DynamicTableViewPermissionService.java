@@ -44,8 +44,24 @@ public class DynamicTableViewPermissionService {
             applyFieldPermissions(viewKey, fields.getSystemFields(), "systemField", oldPermissions, targetStableKeys, plan);
             applyFieldPermissions(viewKey, fields.getComputedFields(), "computedField", oldPermissions, targetStableKeys, plan);
             applyFieldPermissions(viewKey, fields.getFormFields(), "formField", oldPermissions, targetStableKeys, plan);
+            applySectionLinePermissions(viewKey, fields.getSectionLines(), oldPermissions, targetStableKeys, plan);
+        }
+        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
+        if (queries != null) {
+            applyNormalQueryPermissions(viewKey, queries.getNormal(), oldPermissions, targetStableKeys, plan);
+            applyAdvancedQueryPermissions(viewKey, queries.getAdvanced(), oldPermissions, targetStableKeys, plan);
         }
         applyLimitPermissions(viewKey, snapshot.getLimits(), oldPermissions, targetStableKeys, plan);
+        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
+        if (variables != null) {
+            applyPreparedVariablePermissions(viewKey, variables.getPrepared(), oldPermissions, targetStableKeys, plan);
+            applyParentVariablePermissions(viewKey, variables.getParents(), oldPermissions, targetStableKeys, plan);
+        }
+        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
+        if (processors != null) {
+            applyProcessorPermissions(viewKey, processors.getBefore(), "before", oldPermissions, targetStableKeys, plan);
+            applyProcessorPermissions(viewKey, processors.getAfter(), "after", oldPermissions, targetStableKeys, plan);
+        }
         DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
         if (subviews != null) {
             applySystemTabPermissions(viewKey, subviews.getSystemTabs(), oldPermissions, targetStableKeys, plan);
@@ -101,6 +117,72 @@ public class DynamicTableViewPermissionService {
         }
     }
 
+    private void applySectionLinePermissions(String viewKey,
+                                             List<DynamicTableViewSnapshot.SectionLine> lines,
+                                             Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                             Set<String> targetStableKeys,
+                                             DynamicTableViewResponse.WritePlan plan) {
+        if (lines == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SectionLine line : lines) {
+            if (line == null || !hasText(line.getKey())) {
+                continue;
+            }
+            String stableKey = "sectionLine:" + line.getKey();
+            targetStableKeys.add(stableKey);
+            if (line.getPermissions() == null) {
+                line.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(line.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".sectionLine." + line.getKey() + ".view", plan);
+        }
+    }
+
+    private void applyNormalQueryPermissions(String viewKey,
+                                             List<DynamicTableViewSnapshot.NormalQuery> queries,
+                                             Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                             Set<String> targetStableKeys,
+                                             DynamicTableViewResponse.WritePlan plan) {
+        if (queries == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.NormalQuery query : queries) {
+            if (query == null || !hasText(query.getKey())) {
+                continue;
+            }
+            String stableKey = "normalQuery:" + query.getKey();
+            targetStableKeys.add(stableKey);
+            if (query.getPermissions() == null) {
+                query.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(query.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".normalQuery." + query.getKey() + ".view", plan);
+        }
+    }
+
+    private void applyAdvancedQueryPermissions(String viewKey,
+                                               List<DynamicTableViewSnapshot.AdvancedQuery> queries,
+                                               Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                               Set<String> targetStableKeys,
+                                               DynamicTableViewResponse.WritePlan plan) {
+        if (queries == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.AdvancedQuery query : queries) {
+            if (query == null || !hasText(query.getKey())) {
+                continue;
+            }
+            String stableKey = "advancedQuery:" + query.getKey();
+            targetStableKeys.add(stableKey);
+            if (query.getPermissions() == null) {
+                query.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(query.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".advancedQuery." + query.getKey() + ".view", plan);
+        }
+    }
+
     private void applyLimitPermissions(String viewKey,
                                        List<DynamicTableViewSnapshot.Limit> limits,
                                        Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
@@ -120,6 +202,73 @@ public class DynamicTableViewPermissionService {
             }
             applyViewPermission(limit.getPermissions(), oldPermissions.get(stableKey),
                     "dyn." + viewKey + ".limit." + limit.getKey() + ".view", plan);
+        }
+    }
+
+    private void applyPreparedVariablePermissions(String viewKey,
+                                                  List<DynamicTableViewSnapshot.PreparedVariable> variables,
+                                                  Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                                  Set<String> targetStableKeys,
+                                                  DynamicTableViewResponse.WritePlan plan) {
+        if (variables == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.PreparedVariable variable : variables) {
+            if (variable == null || !hasText(variable.getKey())) {
+                continue;
+            }
+            String stableKey = "preparedVariable:" + variable.getKey();
+            targetStableKeys.add(stableKey);
+            if (variable.getPermissions() == null) {
+                variable.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(variable.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".preparedVariable." + variable.getKey() + ".view", plan);
+        }
+    }
+
+    private void applyParentVariablePermissions(String viewKey,
+                                                List<DynamicTableViewSnapshot.ParentVariable> variables,
+                                                Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                                Set<String> targetStableKeys,
+                                                DynamicTableViewResponse.WritePlan plan) {
+        if (variables == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.ParentVariable variable : variables) {
+            if (variable == null || !hasText(variable.getKey())) {
+                continue;
+            }
+            String stableKey = "parentVariable:" + variable.getKey();
+            targetStableKeys.add(stableKey);
+            if (variable.getPermissions() == null) {
+                variable.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(variable.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".parentVariable." + variable.getKey() + ".view", plan);
+        }
+    }
+
+    private void applyProcessorPermissions(String viewKey,
+                                           List<DynamicTableViewSnapshot.Processor> processors,
+                                           String phase,
+                                           Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                           Set<String> targetStableKeys,
+                                           DynamicTableViewResponse.WritePlan plan) {
+        if (processors == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Processor processor : processors) {
+            if (processor == null || !hasText(processor.getKey())) {
+                continue;
+            }
+            String stableKey = "processor:" + phase + ":" + processor.getKey();
+            targetStableKeys.add(stableKey);
+            if (processor.getPermissions() == null) {
+                processor.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(processor.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".processor." + phase + "." + processor.getKey() + ".view", plan);
         }
     }
 
@@ -249,8 +398,24 @@ public class DynamicTableViewPermissionService {
             collectFieldPermissions(fields.getSystemFields(), "systemField", permissions);
             collectFieldPermissions(fields.getComputedFields(), "computedField", permissions);
             collectFieldPermissions(fields.getFormFields(), "formField", permissions);
+            collectSectionLinePermissions(fields.getSectionLines(), permissions);
+        }
+        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
+        if (queries != null) {
+            collectNormalQueryPermissions(queries.getNormal(), permissions);
+            collectAdvancedQueryPermissions(queries.getAdvanced(), permissions);
         }
         collectLimitPermissions(snapshot.getLimits(), permissions);
+        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
+        if (variables != null) {
+            collectPreparedVariablePermissions(variables.getPrepared(), permissions);
+            collectParentVariablePermissions(variables.getParents(), permissions);
+        }
+        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
+        if (processors != null) {
+            collectProcessorPermissions(processors.getBefore(), "before", permissions);
+            collectProcessorPermissions(processors.getAfter(), "after", permissions);
+        }
         DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
         if (subviews != null) {
             collectSystemTabPermissions(subviews.getSystemTabs(), permissions);
@@ -277,6 +442,42 @@ public class DynamicTableViewPermissionService {
             String id = stableFieldId(field, stablePrefix);
             if (hasText(id) && field.getPermissions() != null) {
                 permissions.put(stablePrefix + ":" + id, field.getPermissions());
+            }
+        }
+    }
+
+    private void collectSectionLinePermissions(List<DynamicTableViewSnapshot.SectionLine> lines,
+                                               Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (lines == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SectionLine line : lines) {
+            if (line != null && hasText(line.getKey()) && line.getPermissions() != null) {
+                permissions.put("sectionLine:" + line.getKey(), line.getPermissions());
+            }
+        }
+    }
+
+    private void collectNormalQueryPermissions(List<DynamicTableViewSnapshot.NormalQuery> queries,
+                                               Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (queries == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.NormalQuery query : queries) {
+            if (query != null && hasText(query.getKey()) && query.getPermissions() != null) {
+                permissions.put("normalQuery:" + query.getKey(), query.getPermissions());
+            }
+        }
+    }
+
+    private void collectAdvancedQueryPermissions(List<DynamicTableViewSnapshot.AdvancedQuery> queries,
+                                                 Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (queries == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.AdvancedQuery query : queries) {
+            if (query != null && hasText(query.getKey()) && query.getPermissions() != null) {
+                permissions.put("advancedQuery:" + query.getKey(), query.getPermissions());
             }
         }
     }
@@ -338,6 +539,43 @@ public class DynamicTableViewPermissionService {
         for (DynamicTableViewSnapshot.CustomButton button : buttons) {
             if (button != null && hasText(button.getKey()) && button.getPermissions() != null) {
                 permissions.put(stablePrefix + ":" + button.getKey(), button.getPermissions());
+            }
+        }
+    }
+
+    private void collectPreparedVariablePermissions(List<DynamicTableViewSnapshot.PreparedVariable> variables,
+                                                    Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (variables == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.PreparedVariable variable : variables) {
+            if (variable != null && hasText(variable.getKey()) && variable.getPermissions() != null) {
+                permissions.put("preparedVariable:" + variable.getKey(), variable.getPermissions());
+            }
+        }
+    }
+
+    private void collectParentVariablePermissions(List<DynamicTableViewSnapshot.ParentVariable> variables,
+                                                  Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (variables == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.ParentVariable variable : variables) {
+            if (variable != null && hasText(variable.getKey()) && variable.getPermissions() != null) {
+                permissions.put("parentVariable:" + variable.getKey(), variable.getPermissions());
+            }
+        }
+    }
+
+    private void collectProcessorPermissions(List<DynamicTableViewSnapshot.Processor> processors,
+                                             String phase,
+                                             Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (processors == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Processor processor : processors) {
+            if (processor != null && hasText(processor.getKey()) && processor.getPermissions() != null) {
+                permissions.put("processor:" + phase + ":" + processor.getKey(), processor.getPermissions());
             }
         }
     }
