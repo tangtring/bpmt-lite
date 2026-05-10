@@ -152,6 +152,23 @@
 
 signature = HEX(HMAC_SHA256(APP_SECRET, canonical))</pre>
       <p class="muted">PATH 使用公开请求 URI，例如 <code>/api/v1/dynamic-table-views</code>。NORMALIZED_QUERY 按解码后的参数名和值排序后再编码。</p>
+      <p class="muted">每个 curl 示例都需要按当前 METHOD、PATH、QUERY 和 BODY 重新计算 X-BPMT-Signature，不能复用其它请求的签名。</p>
+      <pre>sign_request() {
+  METHOD="$1"
+  PATH="$2"
+  QUERY="${3:-}"
+  BODY_FILE="${4:-}"
+  if [ -n "$BODY_FILE" ]; then
+    BODY="$(cat "$BODY_FILE")"
+  else
+    BODY=""
+  fi
+  TIMESTAMP="$(date +%s)"
+  NONCE="demo-$TIMESTAMP"
+  BODY_HASH="$(printf '%s' "$BODY" | shasum -a 256 | awk '{print $1}')"
+  CANONICAL="$(printf '%s\n%s\n%s\n%s\n%s\n%s' "$METHOD" "$PATH" "$QUERY" "$TIMESTAMP" "$NONCE" "$BODY_HASH")"
+  SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $NF}')"
+}</pre>
     </section>
 
     <section class="panel">
@@ -273,7 +290,9 @@ signature = HEX(HMAC_SHA256(APP_SECRET, canonical))</pre>
     <section class="panel">
       <h2>validate 与 dryRun</h2>
       <p><code>POST /api/v1/dynamic-table-views:validate</code> 只做校验、默认值规范化、脚本风险扫描和权限限制检查。</p>
-      <pre>curl -sS "$BASE_URL/v1/dynamic-table-views:validate" \
+      <pre>sign_request "POST" "/api/v1/dynamic-table-views:validate" "" "view-snapshot.json"
+
+curl -sS "$BASE_URL/v1/dynamic-table-views:validate" \
   -H "X-BPMT-App-Key: $APP_KEY" \
   -H "X-BPMT-Timestamp: $TIMESTAMP" \
   -H "X-BPMT-Nonce: $NONCE" \
@@ -281,7 +300,9 @@ signature = HEX(HMAC_SHA256(APP_SECRET, canonical))</pre>
   -H "Content-Type: application/json" \
   --data @view-snapshot.json</pre>
       <p><code>dryRun=true</code> 用于创建、替换和局部 patch，返回 <code>plan.dryRun=true</code> 与写入计划，但不写入配置。</p>
-      <pre>curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW/fields?dryRun=true" \
+      <pre>sign_request "PATCH" "/api/v1/dynamic-table-views/CRM_CUSTOMER_VIEW/fields" "dryRun=true" "fields-section.json"
+
+curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW/fields?$QUERY" \
   -X PATCH \
   -H "X-BPMT-App-Key: $APP_KEY" \
   -H "X-BPMT-Timestamp: $TIMESTAMP" \
@@ -297,7 +318,9 @@ signature = HEX(HMAC_SHA256(APP_SECRET, canonical))</pre>
       <p>查询、变量、处理器 <code>permissions</code> 会被校验拒绝，返回 <code>UNSUPPORTED_PERMISSION</code>。</p>
       <p>脚本字段会进行风险扫描。包含删除、反射、进程执行、文件操作等高风险脚本时，应先使用 <code>validate</code> 或 <code>dryRun=true</code> 获取 warnings，再人工复核。</p>
       <p>删除视图需要显式确认：</p>
-      <pre>curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW?confirmViewKey=CRM_CUSTOMER_VIEW" \
+      <pre>sign_request "DELETE" "/api/v1/dynamic-table-views/CRM_CUSTOMER_VIEW" "confirmViewKey=CRM_CUSTOMER_VIEW"
+
+curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW?$QUERY" \
   -X DELETE \
   -H "X-BPMT-App-Key: $APP_KEY" \
   -H "X-BPMT-Timestamp: $TIMESTAMP" \

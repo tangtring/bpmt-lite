@@ -2021,7 +2021,7 @@
       },
       "DynamicTableViewQueries": {
         "type": "object",
-        "description": "查询区块不支持 permissions，传入 permissions 会返回 UNSUPPORTED_PERMISSION。",
+        "description": "查询区块不支持 permissions，传入 permissions 会被校验拒绝并返回 UNSUPPORTED_PERMISSION。",
         "properties": {
           "normal": {
             "type": "array",
@@ -2062,7 +2062,7 @@
       },
       "DynamicTableViewVariables": {
         "type": "object",
-        "description": "变量区块不支持 permissions，传入 permissions 会返回 UNSUPPORTED_PERMISSION。",
+        "description": "变量区块不支持 permissions，传入 permissions 会被校验拒绝并返回 UNSUPPORTED_PERMISSION。",
         "properties": {
           "prepared": {
             "type": "array",
@@ -2085,7 +2085,7 @@
       },
       "DynamicTableViewProcessors": {
         "type": "object",
-        "description": "处理器区块不支持 permissions，传入 permissions 会返回 UNSUPPORTED_PERMISSION。",
+        "description": "处理器区块不支持 permissions，传入 permissions 会被校验拒绝并返回 UNSUPPORTED_PERMISSION。",
         "properties": {
           "before": {
             "type": "array",

@@ -219,21 +219,35 @@ dyn.CRM_CUSTOMER_VIEW.field.CUSTOMER_ID.update
 
 ## curl 示例
 
-导出快照：
+下面示例用 `sign_request` 在每次请求前重新计算签名。不同的 `METHOD`、`PATH`、`QUERY` 或 body 都必须重新签名，不能复用其它请求的 `SIGNATURE`。
 
 ```bash
 BASE_URL="http://127.0.0.1/api"
 APP_KEY="bpmt-api"
 APP_SECRET="bpmt-api-secret"
-METHOD="GET"
-PATH="/api/v1/dynamic-table-views/CRM_CUSTOMER_VIEW"
-QUERY=""
-BODY=""
-TIMESTAMP="$(date +%s)"
-NONCE="demo-$TIMESTAMP"
-BODY_HASH="$(printf '%s' "$BODY" | shasum -a 256 | awk '{print $1}')"
-CANONICAL="$(printf '%s\n%s\n%s\n%s\n%s\n%s' "$METHOD" "$PATH" "$QUERY" "$TIMESTAMP" "$NONCE" "$BODY_HASH")"
-SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $NF}')"
+
+sign_request() {
+  METHOD="$1"
+  PATH="$2"
+  QUERY="${3:-}"
+  BODY_FILE="${4:-}"
+  if [ -n "$BODY_FILE" ]; then
+    BODY="$(cat "$BODY_FILE")"
+  else
+    BODY=""
+  fi
+  TIMESTAMP="$(date +%s)"
+  NONCE="demo-$TIMESTAMP"
+  BODY_HASH="$(printf '%s' "$BODY" | shasum -a 256 | awk '{print $1}')"
+  CANONICAL="$(printf '%s\n%s\n%s\n%s\n%s\n%s' "$METHOD" "$PATH" "$QUERY" "$TIMESTAMP" "$NONCE" "$BODY_HASH")"
+  SIGNATURE="$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$APP_SECRET" | awk '{print $NF}')"
+}
+```
+
+导出快照：
+
+```bash
+sign_request "GET" "/api/v1/dynamic-table-views/CRM_CUSTOMER_VIEW" ""
 
 curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW" \
   -H "X-BPMT-App-Key: $APP_KEY" \
@@ -245,7 +259,9 @@ curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW" \
 删除视图配置：
 
 ```bash
-curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW?confirmViewKey=CRM_CUSTOMER_VIEW" \
+sign_request "DELETE" "/api/v1/dynamic-table-views/CRM_CUSTOMER_VIEW" "confirmViewKey=CRM_CUSTOMER_VIEW"
+
+curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW?$QUERY" \
   -X DELETE \
   -H "X-BPMT-App-Key: $APP_KEY" \
   -H "X-BPMT-Timestamp: $TIMESTAMP" \
