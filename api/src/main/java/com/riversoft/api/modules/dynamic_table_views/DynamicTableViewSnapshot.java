@@ -129,7 +129,7 @@ public class DynamicTableViewSnapshot {
         private Integer layoutColumns;
         private Boolean initQuery;
         private Integer pageLimit;
-        private Sort defaultSort;
+        private Sort defaultSort = new Sort();
 
         public String getTableName() {
             return tableName;

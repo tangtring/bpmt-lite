@@ -4,6 +4,7 @@ import com.riversoft.api.http.ApiJson;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class DynamicTableViewSnapshotTest {
@@ -29,8 +30,18 @@ public class DynamicTableViewSnapshotTest {
     }
 
     @Test
+    public void keepsDefaultSortWhenBaseIsEmpty() {
+        String json = "{\"base\":{}}";
+
+        DynamicTableViewSnapshot snapshot = ApiJson.fromJson(new java.io.ByteArrayInputStream(json.getBytes()), DynamicTableViewSnapshot.class);
+
+        assertNotNull(snapshot.getBase().getDefaultSort());
+    }
+
+    @Test
     public void sectionParserAcceptsOnlyConfiguredBlocks() {
         assertEquals(DynamicTableViewSection.FIELDS, DynamicTableViewSection.parse("fields"));
+        assertEquals(DynamicTableViewSection.FIELDS, DynamicTableViewSection.parse(" fields "));
         assertEquals(DynamicTableViewSection.SCRIPTS, DynamicTableViewSection.parse("scripts"));
     }
 
