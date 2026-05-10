@@ -8,6 +8,8 @@ import com.riversoft.platform.po.VwUrl;
 import java.io.Serializable;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Set;
 
 class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
     private static final String DYN_VIEW_CLASS = "dyn";
+    private static final Set<String> CHILD_KEYS = childKeys();
 
     @SuppressWarnings("unchecked")
     public List<VwUrl> listDynUrls(int start, int limit) {
@@ -74,6 +77,27 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         ORMService.getInstance().updatePO(url);
     }
 
+    @SuppressWarnings("unchecked")
+    public void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
+        Map<String, Object> table = new LinkedHashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : tableMap.entrySet()) {
+            if (!CHILD_KEYS.contains(entry.getKey())) {
+                table.put(entry.getKey(), entry.getValue());
+            }
+        }
+        saveDynamicEntity("VwDynTable", table);
+        for (String childKey : CHILD_KEYS) {
+            Object value = tableMap.get(childKey);
+            if (value instanceof Collection) {
+                for (Object item : (Collection<Object>) value) {
+                    saveMappedChild(item);
+                }
+            } else {
+                saveMappedChild(value);
+            }
+        }
+    }
+
     public void saveDynamicEntity(String entityName, Map<String, Object> values) {
         values.put("$type$", entityName);
         ORMService.getInstance().save(values);
@@ -90,8 +114,13 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         }
     }
 
-    public void removeViewConfig(String viewKey) {
+    public void removeDynamicTableConfig(String viewKey) {
+        ORMService.getInstance().removeByPk("VwDynWeixin", viewKey);
         ORMService.getInstance().removeByPk("VwDynTable", viewKey);
+    }
+
+    public void removeViewConfig(String viewKey) {
+        removeDynamicTableConfig(viewKey);
         ORMService.getInstance().removeByPk(VwUrl.class.getName(), viewKey);
     }
 
@@ -145,6 +174,49 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
                 return;
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void saveMappedChild(Object value) {
+        if (!(value instanceof Map)) {
+            return;
+        }
+        Map<String, Object> child = (Map<String, Object>) value;
+        Object type = child.get("$type$");
+        if (type == null) {
+            return;
+        }
+        Object foreigns = child.get("foreigns");
+        Map<String, Object> saveValues = new LinkedHashMap<String, Object>(child);
+        saveValues.remove("foreigns");
+        saveDynamicEntity(String.valueOf(type), saveValues);
+        if (foreigns instanceof Collection) {
+            for (Object foreign : (Collection<Object>) foreigns) {
+                saveMappedChild(foreign);
+            }
+        }
+    }
+
+    private static Set<String> childKeys() {
+        Set<String> keys = new HashSet<String>();
+        keys.add("columns");
+        keys.add("showColumns");
+        keys.add("formColumns");
+        keys.add("lineColumns");
+        keys.add("querys");
+        keys.add("extQuerys");
+        keys.add("limits");
+        keys.add("prepareExecs");
+        keys.add("parents");
+        keys.add("beforeExecs");
+        keys.add("afterExecs");
+        keys.add("sysSubs");
+        keys.add("viewSubs");
+        keys.add("sysBtns");
+        keys.add("itemBtns");
+        keys.add("summaryBtns");
+        keys.add("weixin");
+        return keys;
     }
 
     private String sqlTypeName(int typeCode) {

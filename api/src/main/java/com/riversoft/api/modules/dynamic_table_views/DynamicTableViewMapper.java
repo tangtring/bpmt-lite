@@ -8,9 +8,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 class DynamicTableViewMapper {
     private enum FieldSource {
@@ -51,6 +54,456 @@ class DynamicTableViewMapper {
         snapshot.setWeixin(toWeixin(asMap(table.get("weixin"))));
         snapshot.setScripts(toScripts(table));
         return snapshot;
+    }
+
+    Map<String, Object> toTableMap(DynamicTableViewSnapshot snapshot) {
+        DynamicTableViewSnapshot.Base base = snapshot.getBase();
+        DynamicTableViewSnapshot.Scripts scripts = snapshot.getScripts();
+        Date now = new Date();
+        Map<String, Object> table = new LinkedHashMap<String, Object>();
+        table.put("viewKey", snapshot.getViewKey());
+        table.put("name", base.getTableName());
+        table.put("logTable", base.getLogTableName());
+        table.put("busiName", base.getDisplayName());
+        table.put("sortName", base.getDefaultSort() == null ? null : base.getDefaultSort().getField());
+        table.put("dir", base.getDefaultSort() == null ? null : base.getDefaultSort().getDirection());
+        table.put("col", base.getLayoutColumns());
+        table.put("pageLimit", base.getPageLimit());
+        table.put("initQuery", boolToInt(base.getInitQuery()));
+        table.put("listJsType", scriptType(scripts == null ? null : scripts.getList()));
+        table.put("listJsScript", scriptText(scripts == null ? null : scripts.getList()));
+        table.put("formJsType", scriptType(scripts == null ? null : scripts.getForm()));
+        table.put("formJsScript", scriptText(scripts == null ? null : scripts.getForm()));
+        table.put("createDate", now);
+        table.put("updateDate", now);
+        table.put("description", snapshot.getDescription());
+
+        DynamicTableViewSnapshot.Fields fields = snapshot.getFields();
+        table.put("columns", toSystemFieldMaps(snapshot.getViewKey(), fields));
+        table.put("showColumns", toComputedFieldMaps(snapshot.getViewKey(), fields));
+        table.put("formColumns", toFormFieldMaps(snapshot.getViewKey(), fields));
+        table.put("lineColumns", toSectionLineMaps(snapshot.getViewKey(), fields));
+
+        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
+        table.put("querys", toNormalQueryMaps(snapshot.getViewKey(), queries));
+        table.put("extQuerys", toAdvancedQueryMaps(snapshot.getViewKey(), queries));
+        table.put("limits", toLimitMaps(snapshot.getViewKey(), snapshot.getLimits()));
+
+        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
+        table.put("prepareExecs", toPreparedVariableMaps(snapshot.getViewKey(), variables));
+        table.put("parents", toParentVariableMaps(snapshot.getViewKey(), variables));
+
+        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
+        table.put("beforeExecs", toProcessorMaps(snapshot.getViewKey(), processors == null ? null : processors.getBefore(),
+                "VwDynExecBefore"));
+        table.put("afterExecs", toProcessorMaps(snapshot.getViewKey(), processors == null ? null : processors.getAfter(),
+                "VwDynExecAfter"));
+
+        DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
+        table.put("sysSubs", toSystemTabMaps(snapshot.getViewKey(), subviews));
+        table.put("viewSubs", toViewTabMaps(snapshot.getViewKey(), subviews));
+
+        DynamicTableViewSnapshot.Buttons buttons = snapshot.getButtons();
+        table.put("sysBtns", toSystemButtonMaps(snapshot.getViewKey(), buttons));
+        table.put("itemBtns", toCustomButtonMaps(snapshot.getViewKey(), buttons == null ? null : buttons.getItem(),
+                "VwDynBtnItem"));
+        table.put("summaryBtns", toCustomButtonMaps(snapshot.getViewKey(), buttons == null ? null : buttons.getSummary(),
+                "VwDynBtnSummary"));
+        table.put("weixin", toWeixinMap(snapshot.getViewKey(), snapshot.getWeixin()));
+        return table;
+    }
+
+    private Set<Map<String, Object>> toSystemFieldMaps(String viewKey, DynamicTableViewSnapshot.Fields fields) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (fields == null || fields.getSystemFields() == null) {
+            return result;
+        }
+        List<String> listOrder = fields.getListOrder();
+        for (int i = 0; i < fields.getSystemFields().size(); i++) {
+            DynamicTableViewSnapshot.Field field = fields.getSystemFields().get(i);
+            if (field == null) {
+                continue;
+            }
+            Map<String, Object> row = fieldBase(viewKey, field, "VwDynColumn", i);
+            row.put("name", field.getName());
+            row.put("showFlag", boolToInt(field.getShowInDetail()));
+            row.put("formFlag", boolToInt(field.getShowInForm()));
+            row.put("contentType", scriptType(field.getContent(), Integer.valueOf(3)));
+            row.put("contentScript", scriptText(field.getContent(), ""));
+            row.put("widgetContentType", scriptType(field.getWidgetContent()));
+            row.put("widgetContentScript", scriptText(field.getWidgetContent()));
+            row.put("listSort", Integer.valueOf(listSort(listOrder, field.getName(), field.getShowInList())));
+            row.put("createPri", pri(permission(field.getPermissions(), "create")));
+            row.put("updatePri", pri(permission(field.getPermissions(), "update")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toComputedFieldMaps(String viewKey, DynamicTableViewSnapshot.Fields fields) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (fields == null || fields.getComputedFields() == null) {
+            return result;
+        }
+        List<String> listOrder = fields.getListOrder();
+        for (int i = 0; i < fields.getComputedFields().size(); i++) {
+            DynamicTableViewSnapshot.Field field = fields.getComputedFields().get(i);
+            if (field == null) {
+                continue;
+            }
+            Map<String, Object> row = fieldBase(viewKey, field, "VwDynColumnShow", i);
+            row.put("sortField", field.getName());
+            row.put("contentType", scriptType(field.getContent(), Integer.valueOf(3)));
+            row.put("contentScript", scriptText(field.getContent(), ""));
+            row.put("listSort", Integer.valueOf(listSort(listOrder, fieldReference(field), field.getShowInList())));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toFormFieldMaps(String viewKey, DynamicTableViewSnapshot.Fields fields) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (fields == null || fields.getFormFields() == null) {
+            return result;
+        }
+        for (int i = 0; i < fields.getFormFields().size(); i++) {
+            DynamicTableViewSnapshot.Field field = fields.getFormFields().get(i);
+            if (field == null) {
+                continue;
+            }
+            Map<String, Object> row = fieldBase(viewKey, field, "VwDynColumnForm", i);
+            row.put("name", fieldReference(field));
+            row.put("contentType", scriptType(field.getContent(), Integer.valueOf(3)));
+            row.put("contentScript", scriptText(field.getContent(), ""));
+            row.put("editPri", pri(permission(field.getPermissions(), "update")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Map<String, Object> fieldBase(String viewKey,
+                                          DynamicTableViewSnapshot.Field field,
+                                          String type,
+                                          int sort) {
+        Map<String, Object> row = typed(type);
+        row.put("viewKey", viewKey);
+        row.put("busiName", field.getDisplayName());
+        row.put("tipType", scriptType(field.getTip()));
+        row.put("tipScript", scriptText(field.getTip()));
+        row.put("style", field.getStyle());
+        row.put("whole", boolToInt(field.getWholeLine()));
+        row.put("widget", field.getWidget());
+        row.put("widgetParamType", scriptType(field.getWidgetParam()));
+        row.put("widgetParamScript", scriptText(field.getWidgetParam()));
+        row.put("sort", Integer.valueOf(sort));
+        row.put("pri", pri(permission(field.getPermissions(), "view")));
+        return row;
+    }
+
+    private Set<Map<String, Object>> toSectionLineMaps(String viewKey, DynamicTableViewSnapshot.Fields fields) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (fields == null || fields.getSectionLines() == null) {
+            return result;
+        }
+        for (int i = 0; i < fields.getSectionLines().size(); i++) {
+            DynamicTableViewSnapshot.SectionLine line = fields.getSectionLines().get(i);
+            if (line == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynColumnLine");
+            row.put("viewKey", viewKey);
+            row.put("busiName", line.getDisplayName());
+            row.put("style", line.getStyle());
+            row.put("expandFlag", Integer.valueOf(1));
+            row.put("sort", Integer.valueOf(i));
+            row.put("pri", pri(permission(line.getPermissions(), "view")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toNormalQueryMaps(String viewKey, DynamicTableViewSnapshot.Queries queries) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (queries == null || queries.getNormal() == null) {
+            return result;
+        }
+        for (int i = 0; i < queries.getNormal().size(); i++) {
+            DynamicTableViewSnapshot.NormalQuery query = queries.getNormal().get(i);
+            if (query == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynQuery");
+            row.put("viewKey", viewKey);
+            row.put("name", query.getField());
+            row.put("busiName", query.getDisplayName());
+            row.put("widget", query.getWidget());
+            row.put("widgetParamType", scriptType(query.getWidgetParam()));
+            row.put("widgetParamScript", scriptText(query.getWidgetParam()));
+            row.put("defVal", query.getDefaultValue());
+            row.put("sort", Integer.valueOf(i));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toAdvancedQueryMaps(String viewKey, DynamicTableViewSnapshot.Queries queries) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (queries == null || queries.getAdvanced() == null) {
+            return result;
+        }
+        for (int i = 0; i < queries.getAdvanced().size(); i++) {
+            DynamicTableViewSnapshot.AdvancedQuery query = queries.getAdvanced().get(i);
+            if (query == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynQueryExt");
+            row.put("viewKey", viewKey);
+            row.put("name", query.getName());
+            row.put("busiName", query.getDisplayName());
+            row.put("widget", query.getWidget());
+            row.put("widgetParamType", scriptType(query.getWidgetParam()));
+            row.put("widgetParamScript", scriptText(query.getWidgetParam()));
+            row.put("defVal", query.getDefaultValue());
+            row.put("sqlType", scriptType(query.getSql()));
+            row.put("sqlScript", scriptText(query.getSql()));
+            row.put("description", query.getDescription());
+            row.put("sort", Integer.valueOf(i));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toLimitMaps(String viewKey, List<DynamicTableViewSnapshot.Limit> limits) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (limits == null) {
+            return result;
+        }
+        for (int i = 0; i < limits.size(); i++) {
+            DynamicTableViewSnapshot.Limit limit = limits.get(i);
+            if (limit == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynLimit");
+            row.put("viewKey", viewKey);
+            row.put("description", limit.getDescription());
+            row.put("sqlType", scriptType(limit.getSql()));
+            row.put("sqlScript", scriptText(limit.getSql()));
+            row.put("sort", Integer.valueOf(i));
+            row.put("pri", pri(permission(limit.getPermissions(), "view")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toPreparedVariableMaps(String viewKey, DynamicTableViewSnapshot.Variables variables) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (variables == null || variables.getPrepared() == null) {
+            return result;
+        }
+        for (int i = 0; i < variables.getPrepared().size(); i++) {
+            DynamicTableViewSnapshot.PreparedVariable variable = variables.getPrepared().get(i);
+            if (variable == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynExecPrepare");
+            row.put("viewKey", viewKey);
+            row.put("var", variable.getVar());
+            row.put("description", variable.getDescription());
+            row.put("execType", scriptType(variable.getExec()));
+            row.put("execScript", scriptText(variable.getExec()));
+            row.put("sort", Integer.valueOf(i));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toParentVariableMaps(String viewKey, DynamicTableViewSnapshot.Variables variables) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (variables == null || variables.getParents() == null) {
+            return result;
+        }
+        for (int i = 0; i < variables.getParents().size(); i++) {
+            DynamicTableViewSnapshot.ParentVariable variable = variables.getParents().get(i);
+            if (variable == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynParent");
+            row.put("parentKey", variable.getKey());
+            row.put("viewKey", viewKey);
+            row.put("tableName", variable.getTableName());
+            row.put("var", variable.getVar());
+            row.put("description", variable.getDescription());
+            row.put("sort", Integer.valueOf(i));
+            row.put("foreigns", toForeignMaps(variable));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toForeignMaps(DynamicTableViewSnapshot.ParentVariable variable) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (variable.getForeigns() == null) {
+            return result;
+        }
+        for (int i = 0; i < variable.getForeigns().size(); i++) {
+            DynamicTableViewSnapshot.Foreign foreign = variable.getForeigns().get(i);
+            if (foreign == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynParentForeign");
+            row.put("parentKey", variable.getKey());
+            row.put("mainColumn", foreign.getMainColumn());
+            row.put("parentColumn", foreign.getParentColumn());
+            row.put("description", foreign.getDescription());
+            row.put("sort", Integer.valueOf(i));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toProcessorMaps(String viewKey,
+                                                     List<DynamicTableViewSnapshot.Processor> processors,
+                                                     String type) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (processors == null) {
+            return result;
+        }
+        for (int i = 0; i < processors.size(); i++) {
+            DynamicTableViewSnapshot.Processor processor = processors.get(i);
+            if (processor == null) {
+                continue;
+            }
+            Map<String, Object> row = typed(type);
+            row.put("viewKey", viewKey);
+            row.put("description", processor.getDescription());
+            row.put("execType", scriptType(processor.getExec()));
+            row.put("execScript", scriptText(processor.getExec()));
+            row.put("sort", Integer.valueOf(i));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toSystemTabMaps(String viewKey, DynamicTableViewSnapshot.Subviews subviews) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (subviews == null || subviews.getSystemTabs() == null) {
+            return result;
+        }
+        for (int i = 0; i < subviews.getSystemTabs().size(); i++) {
+            DynamicTableViewSnapshot.SystemTab tab = subviews.getSystemTabs().get(i);
+            if (tab == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynSubSys");
+            row.put("subKey", viewKey + ".sys." + tab.getName());
+            row.put("viewKey", viewKey);
+            row.put("name", tab.getName());
+            row.put("busiName", tab.getDisplayName());
+            row.put("style", tab.getStyle());
+            row.put("sort", Integer.valueOf(i));
+            row.put("pri", pri(permission(tab.getPermissions(), "view")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toViewTabMaps(String viewKey, DynamicTableViewSnapshot.Subviews subviews) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (subviews == null || subviews.getViewTabs() == null) {
+            return result;
+        }
+        for (int i = 0; i < subviews.getViewTabs().size(); i++) {
+            DynamicTableViewSnapshot.ViewTab tab = subviews.getViewTabs().get(i);
+            if (tab == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynSubView");
+            row.put("subKey", tab.getKey());
+            row.put("viewKey", viewKey);
+            row.put("busiName", tab.getDisplayName());
+            row.put("style", tab.getStyle());
+            row.put("action", tab.getAction());
+            row.put("paramType", scriptType(tab.getParam()));
+            row.put("paramScript", scriptText(tab.getParam()));
+            row.put("sort", Integer.valueOf(i));
+            row.put("pri", pri(permission(tab.getPermissions(), "view")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toSystemButtonMaps(String viewKey, DynamicTableViewSnapshot.Buttons buttons) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (buttons == null || buttons.getSystem() == null) {
+            return result;
+        }
+        for (int i = 0; i < buttons.getSystem().size(); i++) {
+            DynamicTableViewSnapshot.SystemButton button = buttons.getSystem().get(i);
+            if (button == null) {
+                continue;
+            }
+            Map<String, Object> row = typed("VwDynBtnSys");
+            row.put("viewKey", viewKey);
+            row.put("type", button.getType());
+            row.put("name", button.getName());
+            row.put("busiName", button.getDisplayName());
+            row.put("icon", button.getIcon());
+            row.put("styleClass", button.getStyleClass());
+            row.put("description", button.getDescription());
+            row.put("sort", Integer.valueOf(i));
+            row.put("pri", pri(permission(button.getPermissions(), "view")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Set<Map<String, Object>> toCustomButtonMaps(String viewKey,
+                                                        List<DynamicTableViewSnapshot.CustomButton> buttons,
+                                                        String type) {
+        Set<Map<String, Object>> result = new LinkedHashSet<Map<String, Object>>();
+        if (buttons == null) {
+            return result;
+        }
+        for (int i = 0; i < buttons.size(); i++) {
+            DynamicTableViewSnapshot.CustomButton button = buttons.get(i);
+            if (button == null) {
+                continue;
+            }
+            Map<String, Object> row = typed(type);
+            row.put("viewKey", viewKey);
+            row.put("busiName", button.getDisplayName());
+            row.put("icon", button.getIcon());
+            row.put("action", button.getAction());
+            row.put("openType", button.getOpenType());
+            row.put("description", button.getDescription());
+            row.put("paramType", scriptType(button.getParam()));
+            row.put("paramScript", scriptText(button.getParam()));
+            row.put("confirmMsg", button.getConfirmMessage());
+            row.put("sort", Integer.valueOf(i));
+            row.put("pri", pri(permission(button.getPermissions(), "view")));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private Map<String, Object> toWeixinMap(String viewKey, DynamicTableViewSnapshot.Weixin weixin) {
+        if (weixin == null) {
+            return null;
+        }
+        Map<String, Object> row = typed("VwDynWeixin");
+        row.put("viewKey", viewKey);
+        row.put("listMode", weixin.getListMode());
+        row.put("urlMode", weixin.getUrlMode());
+        row.put("titleType", scriptType(weixin.getTitle()));
+        row.put("titleScript", scriptText(weixin.getTitle()));
+        row.put("imgType", scriptType(weixin.getImage()));
+        row.put("imgScript", scriptText(weixin.getImage()));
+        row.put("desType", scriptType(weixin.getDescription()));
+        row.put("desScript", scriptText(weixin.getDescription()));
+        row.put("dateType", scriptType(weixin.getDate()));
+        row.put("dateScript", scriptText(weixin.getDate()));
+        row.put("pri", pri(permission(weixin.getPermissions(), "view")));
+        return row;
     }
 
     private DynamicTableViewSnapshot.Base toBase(Map<String, Object> table) {
@@ -378,6 +831,70 @@ class DynamicTableViewMapper {
         scripts.setList(scriptValue(table, "listJsType", "listJsScript"));
         scripts.setForm(scriptValue(table, "formJsType", "formJsScript"));
         return scripts;
+    }
+
+    private Map<String, Object> typed(String type) {
+        Map<String, Object> row = new LinkedHashMap<String, Object>();
+        row.put("$type$", type);
+        return row;
+    }
+
+    private int listSort(List<String> listOrder, String field, Boolean showInList) {
+        if (!Boolean.TRUE.equals(showInList) || field == null || listOrder == null) {
+            return -1;
+        }
+        int index = listOrder.indexOf(field);
+        return index < 0 ? -1 : index;
+    }
+
+    private String fieldReference(DynamicTableViewSnapshot.Field field) {
+        if (field == null) {
+            return null;
+        }
+        return field.getName() == null ? field.getKey() : field.getName();
+    }
+
+    private Integer boolToInt(Boolean value) {
+        return Boolean.TRUE.equals(value) ? Integer.valueOf(1) : Integer.valueOf(0);
+    }
+
+    private Integer scriptType(DynamicTableViewSnapshot.ScriptValue value) {
+        return scriptType(value, null);
+    }
+
+    private Integer scriptType(DynamicTableViewSnapshot.ScriptValue value, Integer defaultValue) {
+        return value == null || value.getType() == null ? defaultValue : value.getType();
+    }
+
+    private String scriptText(DynamicTableViewSnapshot.ScriptValue value) {
+        return scriptText(value, null);
+    }
+
+    private String scriptText(DynamicTableViewSnapshot.ScriptValue value, String defaultValue) {
+        return value == null || value.getScript() == null ? defaultValue : value.getScript();
+    }
+
+    private String permission(DynamicTableViewSnapshot.PermissionSet permissions, String action) {
+        if (permissions == null) {
+            return null;
+        }
+        if ("create".equals(action)) {
+            return permissions.getCreate();
+        }
+        if ("update".equals(action)) {
+            return permissions.getUpdate();
+        }
+        return permissions.getView();
+    }
+
+    private CmPri pri(String priKey) {
+        if (priKey == null || priKey.trim().length() == 0) {
+            return null;
+        }
+        CmPri pri = new CmPri();
+        pri.setPriKey(priKey);
+        pri.setBusiName(priKey);
+        return pri;
     }
 
     private String firstString(Map<String, Object> first, Map<String, Object> second, String... keys) {

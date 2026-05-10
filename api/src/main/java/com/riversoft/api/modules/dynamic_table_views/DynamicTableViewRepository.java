@@ -22,11 +22,19 @@ interface DynamicTableViewRepository {
 
     void updateUrl(VwUrl url);
 
+    default void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
+        saveDynamicEntity("VwDynTable", tableMap);
+    }
+
     void saveDynamicEntity(String entityName, Map<String, Object> values);
 
     void updateDynamicEntity(String entityName, Map<String, Object> values);
 
     void removeDynamicEntity(String entityName, Object id);
+
+    default void removeDynamicTableConfig(String viewKey) {
+        removeDynamicEntity("VwDynTable", viewKey);
+    }
 
     void removeViewConfig(String viewKey);
 

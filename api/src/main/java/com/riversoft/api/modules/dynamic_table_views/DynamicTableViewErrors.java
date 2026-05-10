@@ -2,6 +2,10 @@ package com.riversoft.api.modules.dynamic_table_views;
 
 import com.riversoft.api.http.ApiException;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 final class DynamicTableViewErrors {
     private DynamicTableViewErrors() {
     }
@@ -18,8 +22,18 @@ final class DynamicTableViewErrors {
         return new ApiException(400, "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT", message);
     }
 
-    static ApiException serviceNotInitialized() {
-        return new ApiException(501, "DYNAMIC_TABLE_VIEW_SERVICE_NOT_INITIALIZED", "动态表视图 API 服务尚未初始化。");
+    static ApiException invalidSnapshot(DynamicTableViewValidationResult result) {
+        String message = "动态表视图快照校验失败。";
+        if (result != null && result.getErrors() != null && !result.getErrors().isEmpty()) {
+            message = result.getErrors().get(0).getMessage();
+        }
+        Map<String, Object> details = new LinkedHashMap<String, Object>();
+        details.put("errors", result == null ? Collections.emptyList() : result.getErrors());
+        return new ApiException(400, "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT", message, details);
+    }
+
+    static ApiException alreadyExists(String viewKey) {
+        return new ApiException(409, "DYNAMIC_TABLE_VIEW_ALREADY_EXISTS", "动态表视图已存在：" + viewKey);
     }
 
     static ApiException confirmRequired() {
