@@ -175,6 +175,25 @@ public class DynamicTableViewPermissionServiceTest {
     }
 
     @Test
+    public void preservesComputedFieldPermissionByIndexWhenKeyMissing() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithComputedFieldWithoutKey("old");
+        DynamicTableViewSnapshot target = snapshotWithComputedFieldWithoutKey(null);
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertEquals("pri-old-computed-index-view",
+                target.getFields().getComputedFields().get(0).getPermissions().getView());
+        assertEquals("pri-old-computed-index-create",
+                target.getFields().getComputedFields().get(0).getPermissions().getCreate());
+        assertEquals("pri-old-computed-index-update",
+                target.getFields().getComputedFields().get(0).getPermissions().getUpdate());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-computed-index-view"));
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-computed-index-create"));
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-computed-index-update"));
+    }
+
+    @Test
     public void keepsTargetPermissionBeforeOldPermission() {
         DynamicTableViewSnapshot oldSnapshot = snapshotWithField("CUSTOMER_ID", "pri-old-view");
         DynamicTableViewSnapshot target = snapshotWithField("CUSTOMER_ID", "pri-target-view");
@@ -542,6 +561,18 @@ public class DynamicTableViewPermissionServiceTest {
         DynamicTableViewSnapshot.Field formField = fieldWithKey("form_note", "form", permissionSuffix);
         snapshot.getFields().getComputedFields().add(computedField);
         snapshot.getFields().getFormFields().add(formField);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithComputedFieldWithoutKey(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.Field field = new DynamicTableViewSnapshot.Field();
+        if (permissionSuffix != null) {
+            field.getPermissions().setView("pri-" + permissionSuffix + "-computed-index-view");
+            field.getPermissions().setCreate("pri-" + permissionSuffix + "-computed-index-create");
+            field.getPermissions().setUpdate("pri-" + permissionSuffix + "-computed-index-update");
+        }
+        snapshot.getFields().getComputedFields().add(field);
         return snapshot;
     }
 

@@ -95,26 +95,32 @@ public class DynamicTableViewPermissionService {
         if (fields == null) {
             return;
         }
-        for (DynamicTableViewSnapshot.Field field : fields) {
+        for (int i = 0; i < fields.size(); i++) {
+            DynamicTableViewSnapshot.Field field = fields.get(i);
             if (field == null) {
                 continue;
             }
-            String stableKey = stablePrefix + ":" + stableFieldId(field, stablePrefix);
-            if (!hasText(stableFieldId(field, stablePrefix))) {
+            String stableId = stableFieldId(field, stablePrefix, i);
+            if (!hasText(stableId)) {
                 continue;
             }
+            String stableKey = stablePrefix + ":" + stableId;
             targetStableKeys.add(stableKey);
             if (field.getPermissions() == null) {
                 field.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
             }
             String permissionId = permissionFieldId(field);
-            if (!hasText(permissionId)) {
+            DynamicTableViewSnapshot.PermissionSet old = oldPermissions.get(stableKey);
+            if (!hasText(permissionId) && old == null) {
                 continue;
             }
-            DynamicTableViewSnapshot.PermissionSet old = oldPermissions.get(stableKey);
-            applyPermission(field.getPermissions(), old, "view", "dyn." + viewKey + ".field." + permissionId + ".view", plan);
-            applyPermission(field.getPermissions(), old, "create", "dyn." + viewKey + ".field." + permissionId + ".create", plan);
-            applyPermission(field.getPermissions(), old, "update", "dyn." + viewKey + ".field." + permissionId + ".update", plan);
+            String permissionPrefix = hasText(permissionId) ? "dyn." + viewKey + ".field." + permissionId : null;
+            applyPermission(field.getPermissions(), old, "view",
+                    permissionPrefix == null ? null : permissionPrefix + ".view", plan);
+            applyPermission(field.getPermissions(), old, "create",
+                    permissionPrefix == null ? null : permissionPrefix + ".create", plan);
+            applyPermission(field.getPermissions(), old, "update",
+                    permissionPrefix == null ? null : permissionPrefix + ".update", plan);
         }
     }
 
@@ -385,6 +391,9 @@ public class DynamicTableViewPermissionService {
             add(plan.getPermissionKeeps(), oldValue);
             return;
         }
+        if (!hasText(generated)) {
+            return;
+        }
         setPermission(target, property, generated);
         add(plan.getPermissionCreates(), generated);
     }
@@ -439,8 +448,9 @@ public class DynamicTableViewPermissionService {
         if (fields == null) {
             return;
         }
-        for (DynamicTableViewSnapshot.Field field : fields) {
-            String id = stableFieldId(field, stablePrefix);
+        for (int i = 0; i < fields.size(); i++) {
+            DynamicTableViewSnapshot.Field field = fields.get(i);
+            String id = stableFieldId(field, stablePrefix, i);
             if (hasText(id) && field.getPermissions() != null) {
                 permissions.put(stablePrefix + ":" + id, field.getPermissions());
             }
@@ -703,14 +713,17 @@ public class DynamicTableViewPermissionService {
         }
     }
 
-    private String stableFieldId(DynamicTableViewSnapshot.Field field, String stablePrefix) {
+    private String stableFieldId(DynamicTableViewSnapshot.Field field, String stablePrefix, int index) {
         if (field == null) {
             return null;
         }
         if ("systemField".equals(stablePrefix)) {
             return field.getName();
         }
-        return field.getKey();
+        if (hasText(field.getKey())) {
+            return field.getKey();
+        }
+        return "index:" + index;
     }
 
     private String permissionFieldId(DynamicTableViewSnapshot.Field field) {
