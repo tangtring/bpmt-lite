@@ -145,6 +145,184 @@ public class DynamicTableViewPermissionServiceTest {
         assertTrue(plan.getPermissionDeletes().contains("pri-old-advanced-query"));
     }
 
+    @Test
+    public void generatesPermissionsForAllScriptAndConfigBlocksWhenAgentOmitsThem() {
+        DynamicTableViewSnapshot target = snapshotWithScriptAndConfigBlocks(null);
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.sectionLine.basic.view",
+                target.getFields().getSectionLines().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.sectionLine.basic.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.normalQuery.customerName.view",
+                target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.normalQuery.customerName.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.advancedQuery.overdue.view",
+                target.getQueries().getAdvanced().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.advancedQuery.overdue.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view",
+                target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.processor.after.syncLog.view",
+                target.getProcessors().getAfter().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.after.syncLog.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.preparedVariable.currentUser.view",
+                target.getVariables().getPrepared().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.preparedVariable.currentUser.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.parentVariable.parentOrder.view",
+                target.getVariables().getParents().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.parentVariable.parentOrder.view"));
+    }
+
+    @Test
+    public void preservesOldPermissionsForAllScriptAndConfigBlocksByStableKey() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithScriptAndConfigBlocks("old");
+        DynamicTableViewSnapshot target = snapshotWithScriptAndConfigBlocks(null);
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertEquals("pri-old-section", target.getFields().getSectionLines().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-section"));
+        assertEquals("pri-old-normal", target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-normal"));
+        assertEquals("pri-old-advanced", target.getQueries().getAdvanced().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-advanced"));
+        assertEquals("pri-old-before", target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-before"));
+        assertEquals("pri-old-after", target.getProcessors().getAfter().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-after"));
+        assertEquals("pri-old-prepared", target.getVariables().getPrepared().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-prepared"));
+        assertEquals("pri-old-parent", target.getVariables().getParents().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-old-parent"));
+    }
+
+    @Test
+    public void keepsTargetPermissionsForAllScriptAndConfigBlocksBeforeOldPermissions() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithScriptAndConfigBlocks("old");
+        DynamicTableViewSnapshot target = snapshotWithScriptAndConfigBlocks("target");
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertEquals("pri-target-section", target.getFields().getSectionLines().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-section"));
+        assertEquals("pri-target-normal", target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-normal"));
+        assertEquals("pri-target-advanced", target.getQueries().getAdvanced().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-advanced"));
+        assertEquals("pri-target-before", target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-before"));
+        assertEquals("pri-target-after", target.getProcessors().getAfter().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-after"));
+        assertEquals("pri-target-prepared", target.getVariables().getPrepared().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-prepared"));
+        assertEquals("pri-target-parent", target.getVariables().getParents().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionKeeps().contains("pri-target-parent"));
+    }
+
+    @Test
+    public void deletesOldPermissionsForAllRemovedScriptAndConfigBlocks() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithScriptAndConfigBlocks("old");
+        DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-section"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-normal"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-advanced"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-before"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-after"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-prepared"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-parent"));
+    }
+
+    @Test
+    public void createsKeepsAndDeletesSubviewPermissions() {
+        DynamicTableViewSnapshot target = snapshotWithSubviews(null);
+
+        DynamicTableViewResponse.WritePlan createPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.systemTab.log.view",
+                target.getSubviews().getSystemTabs().get(0).getPermissions().getView());
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.systemTab.log.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.viewTab.orders.view",
+                target.getSubviews().getViewTabs().get(0).getPermissions().getView());
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.viewTab.orders.view"));
+
+        DynamicTableViewResponse.WritePlan keepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithSubviews("old"), snapshotWithSubviews(null));
+
+        assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-system-tab"));
+        assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-view-tab"));
+
+        DynamicTableViewResponse.WritePlan deletePlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithSubviews("old"), new DynamicTableViewSnapshot());
+
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-system-tab"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-view-tab"));
+    }
+
+    @Test
+    public void createsKeepsAndDeletesCustomButtonPermissions() {
+        DynamicTableViewSnapshot target = snapshotWithCustomButtons(null);
+
+        DynamicTableViewResponse.WritePlan createPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.itemButton.approve.view",
+                target.getButtons().getItem().get(0).getPermissions().getView());
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.itemButton.approve.view"));
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.summaryButton.export.view",
+                target.getButtons().getSummary().get(0).getPermissions().getView());
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.summaryButton.export.view"));
+
+        DynamicTableViewResponse.WritePlan keepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithCustomButtons("old"), snapshotWithCustomButtons(null));
+
+        assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-item-button"));
+        assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-summary-button"));
+
+        DynamicTableViewResponse.WritePlan deletePlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithCustomButtons("old"), new DynamicTableViewSnapshot());
+
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-item-button"));
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-summary-button"));
+    }
+
+    @Test
+    public void createsAndKeepsLimitPermission() {
+        DynamicTableViewSnapshot target = snapshotWithLimit(null);
+
+        DynamicTableViewResponse.WritePlan createPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.limit.own_rows.view", target.getLimits().get(0).getPermissions().getView());
+        assertTrue(createPlan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.limit.own_rows.view"));
+
+        DynamicTableViewResponse.WritePlan keepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithLimit("old"), snapshotWithLimit(null));
+
+        assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-limit"));
+    }
+
+    @Test
+    public void keepsAndDeletesWeixinPermission() {
+        DynamicTableViewResponse.WritePlan keepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithWeixin("old"), snapshotWithWeixin(null));
+
+        assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-weixin"));
+
+        DynamicTableViewResponse.WritePlan deletePlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithWeixin("old"), new DynamicTableViewSnapshot());
+
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-weixin"));
+    }
+
     private DynamicTableViewSnapshot snapshotWithField(String name, String viewPermission) {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         DynamicTableViewSnapshot.Field field = new DynamicTableViewSnapshot.Field();
@@ -166,5 +344,82 @@ public class DynamicTableViewPermissionServiceTest {
         variable.setKey(key);
         variable.getPermissions().setView(viewPermission);
         return variable;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithScriptAndConfigBlocks(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.SectionLine sectionLine = new DynamicTableViewSnapshot.SectionLine();
+        sectionLine.setKey("basic");
+        sectionLine.getPermissions().setView(permission("section", permissionSuffix));
+        snapshot.getFields().getSectionLines().add(sectionLine);
+        snapshot.getQueries().getNormal().add(normalQuery("customerName", permission("normal", permissionSuffix)));
+        DynamicTableViewSnapshot.AdvancedQuery advancedQuery = new DynamicTableViewSnapshot.AdvancedQuery();
+        advancedQuery.setKey("overdue");
+        advancedQuery.getPermissions().setView(permission("advanced", permissionSuffix));
+        snapshot.getQueries().getAdvanced().add(advancedQuery);
+        DynamicTableViewSnapshot.Processor before = new DynamicTableViewSnapshot.Processor();
+        before.setKey("prepareVo");
+        before.getPermissions().setView(permission("before", permissionSuffix));
+        snapshot.getProcessors().getBefore().add(before);
+        DynamicTableViewSnapshot.Processor after = new DynamicTableViewSnapshot.Processor();
+        after.setKey("syncLog");
+        after.getPermissions().setView(permission("after", permissionSuffix));
+        snapshot.getProcessors().getAfter().add(after);
+        snapshot.getVariables().getPrepared().add(preparedVariable("currentUser", permission("prepared", permissionSuffix)));
+        DynamicTableViewSnapshot.ParentVariable parent = new DynamicTableViewSnapshot.ParentVariable();
+        parent.setKey("parentOrder");
+        parent.getPermissions().setView(permission("parent", permissionSuffix));
+        snapshot.getVariables().getParents().add(parent);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithSubviews(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.SystemTab systemTab = new DynamicTableViewSnapshot.SystemTab();
+        systemTab.setName("log");
+        systemTab.getPermissions().setView(permission("system-tab", permissionSuffix));
+        snapshot.getSubviews().getSystemTabs().add(systemTab);
+        DynamicTableViewSnapshot.ViewTab viewTab = new DynamicTableViewSnapshot.ViewTab();
+        viewTab.setKey("orders");
+        viewTab.getPermissions().setView(permission("view-tab", permissionSuffix));
+        snapshot.getSubviews().getViewTabs().add(viewTab);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithCustomButtons(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.CustomButton itemButton = new DynamicTableViewSnapshot.CustomButton();
+        itemButton.setKey("approve");
+        itemButton.getPermissions().setView(permission("item-button", permissionSuffix));
+        snapshot.getButtons().getItem().add(itemButton);
+        DynamicTableViewSnapshot.CustomButton summaryButton = new DynamicTableViewSnapshot.CustomButton();
+        summaryButton.setKey("export");
+        summaryButton.getPermissions().setView(permission("summary-button", permissionSuffix));
+        snapshot.getButtons().getSummary().add(summaryButton);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithLimit(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.Limit limit = new DynamicTableViewSnapshot.Limit();
+        limit.setKey("own_rows");
+        limit.getPermissions().setView(permission("limit", permissionSuffix));
+        snapshot.getLimits().add(limit);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithWeixin(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.Weixin weixin = new DynamicTableViewSnapshot.Weixin();
+        weixin.getPermissions().setView(permission("weixin", permissionSuffix));
+        snapshot.setWeixin(weixin);
+        return snapshot;
+    }
+
+    private String permission(String name, String suffix) {
+        if (suffix == null) {
+            return null;
+        }
+        return "pri-" + suffix + "-" + name;
     }
 }
