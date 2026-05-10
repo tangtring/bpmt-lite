@@ -1,0 +1,3 @@
+-- bpmt-lite v1.6.2 to v1.7.0
+-- v1.7.0 adds API-level dyn view configuration management only.
+-- No BPMT business database schema change is required for this release.

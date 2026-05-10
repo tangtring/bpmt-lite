@@ -6,10 +6,10 @@
 
 本仓只处理遗留 BPMT 的发行工程：代码结构、打包方式、配置方式、Docker 运行方式、初始化数据和升级脚本。不升级 Java/Tomcat/MariaDB 技术栈，不重写业务功能。
 
-当前版本：`v1.6.2`
+当前版本：`v1.7.0`
 
-- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.2`
-- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.2`
+- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.7.0`
+- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.7.0`
 - 同步镜像：`ghcr.io/wodenwang/bpmt-lite:latest`、`ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - API 文档：`http://127.0.0.1/api/docs/`
@@ -21,7 +21,7 @@
 不需要 clone 项目，直接执行一条命令完成安装、初始化数据库并启动服务：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.2/scripts/install.sh | bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.7.0/scripts/install.sh | bash
 ```
 
 脚本会创建 `bpmt-lite/` 运行目录，下载 `docker-compose.yml`、初始化脚本、升级脚本、nginx 配置模板和默认数据库，并执行 `docker compose up -d`。
@@ -42,7 +42,7 @@ http://127.0.0.1/
 启用本地 HTTPS：
 
 ```bash
-curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.6.2/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
+curl -fsSL https://github.com/wodenwang/bpmt-lite/raw/refs/tags/v1.7.0/scripts/install.sh | BPMT_HTTPS_ENABLED=1 bash
 ```
 
 升级到最新版本：
@@ -52,7 +52,7 @@ cd bpmt-lite
 sh ./upgrade.sh
 ```
 
-`upgrade.sh` 会根据 GitHub 最新 release/tag 下载参考 compose 文件，例如 `docker-compose-v1.6.2.yml`；不会覆盖当前 `docker-compose.yml`。升级时只拉取 BPMT Web/API 的 `latest` 镜像并重启这两个服务，不自动升级 `mariadb`、`nginx` 等第三方容器。升级状态记录在 `.bpmt-lite/` 下，不写入业务数据库。
+`upgrade.sh` 会根据 GitHub 最新 release/tag 下载参考 compose 文件，例如 `docker-compose-v1.7.0.yml`；不会覆盖当前 `docker-compose.yml`。升级时只拉取 BPMT Web/API 的 `latest` 镜像并重启这两个服务，不自动升级 `mariadb`、`nginx` 等第三方容器。升级状态记录在 `.bpmt-lite/` 下，不写入业务数据库。
 
 常用检查：
 
@@ -63,6 +63,16 @@ curl -fsSI http://127.0.0.1/ueditor/
 curl -fsSI http://127.0.0.1/api/docs/
 curl -fsSI http://127.0.0.1/api/openapi.json
 ```
+
+## 动态表视图 API
+
+`v1.7.0` 新增动态表视图配置 API，面向外部 AI agent、自动化平台和集成脚本开放 `dyn` 视图配置管理能力。
+
+- 接口前缀：`/api/v1/dynamic-table-views`
+- 能力范围：读取、校验、创建、整体替换、分区 patch、带确认删除 `/{viewKey}.view` 对应的 dyn 视图配置。
+- 安全边界：只管理视图配置，不发布菜单、首页卡片或按钮入口；删除视图不会删除动态表、业务数据、日志表或日志数据。
+- 变更预检：写接口支持 `dryRun=true`，也可使用 `POST /api/v1/dynamic-table-views:validate` 做纯校验。
+- 文档归档：[动态表视图 API](docs/v1.7.0/api-reference.md)，[OpenAPI 快照](docs/v1.7.0/openapi.json)。
 
 ## 文件结构
 
@@ -103,6 +113,7 @@ docker compose up -d
 
 | 版本 | 说明 | 文档 |
 | --- | --- | --- |
+| `v1.7.0` | 开放动态表视图配置 API，支持 validate、dry-run、导出、创建、替换、分区 patch 和带确认删除。 | [API](docs/v1.7.0/api-reference.md) |
 | `v1.6.2` | 修复第三方系统管理界面和 OAuth 无权限提示，新增安装/升级脚本，重构 README。 | [release](docs/release-v1.6.2.md) |
 | `v1.6.1` | 增强微信生态第三方 OAuth 登录态传导。 | [release](docs/release-v1.6.1.md) |
 | `v1.6.0` | 新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。 | [release](docs/release-v1.6.0.md) |
@@ -122,13 +133,13 @@ docker compose up -d
 
 - [bpmt-doc](https://github.com/wodenwang/bpmt-doc)：面向低代码用户的 SOP 文档项目。
 - [维护说明](docs/maintenance.md)：维护者构建、验证、镜像发布和升级策略。
-- [API 文档](docs/v1.4.1/api-reference.md)：动态表结构 API 与数据库操作 API 的 Markdown 归档。
-- [OpenAPI 快照](docs/v1.4.1/openapi.json)：给 AI agent、N8N、飞书集成平台使用的接口契约。
+- [API 文档](docs/v1.7.0/api-reference.md)：动态表视图 API 的 Markdown 归档，完整接口以 OpenAPI 快照为准。
+- [OpenAPI 快照](docs/v1.7.0/openapi.json)：给 AI agent、N8N、飞书集成平台使用的接口契约。
 - [第三方 OAuth 登录](docs/v1.5.0/oauth-login-reference.md)：BPMT 作为 OAuth2 Authorization Code 服务端的接入说明。
 - [HTTPS 验收](docs/v1.6.0/https-acceptance.md)：内置 nginx HTTPS 和可信上游 TLS 的验证记录。
 - [微信生态 OAuth 登录](docs/v1.6.1/wechat-oauth-thirdpart-acceptance.md)：企业号/服务号登录态传导的验收记录。
-- [v1.6.2 设计说明](docs/superpowers/specs/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues-design.md)：本版本需求边界和方案。
-- [v1.6.2 执行计划](docs/superpowers/plans/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues.md)：本版本实施步骤和验证清单。
+- [v1.7.0 设计说明](docs/superpowers/specs/2026-05-10-bpmt-lite-v1.7.0-dynamic-table-view-api-design.md)：动态表视图 API 的需求边界和方案。
+- [v1.7.0 执行计划](docs/superpowers/plans/2026-05-10-bpmt-lite-v1.7.0-dynamic-table-view-api.md)：本版本实施步骤和验证清单。
 
 ## 许可证与作者
 

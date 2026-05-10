@@ -27,9 +27,10 @@
 - `v1.5.4` 是基于 `v1.5.3` 补齐 Web/API 镜像 multi-arch 发布能力的补丁版本。
 - `v1.6.0` 是新增 HTTPS 入口支持的发布版本，支持内置 nginx TLS 和可信上游 TLS。
 - `v1.6.1` 是基于 `v1.6.0` 增强微信生态第三方 OAuth 登录态传导的补丁版本。
-- `v1.6.2` 是当前版本，修复第三方系统管理界面和 OAuth 无权限提示，并新增安装/升级脚本。
-- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.6.2`
-- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.6.2`
+- `v1.6.2` 是修复第三方系统管理界面和 OAuth 无权限提示，并新增安装/升级脚本的补丁版本。
+- `v1.7.0` 是当前版本，新增动态表视图配置 API，开放 `/{viewKey}.view` 对应的 dyn 视图完整配置管理能力。
+- 默认 Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.7.0`
+- 默认 API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.7.0`
 - 同步镜像 tag：发布后同步到 `ghcr.io/wodenwang/bpmt-lite:latest` 和 `ghcr.io/wodenwang/bpmt-lite-api:latest`
 - 默认访问地址：`http://127.0.0.1/`
 - HTTPS 访问地址：`https://127.0.0.1/`，需要 `BPMT_HTTPS_ENABLED=1`
@@ -57,6 +58,7 @@
 - v1.6.0 HTTPS 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.0-https-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.0-https.md` -> `docs/v1.6.0/*` -> `README.md` -> implementation。
 - v1.6.1 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-05-bpmt-lite-v1.6.1-wechat-oauth-thirdpart-design.md` -> `docs/superpowers/plans/2026-05-05-bpmt-lite-v1.6.1-wechat-oauth-thirdpart.md` -> `docs/v1.6.1/*` -> `README.md` -> implementation。
 - v1.6.2 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues-design.md` -> `docs/superpowers/plans/2026-05-06-bpmt-lite-v1.6.2-install-upgrade-readme-issues.md` -> `docs/release-v1.6.2.md` -> `README.md` -> implementation。
+- v1.7.0 动态表视图 API 开发和验收期间的 source-of-truth 顺序是：`AGENTS.md` -> `docs/superpowers/specs/2026-05-10-bpmt-lite-v1.7.0-dynamic-table-view-api-design.md` -> `docs/superpowers/plans/2026-05-10-bpmt-lite-v1.7.0-dynamic-table-view-api.md` -> `docs/v1.7.0/*` -> `docs/release-v1.7.0.md` -> `README.md` -> implementation。
 
 ## 已验证的本地编译基线
 
@@ -226,6 +228,12 @@ docker compose up -d
 - JSON 响应统一为 `success/data/error` 包装，错误响应必须包含稳定 `code` 和 `requestId`。
 - 每个对外接口必须同步更新 OpenAPI、Web 文档和单测。
 - 动态表 API 只管理结构，不管理业务数据；动态表删除等危险能力默认不暴露。
+- v1.7.0 动态表视图 API 只管理 `dyn` 视图配置，不管理菜单、首页卡片、按钮入口或动态表业务数据。
+- 动态表视图 API 固定路径为 `/api/v1/dynamic-table-views`、`/api/v1/dynamic-table-views:validate`、`/api/v1/dynamic-table-views/{viewKey}`、`/api/v1/dynamic-table-views/{viewKey}/{section}`；`dryRun` 是 query 参数，不新增 `/dry-run` 或 `/sections/{section}` 路径。
+- 动态表视图写接口支持 `validate`、`dryRun`、创建、整体替换、分区 patch 和带 `confirmViewKey` 的删除；删除视图不得删除底层动态表、业务数据、日志表或日志数据。
+- 动态表视图快照必须覆盖基础信息、字段、分组、页签、区块、系统按钮、自定义按钮、查询区、前后置处理器、预置变量、父页面变量、权限和脚本风险提示。
+- v1.7.0 不支持在查询区、变量和处理器上写入权限；请求中这些位置的非空 `permissions` 必须按 `UNSUPPORTED_PERMISSION` 拒绝。
+- 每次调整动态表视图 API 都必须同步更新 `api/src/main/webapp/openapi.json`、`api/src/main/webapp/docs/index.html`、`docs/v1.7.0/api-reference.md` 和 `docs/v1.7.0/openapi.json`。
 
 ## v1.5.0 OAuth 开发规则
 
