@@ -687,6 +687,37 @@ v1.6.0 文档见：
 - `docs/v1.6.0/https-acceptance.md`
 - `docs/release-v1.6.0.md`
 
+## v1.7.0 动态表视图 API 发布状态
+
+截至 2026-05-10，v1.7.0 已完成发布收口，目标是把原本依赖前端页面操作的 `dyn` 动态表视图配置能力开放给外部系统和 AI agent。
+
+发布结果：
+
+- Maven 项目版本已切到 `1.7.0`。
+- 默认 Web/API 镜像 tag、安装脚本默认 release tag 和 OpenAPI info 已切到 `1.7.0`。
+- Git tag：`v1.7.0`，对应提交 `fc2e34b`。
+- GitHub Release：`https://github.com/wodenwang/bpmt-lite/releases/tag/v1.7.0`。
+- `ghcr.io/wodenwang/bpmt-lite:1.7.0` 已推送，manifest digest 为 `sha256:c8ac35468773fdf75eca2c3288d6c78f726b3d9cd56ac1057ecb2639885879f7`，包含 `linux/amd64` 和 `linux/arm64`。
+- `ghcr.io/wodenwang/bpmt-lite-api:1.7.0` 已推送，manifest digest 为 `sha256:f07c57b935ad3b2405dbdefb1c28f8bdd7a33aa74626f23053a1b7203c632dd7`，包含 `linux/amd64` 和 `linux/arm64`。
+- 两个 `latest` tag 已同步到 `1.7.0` manifest digest。
+- 本地默认 compose 已使用 `1.7.0` Web/API 镜像验证 `/`、`/ueditor/`、`/api/docs/`、`/api/openapi.json` 均返回 200。
+
+已验收能力：
+
+- 动态表视图 API 支持 validate、dry-run、导出、创建、整体替换、分区 patch 和带确认删除。
+- 删除视图配置不会删除动态表、业务数据、日志表或日志数据。
+- API 只管理 `/{viewKey}.view` 对应的 dyn 视图配置；菜单、首页卡片和按钮入口不属于 v1.7.0 范围。
+- Web/API Hazelcast 双 member 验证通过。
+
+v1.7.0 文档见：
+
+- `docs/superpowers/specs/2026-05-10-bpmt-lite-v1.7.0-dynamic-table-view-api-design.md`
+- `docs/superpowers/plans/2026-05-10-bpmt-lite-v1.7.0-dynamic-table-view-api.md`
+- `docs/v1.7.0/api-reference.md`
+- `docs/v1.7.0/openapi.json`
+- `docs/v1.7.0/dynamic-table-view-acceptance.md`
+- `docs/release-v1.7.0.md`
+
 ## 线上测试环境交接
 
 线上测试环境的非敏感入口、Docker 部署结构、OAuth demo 配置线索和 2026-05-05 微信 OAuth 登录问题结论已记录在：

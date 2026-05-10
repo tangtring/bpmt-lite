@@ -57,10 +57,13 @@ database/upgrade/v1.6.2-to-v1.7.0.sql
 - `scripts/build-api-image.sh`
 - 独立临时 compose smoke，覆盖 API 文档、OpenAPI、validate、dry-run、创建、导出、替换预检、分区 patch、视图入口、动态 Action、删除确认和删除后业务表保留。
 
-本地镜像：
+正式发布产物：
 
-- `ghcr.io/wodenwang/bpmt-lite:1.7.0`
-- `ghcr.io/wodenwang/bpmt-lite-api:1.7.0`
+- GitHub Release：`https://github.com/wodenwang/bpmt-lite/releases/tag/v1.7.0`
+- Git tag：`v1.7.0`
+- Web 镜像：`ghcr.io/wodenwang/bpmt-lite:1.7.0`，manifest digest 为 `sha256:c8ac35468773fdf75eca2c3288d6c78f726b3d9cd56ac1057ecb2639885879f7`，包含 `linux/amd64` 和 `linux/arm64`。
+- API 镜像：`ghcr.io/wodenwang/bpmt-lite-api:1.7.0`，manifest digest 为 `sha256:f07c57b935ad3b2405dbdefb1c28f8bdd7a33aa74626f23053a1b7203c632dd7`，包含 `linux/amd64` 和 `linux/arm64`。
+- `latest` 已同步到上述 Web/API manifest digest。
 
 ## 回滚说明
 
