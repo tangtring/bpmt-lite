@@ -160,6 +160,17 @@ public class DynamicTableViewValidatorTest {
     }
 
     @Test
+    public void validateRejectsLogTableSameAsMainTable() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getBase().setLogTableName("CRM_CUSTOMER");
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "base.logTableName", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+    }
+
+    @Test
     public void validateRejectsLogTablePrimaryKeyNameMismatch() {
         DynamicTableViewSnapshot snapshot = minimalSnapshot();
         snapshot.getBase().setLogTableName("CRM_CUSTOMER_LOG_BAD_PK");

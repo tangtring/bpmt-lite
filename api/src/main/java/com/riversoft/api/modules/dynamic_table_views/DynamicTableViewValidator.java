@@ -273,6 +273,10 @@ public class DynamicTableViewValidator {
         if (tableDefinition == null || logDefinition == null) {
             return;
         }
+        if (logTableName.equals(trimToNull(base.getTableName()))) {
+            result.addError("base.logTableName", INVALID, "日志表不能与主表相同。");
+            return;
+        }
         Object mainPk = tableDefinition.get("primaryKeyName");
         Object logPk = logDefinition.get("primaryKeyName");
         Object mainType = firstNonNull(tableDefinition.get("primaryKeyType"), tableDefinition.get("type"));
