@@ -1,0 +1,34 @@
+package com.riversoft.api.modules.dynamic_table_views;
+
+import com.riversoft.platform.po.VwUrl;
+
+import java.util.List;
+import java.util.Map;
+
+interface DynamicTableViewRepository {
+    List<VwUrl> listDynUrls(int start, int limit);
+
+    int countDynUrls();
+
+    VwUrl findUrl(String viewKey);
+
+    Map<String, Object> findTable(String viewKey);
+
+    Map<String, Object> findTableDefinition(String tableName);
+
+    Map<String, Object> findColumnDefinition(String tableName, String columnName);
+
+    VwUrl saveUrl(VwUrl url);
+
+    void updateUrl(VwUrl url);
+
+    void saveDynamicEntity(String entityName, Map<String, Object> values);
+
+    void updateDynamicEntity(String entityName, Map<String, Object> values);
+
+    void removeDynamicEntity(String entityName, Object id);
+
+    void removeViewConfig(String viewKey);
+
+    void flushAndClearViewCache(String viewKey);
+}
