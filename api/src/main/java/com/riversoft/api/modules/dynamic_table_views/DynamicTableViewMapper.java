@@ -320,7 +320,7 @@ class DynamicTableViewMapper {
         for (Map<String, Object> row : sortByInt(rows, "sort")) {
             DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
             button.setName(stringValue(row, "name"));
-            button.setType(stringValue(row, "type"));
+            button.setType(intValue(row, "type"));
             button.setDisplayName(stringValue(row, "busiName"));
             button.setIcon(stringValue(row, "icon"));
             button.setStyleClass(stringValue(row, "styleClass"));

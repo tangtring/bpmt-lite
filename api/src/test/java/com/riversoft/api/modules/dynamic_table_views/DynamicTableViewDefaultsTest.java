@@ -106,9 +106,21 @@ public class DynamicTableViewDefaultsTest {
         new DynamicTableViewDefaults().normalize(snapshot, new DefaultsRepository());
 
         assertEquals("show", snapshot.getButtons().getSystem().get(0).getName());
+        assertEquals(Integer.valueOf(1), snapshot.getButtons().getSystem().get(0).getType());
+        assertEquals("zoomin", snapshot.getButtons().getSystem().get(0).getIcon());
+        assertEquals("left", snapshot.getButtons().getSystem().get(0).getStyleClass());
         assertEquals("edit", snapshot.getButtons().getSystem().get(1).getName());
+        assertEquals(Integer.valueOf(1), snapshot.getButtons().getSystem().get(1).getType());
+        assertEquals("wrench", snapshot.getButtons().getSystem().get(1).getIcon());
+        assertEquals("left", snapshot.getButtons().getSystem().get(1).getStyleClass());
         assertEquals("del", snapshot.getButtons().getSystem().get(2).getName());
+        assertEquals(Integer.valueOf(1), snapshot.getButtons().getSystem().get(2).getType());
+        assertEquals("trash", snapshot.getButtons().getSystem().get(2).getIcon());
+        assertEquals("left", snapshot.getButtons().getSystem().get(2).getStyleClass());
         assertEquals("create", snapshot.getButtons().getSystem().get(3).getName());
+        assertEquals(Integer.valueOf(2), snapshot.getButtons().getSystem().get(3).getType());
+        assertEquals("plus", snapshot.getButtons().getSystem().get(3).getIcon());
+        assertEquals("left", snapshot.getButtons().getSystem().get(3).getStyleClass());
     }
 
     private DynamicTableViewSnapshot snapshotWithFields() {

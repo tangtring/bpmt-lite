@@ -297,8 +297,20 @@ public class DynamicTableViewValidator {
             String name = button == null ? null : trimToNull(button.getName());
             if (name == null || !allowed.contains(name)) {
                 result.addError("buttons.system[" + i + "].name", INVALID, "系统按钮名称不在允许范围内。");
+                continue;
+            }
+            Integer expectedType = expectedSystemButtonType(name);
+            if (button.getType() != null && !button.getType().equals(expectedType)) {
+                result.addError("buttons.system[" + i + "].type", INVALID, "系统按钮 type 与运行期定义不一致。");
             }
         }
+    }
+
+    private Integer expectedSystemButtonType(String name) {
+        if ("show".equals(name) || "edit".equals(name) || "del".equals(name)) {
+            return Integer.valueOf(1);
+        }
+        return Integer.valueOf(2);
     }
 
     private void validateTabs(DynamicTableViewSnapshot.Subviews subviews, DynamicTableViewValidationResult result) {

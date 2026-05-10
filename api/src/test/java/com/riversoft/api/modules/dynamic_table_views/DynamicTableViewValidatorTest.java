@@ -128,6 +128,27 @@ public class DynamicTableViewValidatorTest {
     }
 
     @Test
+    public void validateAcceptsExistingDynSystemButtonType() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getButtons().setSystem(Collections.singletonList(systemButton("show", Integer.valueOf(1))));
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertTrue(result.isValid());
+    }
+
+    @Test
+    public void validateRejectsWrongDynSystemButtonType() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getButtons().setSystem(Collections.singletonList(systemButton("show", Integer.valueOf(2))));
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "buttons.system[0].type", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+    }
+
+    @Test
     public void validateRejectsNonDynSystemButtonName() {
         DynamicTableViewSnapshot snapshot = minimalSnapshot();
         snapshot.getButtons().setSystem(Collections.singletonList(systemButton("CREATE")));
@@ -206,8 +227,13 @@ public class DynamicTableViewValidatorTest {
     }
 
     private DynamicTableViewSnapshot.SystemButton systemButton(String name) {
+        return systemButton(name, null);
+    }
+
+    private DynamicTableViewSnapshot.SystemButton systemButton(String name, Integer type) {
         DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
         button.setName(name);
+        button.setType(type);
         return button;
     }
 

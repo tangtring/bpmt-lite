@@ -386,6 +386,8 @@ public class DynamicTableViewDefaults {
     private void normalizeButtons(DynamicTableViewSnapshot.Buttons buttons) {
         if (buttons.getSystem() == null || buttons.getSystem().isEmpty()) {
             buttons.setSystem(defaultSystemButtons());
+        } else {
+            normalizeSystemButtons(buttons.getSystem());
         }
         if (buttons.getItem() == null) {
             buttons.setItem(new ArrayList<DynamicTableViewSnapshot.CustomButton>());
@@ -409,18 +411,69 @@ public class DynamicTableViewDefaults {
 
     private List<DynamicTableViewSnapshot.SystemButton> defaultSystemButtons() {
         List<DynamicTableViewSnapshot.SystemButton> buttons = new ArrayList<DynamicTableViewSnapshot.SystemButton>();
-        buttons.add(systemButton("show", "查看", "item"));
-        buttons.add(systemButton("edit", "编辑", "item"));
-        buttons.add(systemButton("del", "删除", "item"));
-        buttons.add(systemButton("create", "新增", "item"));
+        buttons.add(systemButton("show", Integer.valueOf(1), "查看", "zoomin", "left"));
+        buttons.add(systemButton("edit", Integer.valueOf(1), "编辑", "wrench", "left"));
+        buttons.add(systemButton("del", Integer.valueOf(1), "删除", "trash", "left"));
+        buttons.add(systemButton("create", Integer.valueOf(2), "新增", "plus", "left"));
         return buttons;
     }
 
-    private DynamicTableViewSnapshot.SystemButton systemButton(String name, String displayName, String type) {
+    private void normalizeSystemButtons(List<DynamicTableViewSnapshot.SystemButton> buttons) {
+        for (DynamicTableViewSnapshot.SystemButton button : buttons) {
+            if (button == null || isBlank(button.getName())) {
+                continue;
+            }
+            DynamicTableViewSnapshot.SystemButton defaults = systemButtonDefaults(button.getName());
+            if (defaults == null) {
+                continue;
+            }
+            if (button.getType() == null) {
+                button.setType(defaults.getType());
+            }
+            if (isBlank(button.getDisplayName())) {
+                button.setDisplayName(defaults.getDisplayName());
+            }
+            if (isBlank(button.getIcon())) {
+                button.setIcon(defaults.getIcon());
+            }
+            if (isBlank(button.getStyleClass())) {
+                button.setStyleClass(defaults.getStyleClass());
+            }
+        }
+    }
+
+    private DynamicTableViewSnapshot.SystemButton systemButtonDefaults(String name) {
+        if ("show".equals(name)) {
+            return systemButton("show", Integer.valueOf(1), "查看", "zoomin", "left");
+        }
+        if ("edit".equals(name)) {
+            return systemButton("edit", Integer.valueOf(1), "编辑", "wrench", "left");
+        }
+        if ("del".equals(name)) {
+            return systemButton("del", Integer.valueOf(1), "删除", "trash", "left");
+        }
+        if ("create".equals(name)) {
+            return systemButton("create", Integer.valueOf(2), "新增", "plus", "left");
+        }
+        if ("upload".equals(name)) {
+            return systemButton("upload", Integer.valueOf(2), "导入", "arrowthickstop-1-n", "right");
+        }
+        if ("download".equals(name)) {
+            return systemButton("download", Integer.valueOf(2), "批量导出", "arrowthickstop-1-s", "right");
+        }
+        if ("delAll".equals(name)) {
+            return systemButton("delAll", Integer.valueOf(2), "批量删除", "trash", "right");
+        }
+        return null;
+    }
+
+    private DynamicTableViewSnapshot.SystemButton systemButton(String name, Integer type, String displayName, String icon, String styleClass) {
         DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
         button.setName(name);
-        button.setDisplayName(displayName);
         button.setType(type);
+        button.setDisplayName(displayName);
+        button.setIcon(icon);
+        button.setStyleClass(styleClass);
         return button;
     }
 

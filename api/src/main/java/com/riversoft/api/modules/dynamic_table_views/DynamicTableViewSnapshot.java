@@ -1006,7 +1006,7 @@ public class DynamicTableViewSnapshot {
 
     public static class SystemButton {
         private String name;
-        private String type;
+        private Integer type;
         private String displayName;
         private String icon;
         private String styleClass;
@@ -1021,11 +1021,11 @@ public class DynamicTableViewSnapshot {
             this.name = name;
         }
 
-        public String getType() {
+        public Integer getType() {
             return type;
         }
 
-        public void setType(String type) {
+        public void setType(Integer type) {
             this.type = type;
         }
 
