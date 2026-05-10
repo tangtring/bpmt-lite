@@ -71,10 +71,38 @@ public class DynamicTableViewPermissionServiceTest {
         button.setType(Integer.valueOf(2));
         target.getButtons().getSystem().add(button);
 
-        new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
 
         assertEquals("dyn.CRM_CUSTOMER_VIEW.systemButton.create.2.view",
                 target.getButtons().getSystem().get(0).getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.systemButton.create.2.view"));
+    }
+
+    @Test
+    public void createsKeepsAndDeletesSystemButtonPermissions() {
+        DynamicTableViewSnapshot oldKeepTarget = snapshotWithSystemButton(null);
+        DynamicTableViewResponse.WritePlan oldKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW",
+                        snapshotWithSystemButton("old"), oldKeepTarget);
+
+        assertEquals("pri-old-system-button",
+                oldKeepTarget.getButtons().getSystem().get(0).getPermissions().getView());
+        assertTrue(oldKeepPlan.getPermissionKeeps().contains("pri-old-system-button"));
+
+        DynamicTableViewSnapshot target = snapshotWithSystemButton("target");
+        DynamicTableViewResponse.WritePlan targetKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithSystemButton("old"), target);
+
+        assertEquals("pri-target-system-button",
+                target.getButtons().getSystem().get(0).getPermissions().getView());
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-system-button"));
+
+        DynamicTableViewResponse.WritePlan deletePlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW",
+                        snapshotWithSystemButton("old"), new DynamicTableViewSnapshot());
+
+        assertTrue(deletePlan.getPermissionDeletes().contains("pri-old-system-button"));
     }
 
     @Test
@@ -82,9 +110,11 @@ public class DynamicTableViewPermissionServiceTest {
         DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
         target.setWeixin(new DynamicTableViewSnapshot.Weixin());
 
-        new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
 
         assertEquals("dyn.CRM_CUSTOMER_VIEW.weixin.view", target.getWeixin().getPermissions().getView());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.weixin.view"));
     }
 
     @Test
@@ -260,6 +290,17 @@ public class DynamicTableViewPermissionServiceTest {
         assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-system-tab"));
         assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-view-tab"));
 
+        DynamicTableViewSnapshot targetKeep = snapshotWithSubviews("target");
+        DynamicTableViewResponse.WritePlan targetKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithSubviews("old"), targetKeep);
+
+        assertEquals("pri-target-system-tab",
+                targetKeep.getSubviews().getSystemTabs().get(0).getPermissions().getView());
+        assertEquals("pri-target-view-tab",
+                targetKeep.getSubviews().getViewTabs().get(0).getPermissions().getView());
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-system-tab"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-view-tab"));
+
         DynamicTableViewResponse.WritePlan deletePlan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithSubviews("old"), new DynamicTableViewSnapshot());
 
@@ -287,6 +328,17 @@ public class DynamicTableViewPermissionServiceTest {
         assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-item-button"));
         assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-summary-button"));
 
+        DynamicTableViewSnapshot targetKeep = snapshotWithCustomButtons("target");
+        DynamicTableViewResponse.WritePlan targetKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithCustomButtons("old"), targetKeep);
+
+        assertEquals("pri-target-item-button",
+                targetKeep.getButtons().getItem().get(0).getPermissions().getView());
+        assertEquals("pri-target-summary-button",
+                targetKeep.getButtons().getSummary().get(0).getPermissions().getView());
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-item-button"));
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-summary-button"));
+
         DynamicTableViewResponse.WritePlan deletePlan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithCustomButtons("old"), new DynamicTableViewSnapshot());
 
@@ -308,6 +360,13 @@ public class DynamicTableViewPermissionServiceTest {
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithLimit("old"), snapshotWithLimit(null));
 
         assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-limit"));
+
+        DynamicTableViewSnapshot targetKeep = snapshotWithLimit("target");
+        DynamicTableViewResponse.WritePlan targetKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithLimit("old"), targetKeep);
+
+        assertEquals("pri-target-limit", targetKeep.getLimits().get(0).getPermissions().getView());
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-limit"));
     }
 
     @Test
@@ -316,6 +375,13 @@ public class DynamicTableViewPermissionServiceTest {
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithWeixin("old"), snapshotWithWeixin(null));
 
         assertTrue(keepPlan.getPermissionKeeps().contains("pri-old-weixin"));
+
+        DynamicTableViewSnapshot targetKeep = snapshotWithWeixin("target");
+        DynamicTableViewResponse.WritePlan targetKeepPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithWeixin("old"), targetKeep);
+
+        assertEquals("pri-target-weixin", targetKeep.getWeixin().getPermissions().getView());
+        assertTrue(targetKeepPlan.getPermissionKeeps().contains("pri-target-weixin"));
 
         DynamicTableViewResponse.WritePlan deletePlan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", snapshotWithWeixin("old"), new DynamicTableViewSnapshot());
@@ -396,6 +462,16 @@ public class DynamicTableViewPermissionServiceTest {
         summaryButton.setKey("export");
         summaryButton.getPermissions().setView(permission("summary-button", permissionSuffix));
         snapshot.getButtons().getSummary().add(summaryButton);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithSystemButton(String permissionSuffix) {
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
+        DynamicTableViewSnapshot.SystemButton button = new DynamicTableViewSnapshot.SystemButton();
+        button.setName("create");
+        button.setType(Integer.valueOf(2));
+        button.getPermissions().setView(permission("system-button", permissionSuffix));
+        snapshot.getButtons().getSystem().add(button);
         return snapshot;
     }
 
