@@ -111,23 +111,23 @@ docker compose up -d
 
 ## 版本历史
 
-| 版本 | 说明 | 文档 |
-| --- | --- | --- |
-| `v1.7.0` | 开放动态表视图配置 API，支持 validate、dry-run、导出、创建、替换、分区 patch 和带确认删除。 | [API](docs/v1.7.0/api-reference.md) |
-| `v1.6.2` | 修复第三方系统管理界面和 OAuth 无权限提示，新增安装/升级脚本，重构 README。 | [release](docs/release-v1.6.2.md) |
-| `v1.6.1` | 增强微信生态第三方 OAuth 登录态传导。 | [release](docs/release-v1.6.1.md) |
-| `v1.6.0` | 新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。 | [release](docs/release-v1.6.0.md) |
-| `v1.5.4` | 补齐 Web/API 镜像 multi-arch 发布能力。 | [release](docs/release-v1.5.4.md) |
-| `v1.5.3` | 修复 nginx 转发非 80 端口时 OAuth 回跳地址丢端口的问题。 | [release](docs/release-v1.5.3.md) |
-| `v1.5.2` | 增强外部系统 OAuth 登录态切换体验。 | [release](docs/release-v1.5.2.md) |
-| `v1.5.1` | 修复工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题。 | [release](docs/release-v1.5.1.md) |
-| `v1.5.0` | 新增外部系统 OAuth 登录能力。 | [release](docs/release-v1.5.0.md) |
-| `v1.4.1` | 新增 nginx 单入口、API 模块化路径重整和数据库操作模块接口。 | [API](docs/v1.4.1/api-reference.md) |
-| `v1.4.0` | 新增独立 `api` 子项目和独立 API Docker 容器。 | [release](docs/release-v1.4.0.md) |
-| `v1.3.0` | 修复移动端 H5 登录、首页、菜单和核心业务视图阻断问题。 | [release](docs/release-v1.3.0.md) |
-| `v1.2.0` | 整理初始化数据、修复早期 Docker 运行问题并重构入门文档。 | [roadmap](docs/v1.2.0/roadmap.md) |
-| `v1.1.0` | 第二个 Docker 化版本，收敛 compose 配置和本地构建入口。 | [release](docs/release-v1.1.0.md) |
-| `v1.0.0` | 首个正式 Docker 化版本。 | [release](docs/release-v1.0.0.md) |
+| 版本 | 发布日期 | 说明 | 文档 |
+| --- | --- | --- | --- |
+| `v1.7.0` | 2026-05-10 | 开放动态表视图配置 API，支持 validate、dry-run、导出、创建、替换、分区 patch 和带确认删除。 | [API](docs/v1.7.0/api-reference.md) |
+| `v1.6.2` | 2026-05-06 | 修复第三方系统管理界面和 OAuth 无权限提示，新增安装/升级脚本，重构 README。 | [release](docs/release-v1.6.2.md) |
+| `v1.6.1` | 2026-05-05 | 增强微信生态第三方 OAuth 登录态传导。 | [release](docs/release-v1.6.1.md) |
+| `v1.6.0` | 2026-05-05 | 新增 HTTPS 入口支持，支持内置 nginx TLS 和可信上游 TLS。 | [release](docs/release-v1.6.0.md) |
+| `v1.5.4` | 2026-05-05 | 补齐 Web/API 镜像 multi-arch 发布能力。 | [release](docs/release-v1.5.4.md) |
+| `v1.5.3` | 2026-05-04 | 修复 nginx 转发非 80 端口时 OAuth 回跳地址丢端口的问题。 | [release](docs/release-v1.5.3.md) |
+| `v1.5.2` | 2026-05-04 | 增强外部系统 OAuth 登录态切换体验。 | [release](docs/release-v1.5.2.md) |
+| `v1.5.1` | 2026-05-04 | 修复工作流待办“查看/处理”跳转 `_ORD_ID=null` 问题。 | [release](docs/release-v1.5.1.md) |
+| `v1.5.0` | 2026-05-03 | 新增外部系统 OAuth 登录能力。 | [release](docs/release-v1.5.0.md) |
+| `v1.4.1` | 2026-05-03 | 新增 nginx 单入口、API 模块化路径重整和数据库操作模块接口。 | [API](docs/v1.4.1/api-reference.md) |
+| `v1.4.0` | 2026-05-02 | 新增独立 `api` 子项目和独立 API Docker 容器。 | [release](docs/release-v1.4.0.md) |
+| `v1.3.0` | 2026-05-01 | 修复移动端 H5 登录、首页、菜单和核心业务视图阻断问题。 | [release](docs/release-v1.3.0.md) |
+| `v1.2.0` | 2026-04-28 | 整理初始化数据、修复早期 Docker 运行问题并重构入门文档。 | [roadmap](docs/v1.2.0/roadmap.md) |
+| `v1.1.0` | 2026-04-26 | 第二个 Docker 化版本，收敛 compose 配置和本地构建入口。 | [release](docs/release-v1.1.0.md) |
+| `v1.0.0` | 2026-04-26 | 首个正式 Docker 化版本。 | [release](docs/release-v1.0.0.md) |
 
 ## 文档
 
