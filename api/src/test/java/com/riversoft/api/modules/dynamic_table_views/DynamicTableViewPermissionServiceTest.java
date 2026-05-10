@@ -2,7 +2,10 @@ package com.riversoft.api.modules.dynamic_table_views;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DynamicTableViewPermissionServiceTest {
@@ -16,6 +19,56 @@ public class DynamicTableViewPermissionServiceTest {
 
         assertEquals("pri-old-view", target.getFields().getSystemFields().get(0).getPermissions().getView());
         assertTrue(plan.getPermissionKeeps().contains("pri-old-view"));
+    }
+
+    @Test
+    public void retainedPermissionIsNotDeleted() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithField("CUSTOMER_ID", "pri-shared-field-view");
+        DynamicTableViewSnapshot target = snapshotWithField("CUSTOMER_ID", null);
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertTrue(plan.getPermissionKeeps().contains("pri-shared-field-view"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-shared-field-view"));
+    }
+
+    @Test
+    public void deletedPermissionsExcludeActivePermissionKeys() {
+        DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
+        oldSnapshot.getLimits().add(limit("removed", "pri-shared-limit-view"));
+        oldSnapshot.getSubviews().getViewTabs().add(viewTab("kept", "pri-shared-limit-view"));
+        DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
+        target.getSubviews().getViewTabs().add(viewTab("kept", null));
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertTrue(plan.getPermissionKeeps().contains("pri-shared-limit-view"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-shared-limit-view"));
+    }
+
+    @Test
+    public void deletedPermissionsAreReturnedInStableSectionOrder() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithDeletedPermissionOrderSections();
+        DynamicTableViewResponse.WritePlan firstPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, new DynamicTableViewSnapshot());
+        DynamicTableViewResponse.WritePlan secondPlan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, new DynamicTableViewSnapshot());
+
+        assertEquals(Arrays.asList(
+                "pri-old-field-view",
+                "pri-old-section-view",
+                "pri-old-normal-view",
+                "pri-old-advanced-view",
+                "pri-old-limit-view",
+                "pri-old-prepared-view",
+                "pri-old-before-view",
+                "pri-old-system-tab-view",
+                "pri-old-item-button-view",
+                "pri-old-weixin-view"),
+                firstPlan.getPermissionDeletes());
+        assertEquals(firstPlan.getPermissionDeletes(), secondPlan.getPermissionDeletes());
     }
 
     @Test
@@ -405,6 +458,27 @@ public class DynamicTableViewPermissionServiceTest {
         return query;
     }
 
+    private DynamicTableViewSnapshot.AdvancedQuery advancedQuery(String key, String viewPermission) {
+        DynamicTableViewSnapshot.AdvancedQuery query = new DynamicTableViewSnapshot.AdvancedQuery();
+        query.setKey(key);
+        query.getPermissions().setView(viewPermission);
+        return query;
+    }
+
+    private DynamicTableViewSnapshot.Limit limit(String key, String viewPermission) {
+        DynamicTableViewSnapshot.Limit limit = new DynamicTableViewSnapshot.Limit();
+        limit.setKey(key);
+        limit.getPermissions().setView(viewPermission);
+        return limit;
+    }
+
+    private DynamicTableViewSnapshot.ViewTab viewTab(String key, String viewPermission) {
+        DynamicTableViewSnapshot.ViewTab tab = new DynamicTableViewSnapshot.ViewTab();
+        tab.setKey(key);
+        tab.getPermissions().setView(viewPermission);
+        return tab;
+    }
+
     private DynamicTableViewSnapshot.PreparedVariable preparedVariable(String key, String viewPermission) {
         DynamicTableViewSnapshot.PreparedVariable variable = new DynamicTableViewSnapshot.PreparedVariable();
         variable.setKey(key);
@@ -436,6 +510,34 @@ public class DynamicTableViewPermissionServiceTest {
         parent.setKey("parentOrder");
         parent.getPermissions().setView(permission("parent", permissionSuffix));
         snapshot.getVariables().getParents().add(parent);
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithDeletedPermissionOrderSections() {
+        DynamicTableViewSnapshot snapshot = snapshotWithField("CUSTOMER_ID", "pri-old-field-view");
+        DynamicTableViewSnapshot.SectionLine sectionLine = new DynamicTableViewSnapshot.SectionLine();
+        sectionLine.setKey("basic");
+        sectionLine.getPermissions().setView("pri-old-section-view");
+        snapshot.getFields().getSectionLines().add(sectionLine);
+        snapshot.getQueries().getNormal().add(normalQuery("customerName", "pri-old-normal-view"));
+        snapshot.getQueries().getAdvanced().add(advancedQuery("overdue", "pri-old-advanced-view"));
+        snapshot.getLimits().add(limit("own_rows", "pri-old-limit-view"));
+        snapshot.getVariables().getPrepared().add(preparedVariable("currentUser", "pri-old-prepared-view"));
+        DynamicTableViewSnapshot.Processor before = new DynamicTableViewSnapshot.Processor();
+        before.setKey("prepareVo");
+        before.getPermissions().setView("pri-old-before-view");
+        snapshot.getProcessors().getBefore().add(before);
+        DynamicTableViewSnapshot.SystemTab systemTab = new DynamicTableViewSnapshot.SystemTab();
+        systemTab.setName("log");
+        systemTab.getPermissions().setView("pri-old-system-tab-view");
+        snapshot.getSubviews().getSystemTabs().add(systemTab);
+        DynamicTableViewSnapshot.CustomButton itemButton = new DynamicTableViewSnapshot.CustomButton();
+        itemButton.setKey("approve");
+        itemButton.getPermissions().setView("pri-old-item-button-view");
+        snapshot.getButtons().getItem().add(itemButton);
+        DynamicTableViewSnapshot.Weixin weixin = new DynamicTableViewSnapshot.Weixin();
+        weixin.getPermissions().setView("pri-old-weixin-view");
+        snapshot.setWeixin(weixin);
         return snapshot;
     }
 

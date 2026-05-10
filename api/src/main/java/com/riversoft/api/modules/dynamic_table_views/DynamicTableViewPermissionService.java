@@ -1,7 +1,7 @@
 package com.riversoft.api.modules.dynamic_table_views;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,10 +21,11 @@ public class DynamicTableViewPermissionService {
                                                     DynamicTableViewResponse.WritePlan plan) {
         DynamicTableViewResponse.WritePlan effectivePlan =
                 plan == null ? new DynamicTableViewResponse.WritePlan() : plan;
-        Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions = new HashMap<String, DynamicTableViewSnapshot.PermissionSet>();
+        Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions =
+                new LinkedHashMap<String, DynamicTableViewSnapshot.PermissionSet>();
         collectPermissionSets(oldSnapshot, oldPermissions);
 
-        Set<String> targetStableKeys = new HashSet<String>();
+        Set<String> targetStableKeys = new LinkedHashSet<String>();
         applyTargetPermissions(viewKey, target, oldPermissions, targetStableKeys, effectivePlan);
         collectStableKeysWithoutPermissions(target, targetStableKeys);
         collectDeletedPermissions(oldSnapshot, targetStableKeys, effectivePlan);
@@ -609,23 +610,27 @@ public class DynamicTableViewPermissionService {
                                            Set<String> targetStableKeys,
                                            DynamicTableViewResponse.WritePlan plan) {
         Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions =
-                new HashMap<String, DynamicTableViewSnapshot.PermissionSet>();
+                new LinkedHashMap<String, DynamicTableViewSnapshot.PermissionSet>();
         collectPermissionSets(oldSnapshot, oldPermissions);
+        Set<String> activePermissions = new LinkedHashSet<String>();
+        activePermissions.addAll(plan.getPermissionCreates());
+        activePermissions.addAll(plan.getPermissionKeeps());
         for (Map.Entry<String, DynamicTableViewSnapshot.PermissionSet> entry : oldPermissions.entrySet()) {
             if (!targetStableKeys.contains(entry.getKey())) {
-                addPermissionDeletes(entry.getValue(), plan);
+                addPermissionDeletes(entry.getValue(), activePermissions, plan);
             }
         }
     }
 
     private void addPermissionDeletes(DynamicTableViewSnapshot.PermissionSet permissions,
+                                      Set<String> activePermissions,
                                       DynamicTableViewResponse.WritePlan plan) {
         if (permissions == null) {
             return;
         }
-        addIfText(plan.getPermissionDeletes(), permissions.getView());
-        addIfText(plan.getPermissionDeletes(), permissions.getCreate());
-        addIfText(plan.getPermissionDeletes(), permissions.getUpdate());
+        addDeleteIfInactive(plan.getPermissionDeletes(), activePermissions, permissions.getView());
+        addDeleteIfInactive(plan.getPermissionDeletes(), activePermissions, permissions.getCreate());
+        addDeleteIfInactive(plan.getPermissionDeletes(), activePermissions, permissions.getUpdate());
     }
 
     private void collectSectionLineStableKeys(List<DynamicTableViewSnapshot.SectionLine> lines, Set<String> stableKeys) {
@@ -744,6 +749,12 @@ public class DynamicTableViewPermissionService {
 
     private void addIfText(List<String> values, String value) {
         if (hasText(value)) {
+            add(values, value);
+        }
+    }
+
+    private void addDeleteIfInactive(List<String> values, Set<String> activePermissions, String value) {
+        if (hasText(value) && !activePermissions.contains(value)) {
             add(values, value);
         }
     }
