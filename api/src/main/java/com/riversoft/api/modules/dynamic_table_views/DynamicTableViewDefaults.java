@@ -2,6 +2,7 @@ package com.riversoft.api.modules.dynamic_table_views;
 
 import com.riversoft.core.IDGenerator;
 
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -130,27 +131,35 @@ public class DynamicTableViewDefaults {
             }
             return;
         }
-        if (requiredField && currentWidget.indexOf("required:true") < 0) {
+        if (requiredField && !hasRequiredRule(currentWidget)) {
             field.setWidget(appendRequired(currentWidget));
         }
     }
 
     private String defaultWidget(Map<String, Object> column) {
         String type = lowerString(firstNonNull(column.get("type"), column.get("typeName"), column.get("columnType")));
+        Integer typeCode = integerValue(firstNonNull(column.get("typeCode"), column.get("mappedTypeCode")));
         int length = intValue(firstNonNull(column.get("totalSize"), column.get("length")));
-        if (containsAny(type, "date", "time", "timestamp")) {
+        if (containsAny(type, "date", "time", "timestamp") || isTypeCode(typeCode, Types.DATE, Types.TIME, Types.TIMESTAMP)) {
             return "date";
         }
-        if (containsAny(type, "clob", "text") || (containsAny(type, "char", "string", "varchar") && length > 1000)) {
+        if (containsAny(type, "clob", "text")
+                || isTypeCode(typeCode, Types.CLOB, Types.NCLOB, Types.LONGVARCHAR, Types.LONGNVARCHAR)
+                || ((containsAny(type, "char", "string", "varchar")
+                || isTypeCode(typeCode, Types.CHAR, Types.VARCHAR, Types.NCHAR, Types.NVARCHAR))
+                && length > 1000)) {
             return "textarea";
         }
-        if (containsAny(type, "blob", "binary")) {
+        if (containsAny(type, "blob", "binary")
+                || isTypeCode(typeCode, Types.BLOB, Types.BINARY, Types.VARBINARY, Types.LONGVARBINARY)) {
             return "file";
         }
-        if (containsAny(type, "int", "integer", "long", "bigint")) {
+        if (containsAny(type, "int", "integer", "long", "bigint")
+                || isTypeCode(typeCode, Types.INTEGER, Types.SMALLINT, Types.TINYINT, Types.BIGINT)) {
             return "text{digits:true}";
         }
-        if (containsAny(type, "number", "decimal", "numeric", "double", "float", "real")) {
+        if (containsAny(type, "number", "decimal", "numeric", "double", "float", "real")
+                || isTypeCode(typeCode, Types.NUMERIC, Types.DECIMAL, Types.DOUBLE, Types.FLOAT, Types.REAL)) {
             return "text{number:true}";
         }
         return "text";
@@ -169,6 +178,28 @@ public class DynamicTableViewDefaults {
         return safeWidget + "{required:true}";
     }
 
+    private boolean hasRequiredRule(String widget) {
+        if (widget == null) {
+            return false;
+        }
+        String normalized = widget.toLowerCase(Locale.ENGLISH).replace(" ", "");
+        if (normalized.indexOf("required:true") >= 0) {
+            return true;
+        }
+        int open = normalized.indexOf('{');
+        int close = normalized.lastIndexOf('}');
+        if (open < 0 || close <= open) {
+            return false;
+        }
+        String[] rules = normalized.substring(open + 1, close).split(",");
+        for (String rule : rules) {
+            if ("required".equals(rule) || "required:true".equals(rule)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Object firstNonNull(Object first, Object second) {
         return first != null ? first : second;
     }
@@ -182,6 +213,20 @@ public class DynamicTableViewDefaults {
 
     private String lowerString(Object value) {
         return value == null ? "" : String.valueOf(value).toLowerCase(Locale.ENGLISH);
+    }
+
+    private Integer integerValue(Object value) {
+        if (value instanceof Number) {
+            return Integer.valueOf(((Number) value).intValue());
+        }
+        if (value != null) {
+            try {
+                return Integer.valueOf(String.valueOf(value));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private int intValue(Object value) {
@@ -208,6 +253,18 @@ public class DynamicTableViewDefaults {
         if (value != null) {
             String text = String.valueOf(value).trim();
             return "true".equalsIgnoreCase(text) || "1".equals(text) || "Y".equalsIgnoreCase(text);
+        }
+        return false;
+    }
+
+    private boolean isTypeCode(Integer value, int... expected) {
+        if (value == null || expected == null) {
+            return false;
+        }
+        for (int typeCode : expected) {
+            if (value.intValue() == typeCode) {
+                return true;
+            }
         }
         return false;
     }

@@ -6,6 +6,7 @@ import com.riversoft.platform.po.TbTable;
 import com.riversoft.platform.po.VwUrl;
 
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +48,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         result.put("description", table.getDescription());
         result.put("cacheFlag", table.getCacheFlag());
         result.put("columns", toColumnDefinitions(table.getTbColumns()));
+        addPrimaryKeyDefinition(result, table.getTbColumns());
         return result;
     }
 
@@ -114,7 +116,11 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         result.put("name", column.getName());
         result.put("description", column.getDescription());
         result.put("tableName", column.getTableName());
-        result.put("typeCode", Integer.valueOf(column.getMappedTypeCode()));
+        int typeCode = column.getMappedTypeCode();
+        String typeName = sqlTypeName(typeCode);
+        result.put("typeCode", Integer.valueOf(typeCode));
+        result.put("typeName", typeName);
+        result.put("columnType", typeName);
         result.put("totalSize", Integer.valueOf(column.getTotalSize()));
         result.put("scale", Integer.valueOf(column.getScale()));
         result.put("primaryKey", Boolean.valueOf(column.isPrimaryKey()));
@@ -124,5 +130,79 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         result.put("sort", column.getSort());
         result.put("memo", column.getMemo());
         return result;
+    }
+
+    private void addPrimaryKeyDefinition(Map<String, Object> result, Set<TbColumn> columns) {
+        if (columns == null) {
+            return;
+        }
+        for (TbColumn column : columns) {
+            if (column != null && column.isPrimaryKey()) {
+                int typeCode = column.getMappedTypeCode();
+                result.put("primaryKeyName", column.getName());
+                result.put("primaryKeyType", sqlTypeName(typeCode));
+                result.put("primaryKeyTypeCode", Integer.valueOf(typeCode));
+                return;
+            }
+        }
+    }
+
+    private String sqlTypeName(int typeCode) {
+        switch (typeCode) {
+            case Types.BIT:
+                return "BIT";
+            case Types.TINYINT:
+                return "TINYINT";
+            case Types.SMALLINT:
+                return "SMALLINT";
+            case Types.INTEGER:
+                return "INTEGER";
+            case Types.BIGINT:
+                return "BIGINT";
+            case Types.FLOAT:
+                return "FLOAT";
+            case Types.REAL:
+                return "REAL";
+            case Types.DOUBLE:
+                return "DOUBLE";
+            case Types.NUMERIC:
+                return "NUMERIC";
+            case Types.DECIMAL:
+                return "DECIMAL";
+            case Types.CHAR:
+                return "CHAR";
+            case Types.VARCHAR:
+                return "VARCHAR";
+            case Types.LONGVARCHAR:
+                return "LONGVARCHAR";
+            case Types.DATE:
+                return "DATE";
+            case Types.TIME:
+                return "TIME";
+            case Types.TIMESTAMP:
+                return "TIMESTAMP";
+            case Types.BINARY:
+                return "BINARY";
+            case Types.VARBINARY:
+                return "VARBINARY";
+            case Types.LONGVARBINARY:
+                return "LONGVARBINARY";
+            case Types.BLOB:
+                return "BLOB";
+            case Types.CLOB:
+                return "CLOB";
+            case Types.BOOLEAN:
+                return "BOOLEAN";
+            case -15:
+                return "NCHAR";
+            case -9:
+                return "NVARCHAR";
+            case -16:
+                return "LONGNVARCHAR";
+            case 2011:
+                return "NCLOB";
+            default:
+                return String.valueOf(typeCode);
+        }
     }
 }

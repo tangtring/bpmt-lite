@@ -138,6 +138,28 @@ public class DynamicTableViewValidatorTest {
         assertError(result, "buttons.system[0].name", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
     }
 
+    @Test
+    public void validateRejectsLogTablePrimaryKeyNameMismatch() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getBase().setLogTableName("CRM_CUSTOMER_LOG_BAD_PK");
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "base.logTableName", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+    }
+
+    @Test
+    public void validateRejectsLogTablePrimaryKeyTypeMismatch() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getBase().setLogTableName("CRM_CUSTOMER_LOG_BAD_TYPE");
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "base.logTableName", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
+    }
+
     private DynamicTableViewSnapshot minimalSnapshot() {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         snapshot.setBase(new DynamicTableViewSnapshot.Base());
@@ -199,6 +221,20 @@ public class DynamicTableViewValidatorTest {
                 table.put("name", tableName);
                 table.put("primaryKeyName", "ID");
                 table.put("primaryKeyType", "VARCHAR");
+                return table;
+            }
+            if ("CRM_CUSTOMER_LOG_BAD_PK".equals(tableName)) {
+                Map<String, Object> table = new LinkedHashMap<String, Object>();
+                table.put("name", tableName);
+                table.put("primaryKeyName", "LOG_ID");
+                table.put("primaryKeyType", "VARCHAR");
+                return table;
+            }
+            if ("CRM_CUSTOMER_LOG_BAD_TYPE".equals(tableName)) {
+                Map<String, Object> table = new LinkedHashMap<String, Object>();
+                table.put("name", tableName);
+                table.put("primaryKeyName", "ID");
+                table.put("primaryKeyType", "INTEGER");
                 return table;
             }
             return null;
