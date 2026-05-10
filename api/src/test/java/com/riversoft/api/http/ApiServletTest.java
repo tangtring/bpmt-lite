@@ -9,6 +9,7 @@ import java.util.Map;
 import com.riversoft.api.ApiServlet;
 import com.riversoft.api.modules.database_operations.DatabaseOperationController;
 import com.riversoft.api.modules.dynamic_tables.DynamicTableController;
+import com.riversoft.api.modules.dynamic_table_views.DynamicTableViewController;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -84,5 +85,52 @@ public class ApiServletTest {
 
         assertTrue(response.getStatus() == 200);
         assertTrue(response.getContentAsString().contains("\"tpl-ok\""));
+    }
+
+    @Test
+    public void dynamicTableViewValidateRouteIsNotCapturedAsViewKey() throws Exception {
+        ApiServlet servlet = servletWithDynamicTableViewRouteProbe();
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/dynamic-table-views:validate");
+        request.setPathInfo("/dynamic-table-views:validate");
+        request.setContentType("application/json");
+        request.setContent("{}".getBytes("UTF-8"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        servlet.service((javax.servlet.ServletRequest) request, (javax.servlet.ServletResponse) response);
+
+        assertTrue(response.getStatus() == 200);
+        assertTrue(response.getContentAsString().contains("\"route\":\"validate\""));
+    }
+
+    @Test
+    public void dynamicTableViewDetailDecodesViewKey() throws Exception {
+        ApiServlet servlet = servletWithDynamicTableViewRouteProbe();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/dynamic-table-views/CRM%2DCUSTOMER");
+        request.setPathInfo("/dynamic-table-views/CRM%2DCUSTOMER");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        servlet.service((javax.servlet.ServletRequest) request, (javax.servlet.ServletResponse) response);
+
+        assertTrue(response.getStatus() == 200);
+        assertTrue(response.getContentAsString().contains("\"viewKey\":\"CRM-CUSTOMER\""));
+    }
+
+    private ApiServlet servletWithDynamicTableViewRouteProbe() {
+        DynamicTableViewController viewController = new DynamicTableViewController() {
+            @Override
+            public Map<String, Object> validate(ApiRequest request) {
+                Map<String, Object> result = new LinkedHashMap<String, Object>();
+                result.put("route", "validate");
+                return result;
+            }
+
+            @Override
+            public Map<String, Object> detail(String viewKey) {
+                Map<String, Object> result = new LinkedHashMap<String, Object>();
+                result.put("viewKey", viewKey);
+                return result;
+            }
+        };
+        return new ApiServlet(new DynamicTableController(), new DatabaseOperationController(), viewController);
     }
 }

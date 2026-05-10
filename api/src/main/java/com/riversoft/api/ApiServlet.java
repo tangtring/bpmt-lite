@@ -1,6 +1,7 @@
 package com.riversoft.api;
 
 import com.riversoft.api.modules.dynamic_tables.DynamicTableController;
+import com.riversoft.api.modules.dynamic_table_views.DynamicTableViewController;
 import com.riversoft.api.modules.database_operations.DatabaseOperationController;
 import com.riversoft.api.http.ApiError;
 import com.riversoft.api.http.ApiException;
@@ -24,15 +25,23 @@ public class ApiServlet extends HttpServlet {
 
     private final DynamicTableController dynamicTableController;
     private final DatabaseOperationController databaseOperationController;
+    private final DynamicTableViewController dynamicTableViewController;
 
     public ApiServlet() {
-        this(new DynamicTableController(), new DatabaseOperationController());
+        this(new DynamicTableController(), new DatabaseOperationController(), new DynamicTableViewController());
     }
 
     public ApiServlet(DynamicTableController dynamicTableController,
                       DatabaseOperationController databaseOperationController) {
+        this(dynamicTableController, databaseOperationController, new DynamicTableViewController());
+    }
+
+    public ApiServlet(DynamicTableController dynamicTableController,
+                      DatabaseOperationController databaseOperationController,
+                      DynamicTableViewController dynamicTableViewController) {
         this.dynamicTableController = dynamicTableController;
         this.databaseOperationController = databaseOperationController;
+        this.dynamicTableViewController = dynamicTableViewController;
     }
 
     @Override
@@ -51,6 +60,47 @@ public class ApiServlet extends HttpServlet {
     private Object dispatch(ApiRequest request) {
         String method = StringUtils.upperCase(request.getMethod());
         String path = normalizePath(request.getPathInfo());
+
+        if ("/dynamic-table-views".equals(path)) {
+            if ("GET".equals(method)) {
+                return dynamicTableViewController.list(request);
+            }
+            if ("POST".equals(method)) {
+                return dynamicTableViewController.create(request);
+            }
+            throw methodNotAllowed();
+        }
+
+        if ("/dynamic-table-views:validate".equals(path)) {
+            if ("POST".equals(method)) {
+                return dynamicTableViewController.validate(request);
+            }
+            throw methodNotAllowed();
+        }
+
+        if (path.startsWith("/dynamic-table-views/")) {
+            String tail = path.substring("/dynamic-table-views/".length());
+            String[] parts = tail.split("/");
+            if (parts.length == 1 && StringUtils.isNotBlank(parts[0])) {
+                String viewKey = decode(parts[0]);
+                if ("GET".equals(method)) {
+                    return dynamicTableViewController.detail(viewKey);
+                }
+                if ("PUT".equals(method)) {
+                    return dynamicTableViewController.replace(viewKey, request);
+                }
+                if ("DELETE".equals(method)) {
+                    return dynamicTableViewController.delete(viewKey, request);
+                }
+                throw methodNotAllowed();
+            }
+            if (parts.length == 2 && StringUtils.isNotBlank(parts[0]) && StringUtils.isNotBlank(parts[1])) {
+                if ("PATCH".equals(method)) {
+                    return dynamicTableViewController.patch(decode(parts[0]), decode(parts[1]), request);
+                }
+                throw methodNotAllowed();
+            }
+        }
 
         if ("/dynamic-tables".equals(path)) {
             if ("GET".equals(method)) {
