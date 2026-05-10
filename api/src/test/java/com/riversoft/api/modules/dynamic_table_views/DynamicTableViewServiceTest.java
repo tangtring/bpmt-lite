@@ -1,6 +1,7 @@
 package com.riversoft.api.modules.dynamic_table_views;
 
 import com.riversoft.api.http.ApiException;
+import com.riversoft.platform.po.CmPri;
 import com.riversoft.platform.po.VwUrl;
 import org.junit.Test;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -211,7 +212,7 @@ public class DynamicTableViewServiceTest {
     }
 
     @Test
-    public void ormReplaceViewConfigRunsRemoveAndSaveInRequiredTransaction() {
+    public void ormReplaceViewConfigRunsTableUpdateChildBulkDeleteAndSaveInRequiredTransaction() {
         RecordingTransactionManager transactionManager = new RecordingTransactionManager();
         TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
 
@@ -223,14 +224,16 @@ public class DynamicTableViewServiceTest {
         assertEquals(0, transactionManager.rollbacks);
         assertEquals(TransactionDefinition.PROPAGATION_REQUIRED,
                 transactionManager.lastDefinition.getPropagationBehavior());
-        assertEquals(3, repository.operations.size());
+        assertEquals(4, repository.operations.size());
         assertEquals("updateUrl:CRM_CUSTOMER_VIEW", repository.operations.get(0));
-        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(1));
-        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(2));
+        assertEquals("updateEntity:VwDynTable", repository.operations.get(1));
+        assertEquals("bulkDeleteChildren:CRM_CUSTOMER_VIEW", repository.operations.get(2));
+        assertEquals("saveChildren", repository.operations.get(3));
+        assertFalse(repository.operations.contains("remove:CRM_CUSTOMER_VIEW"));
     }
 
     @Test
-    public void ormReplaceViewConfigRollsBackWhenSaveFails() {
+    public void ormReplaceViewConfigRollsBackWhenSaveChildrenFailsWithoutRemovingTable() {
         RecordingTransactionManager transactionManager = new RecordingTransactionManager();
         TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
         repository.failSave = true;
@@ -246,10 +249,12 @@ public class DynamicTableViewServiceTest {
         assertEquals(1, transactionManager.begins);
         assertEquals(0, transactionManager.commits);
         assertEquals(1, transactionManager.rollbacks);
-        assertEquals(3, repository.operations.size());
+        assertEquals(4, repository.operations.size());
         assertEquals("updateUrl:CRM_CUSTOMER_VIEW", repository.operations.get(0));
-        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(1));
-        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(2));
+        assertEquals("updateEntity:VwDynTable", repository.operations.get(1));
+        assertEquals("bulkDeleteChildren:CRM_CUSTOMER_VIEW", repository.operations.get(2));
+        assertEquals("saveChildren", repository.operations.get(3));
+        assertFalse(repository.operations.contains("remove:CRM_CUSTOMER_VIEW"));
     }
 
     @Test
@@ -268,6 +273,37 @@ public class DynamicTableViewServiceTest {
         assertEquals(2, repository.operations.size());
         assertEquals("saveUrl:CRM_CUSTOMER_VIEW", repository.operations.get(0));
         assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(1));
+    }
+
+    @Test
+    public void ormPatchWeixinUsesBulkDeleteInsteadOfRemoveByPk() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
+
+        repository.patchViewConfig(url("CRM_CUSTOMER_VIEW", "dyn"), DynamicTableViewSection.WEIXIN,
+                new LinkedHashMap<String, Object>(), new DynamicTableViewResponse.WritePlan());
+
+        assertTrue(repository.operations.contains("bulkDelete:VwDynWeixin:CRM_CUSTOMER_VIEW"));
+        assertFalse(repository.operations.contains("removeEntity:VwDynWeixin:CRM_CUSTOMER_VIEW"));
+    }
+
+    @Test
+    public void ormSaveMappedChildAttachesExistingPermissionBeforeSave() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
+        CmPri existing = new CmPri();
+        existing.setPriKey("pri-existing");
+        repository.existingPermission = existing;
+        Map<String, Object> child = new LinkedHashMap<String, Object>();
+        child.put("$type$", "VwDynColumn");
+        CmPri transientPermission = new CmPri();
+        transientPermission.setPriKey("pri-existing");
+        child.put("pri", transientPermission);
+
+        repository.saveMappedChild(child);
+
+        assertTrue(repository.savedValues.containsKey("pri"));
+        assertTrue(repository.savedValues.get("pri") == existing);
     }
 
     private DynamicTableViewSnapshot snapshot(String viewKey) {
@@ -482,6 +518,8 @@ public class DynamicTableViewServiceTest {
     private static class TransactionalOrmRepository extends OrmDynamicTableViewRepository {
         private final PlatformTransactionManager transactionManager;
         private final List<String> operations = new ArrayList<String>();
+        private final Map<String, Object> savedValues = new LinkedHashMap<String, Object>();
+        private CmPri existingPermission;
         private boolean failSave;
 
         private TransactionalOrmRepository(PlatformTransactionManager transactionManager) {
@@ -515,6 +553,51 @@ public class DynamicTableViewServiceTest {
             if (failSave) {
                 throw new IllegalStateException("save failed");
             }
+        }
+
+        @Override
+        public void updateDynamicEntity(String entityName, Map<String, Object> values) {
+            operations.add("updateEntity:" + entityName);
+        }
+
+        @Override
+        public void removeDynamicEntity(String entityName, Object id) {
+            operations.add("removeEntity:" + entityName + ":" + id);
+        }
+
+        @Override
+        protected void removeAllChildConfig(String viewKey) {
+            operations.add("bulkDeleteChildren:" + viewKey);
+        }
+
+        @Override
+        protected void removeEntitiesByViewKey(String viewKey, String... entityNames) {
+            for (String entityName : entityNames) {
+                operations.add("bulkDelete:" + entityName + ":" + viewKey);
+            }
+        }
+
+        @Override
+        protected void saveChildConfig(Map<String, Object> tableMap) {
+            operations.add("saveChildren");
+            if (failSave) {
+                throw new IllegalStateException("save failed");
+            }
+        }
+
+        @Override
+        public void saveDynamicEntity(String entityName, Map<String, Object> values) {
+            operations.add("saveEntity:" + entityName);
+            savedValues.clear();
+            savedValues.putAll(values);
+        }
+
+        @Override
+        protected CmPri findPermission(String priKey) {
+            if (existingPermission != null && existingPermission.getPriKey().equals(priKey)) {
+                return existingPermission;
+            }
+            return null;
         }
     }
 

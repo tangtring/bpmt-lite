@@ -101,25 +101,9 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         });
     }
 
-    @SuppressWarnings("unchecked")
     public void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
-        Map<String, Object> table = new LinkedHashMap<String, Object>();
-        for (Map.Entry<String, Object> entry : tableMap.entrySet()) {
-            if (!CHILD_KEYS.contains(entry.getKey())) {
-                table.put(entry.getKey(), entry.getValue());
-            }
-        }
-        saveDynamicEntity("VwDynTable", table);
-        for (String childKey : CHILD_KEYS) {
-            Object value = tableMap.get(childKey);
-            if (value instanceof Collection) {
-                for (Object item : (Collection<Object>) value) {
-                    saveMappedChild(item);
-                }
-            } else {
-                saveMappedChild(value);
-            }
-        }
+        saveDynamicEntity("VwDynTable", tableValues(tableMap));
+        saveChildConfig(tableMap);
     }
 
     public void replaceViewConfig(final String viewKey, final Map<String, Object> tableMap) {
@@ -139,9 +123,10 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
                 updateUrl(url);
-                removeDynamicTableConfig(url.getViewKey());
+                updateDynamicEntity("VwDynTable", tableValues(tableMap));
+                removeAllChildConfig(url.getViewKey());
                 removePermissions(plan);
-                saveViewConfig(url.getViewKey(), tableMap);
+                saveChildConfig(tableMap);
             }
         });
     }
@@ -198,8 +183,8 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
     }
 
     public void removeDynamicTableConfig(String viewKey) {
-        ORMService.getInstance().removeByPk("VwDynWeixin", viewKey);
-        ORMService.getInstance().removeByPk("VwDynTable", viewKey);
+        removeAllChildConfig(viewKey);
+        removeDynamicEntity("VwDynTable", viewKey);
     }
 
     public void removeViewConfig(String viewKey) {
@@ -260,7 +245,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
     }
 
     @SuppressWarnings("unchecked")
-    private void saveMappedChild(Object value) {
+    protected void saveMappedChild(Object value) {
         if (!(value instanceof Map)) {
             return;
         }
@@ -272,6 +257,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         Object foreigns = child.get("foreigns");
         Map<String, Object> saveValues = new LinkedHashMap<String, Object>(child);
         saveValues.remove("foreigns");
+        attachExistingPermissions(saveValues);
         saveDynamicEntity(String.valueOf(type), saveValues);
         if (foreigns instanceof Collection) {
             for (Object foreign : (Collection<Object>) foreigns) {
@@ -280,9 +266,30 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         }
     }
 
-    private void patchDynamicTableConfig(String viewKey,
-                                         DynamicTableViewSection section,
-                                         Map<String, Object> tableMap) {
+    protected void attachExistingPermissions(Map<String, Object> values) {
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            Object value = entry.getValue();
+            if (!(value instanceof CmPri)) {
+                continue;
+            }
+            CmPri pri = (CmPri) value;
+            if (pri.getPriKey() == null || pri.getPriKey().trim().length() == 0) {
+                continue;
+            }
+            CmPri existing = findPermission(pri.getPriKey());
+            if (existing != null) {
+                entry.setValue(existing);
+            }
+        }
+    }
+
+    protected CmPri findPermission(String priKey) {
+        return (CmPri) ORMService.getInstance().findByPk(CmPri.class.getName(), priKey);
+    }
+
+    protected void patchDynamicTableConfig(String viewKey,
+                                           DynamicTableViewSection section,
+                                           Map<String, Object> tableMap) {
         if (DynamicTableViewSection.BASE.equals(section) || DynamicTableViewSection.SCRIPTS.equals(section)) {
             updateDynamicEntity("VwDynTable", tableValues(tableMap));
             return;
@@ -294,7 +301,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
     }
 
     @SuppressWarnings("unchecked")
-    private void saveMappedValue(Object value) {
+    protected void saveMappedValue(Object value) {
         if (value instanceof Collection) {
             for (Object item : (Collection<Object>) value) {
                 saveMappedChild(item);
@@ -304,7 +311,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         }
     }
 
-    private Map<String, Object> tableValues(Map<String, Object> tableMap) {
+    protected Map<String, Object> tableValues(Map<String, Object> tableMap) {
         Map<String, Object> table = new LinkedHashMap<String, Object>();
         for (Map.Entry<String, Object> entry : tableMap.entrySet()) {
             if (!CHILD_KEYS.contains(entry.getKey())) {
@@ -314,7 +321,35 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         return table;
     }
 
-    private void removeSectionConfig(String viewKey, DynamicTableViewSection section) {
+    protected void saveChildConfig(Map<String, Object> tableMap) {
+        for (String childKey : CHILD_KEYS) {
+            saveMappedValue(tableMap.get(childKey));
+        }
+    }
+
+    protected void removeAllChildConfig(String viewKey) {
+        removeParentVariables(viewKey);
+        removeEntitiesByViewKey(viewKey,
+                "VwDynColumn",
+                "VwDynColumnShow",
+                "VwDynColumnForm",
+                "VwDynColumnLine",
+                "VwDynQuery",
+                "VwDynQueryExt",
+                "VwDynLimit",
+                "VwDynExecPrepare",
+                "VwDynParent",
+                "VwDynExecBefore",
+                "VwDynExecAfter",
+                "VwDynSubSys",
+                "VwDynSubView",
+                "VwDynBtnSys",
+                "VwDynBtnItem",
+                "VwDynBtnSummary",
+                "VwDynWeixin");
+    }
+
+    protected void removeSectionConfig(String viewKey, DynamicTableViewSection section) {
         if (DynamicTableViewSection.FIELDS.equals(section)) {
             removeEntitiesByViewKey(viewKey, "VwDynColumn", "VwDynColumnShow", "VwDynColumnForm", "VwDynColumnLine");
         } else if (DynamicTableViewSection.QUERIES.equals(section)) {
@@ -331,11 +366,11 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         } else if (DynamicTableViewSection.BUTTONS.equals(section)) {
             removeEntitiesByViewKey(viewKey, "VwDynBtnSys", "VwDynBtnItem", "VwDynBtnSummary");
         } else if (DynamicTableViewSection.WEIXIN.equals(section)) {
-            ORMService.getInstance().removeByPk("VwDynWeixin", viewKey);
+            removeEntitiesByViewKey(viewKey, "VwDynWeixin");
         }
     }
 
-    private void removeParentVariables(String viewKey) {
+    protected void removeParentVariables(String viewKey) {
         @SuppressWarnings("unchecked")
         List<String> parentKeys = (List<String>) ORMService.getInstance()
                 .queryHQL("select parentKey from VwDynParent where viewKey = ?", viewKey);
@@ -345,7 +380,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         }
     }
 
-    private void removeEntitiesByViewKey(String viewKey, String... entityNames) {
+    protected void removeEntitiesByViewKey(String viewKey, String... entityNames) {
         for (String entityName : entityNames) {
             ORMService.getInstance().executeHQL("delete from " + entityName + " where viewKey = ?", viewKey);
         }

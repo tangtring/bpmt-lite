@@ -214,6 +214,31 @@ public class DynamicTableViewValidatorTest {
         assertError(result, "subviews.systemTabs[1].name", "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT");
     }
 
+    @Test
+    public void validateRejectsUnsupportedPermissionsThatWillNotPersist() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        DynamicTableViewSnapshot.NormalQuery query = new DynamicTableViewSnapshot.NormalQuery();
+        query.setKey("customerId");
+        query.setField("ID");
+        query.getPermissions().setView("pri-query-view");
+        snapshot.getQueries().getNormal().add(query);
+        DynamicTableViewSnapshot.PreparedVariable prepared = new DynamicTableViewSnapshot.PreparedVariable();
+        prepared.setKey("currentUser");
+        prepared.getPermissions().setView("pri-prepared-view");
+        snapshot.getVariables().getPrepared().add(prepared);
+        DynamicTableViewSnapshot.Processor processor = new DynamicTableViewSnapshot.Processor();
+        processor.setKey("prepareVo");
+        processor.getPermissions().setView("pri-before-view");
+        snapshot.getProcessors().getBefore().add(processor);
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "queries.normal[0].permissions", "UNSUPPORTED_PERMISSION");
+        assertError(result, "variables.prepared[0].permissions", "UNSUPPORTED_PERMISSION");
+        assertError(result, "processors.before[0].permissions", "UNSUPPORTED_PERMISSION");
+    }
+
     private DynamicTableViewSnapshot minimalSnapshot() {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         snapshot.setBase(new DynamicTableViewSnapshot.Base());

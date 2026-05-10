@@ -25,8 +25,7 @@ interface DynamicTableViewRepository {
     default void createViewConfig(VwUrl url,
                                   Map<String, Object> tableMap,
                                   DynamicTableViewResponse.WritePlan plan) {
-        saveUrl(url);
-        saveViewConfig(url.getViewKey(), tableMap);
+        throw new UnsupportedOperationException("createViewConfig must be implemented with a transaction boundary.");
     }
 
     default void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
@@ -41,16 +40,14 @@ interface DynamicTableViewRepository {
     default void replaceViewConfig(VwUrl url,
                                    Map<String, Object> tableMap,
                                    DynamicTableViewResponse.WritePlan plan) {
-        updateUrl(url);
-        replaceViewConfig(url.getViewKey(), tableMap);
+        throw new UnsupportedOperationException("replaceViewConfig must be implemented with a transaction boundary.");
     }
 
     default void patchViewConfig(VwUrl url,
                                  DynamicTableViewSection section,
                                  Map<String, Object> tableMap,
                                  DynamicTableViewResponse.WritePlan plan) {
-        updateUrl(url);
-        replaceViewConfig(url.getViewKey(), tableMap);
+        throw new UnsupportedOperationException("patchViewConfig must be implemented with a transaction boundary.");
     }
 
     void saveDynamicEntity(String entityName, Map<String, Object> values);
@@ -66,7 +63,7 @@ interface DynamicTableViewRepository {
     void removeViewConfig(String viewKey);
 
     default void removeViewConfig(String viewKey, DynamicTableViewResponse.WritePlan plan) {
-        removeViewConfig(viewKey);
+        throw new UnsupportedOperationException("removeViewConfig must be implemented with a transaction boundary.");
     }
 
     void flushAndClearViewCache(String viewKey);

@@ -11,6 +11,7 @@ public class DynamicTableViewValidator {
     private static final String INVALID = "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT";
     private static final String TABLE_NOT_FOUND = "DYNAMIC_TABLE_VIEW_TABLE_NOT_FOUND";
     private static final String FIELD_NOT_FOUND = "DYNAMIC_TABLE_VIEW_FIELD_NOT_FOUND";
+    private static final String UNSUPPORTED_PERMISSION = "UNSUPPORTED_PERMISSION";
 
     private final DynamicTableViewRepository repository;
     private final DynamicTableViewDefaults defaults;
@@ -39,6 +40,7 @@ public class DynamicTableViewValidator {
         validateFields(normalized, tableName, result);
         validateQueries(normalized, result);
         validateParents(normalized, tableName, result);
+        validateUnsupportedPermissions(normalized, result);
         validateLogTable(base, tableDefinition, result);
         validateButtons(normalized.getButtons(), result);
         validateTabs(normalized.getSubviews(), result);
@@ -246,6 +248,102 @@ public class DynamicTableViewValidator {
                         "variables.parents[" + i + "].foreigns[" + j + "].parentColumn", result);
             }
         }
+    }
+
+    private void validateUnsupportedPermissions(DynamicTableViewSnapshot snapshot,
+                                                DynamicTableViewValidationResult result) {
+        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
+        if (queries != null) {
+            validateUnsupportedNormalQueryPermissions(queries.getNormal(), result);
+            validateUnsupportedAdvancedQueryPermissions(queries.getAdvanced(), result);
+        }
+        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
+        if (variables != null) {
+            validateUnsupportedPreparedVariablePermissions(variables.getPrepared(), result);
+            validateUnsupportedParentVariablePermissions(variables.getParents(), result);
+        }
+        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
+        if (processors != null) {
+            validateUnsupportedProcessorPermissions(processors.getBefore(), "processors.before", result);
+            validateUnsupportedProcessorPermissions(processors.getAfter(), "processors.after", result);
+        }
+    }
+
+    private void validateUnsupportedNormalQueryPermissions(List<DynamicTableViewSnapshot.NormalQuery> queries,
+                                                           DynamicTableViewValidationResult result) {
+        if (queries == null) {
+            return;
+        }
+        for (int i = 0; i < queries.size(); i++) {
+            DynamicTableViewSnapshot.NormalQuery query = queries.get(i);
+            if (query != null && hasPermissions(query.getPermissions())) {
+                addUnsupportedPermissionError("queries.normal[" + i + "].permissions", result);
+            }
+        }
+    }
+
+    private void validateUnsupportedAdvancedQueryPermissions(List<DynamicTableViewSnapshot.AdvancedQuery> queries,
+                                                             DynamicTableViewValidationResult result) {
+        if (queries == null) {
+            return;
+        }
+        for (int i = 0; i < queries.size(); i++) {
+            DynamicTableViewSnapshot.AdvancedQuery query = queries.get(i);
+            if (query != null && hasPermissions(query.getPermissions())) {
+                addUnsupportedPermissionError("queries.advanced[" + i + "].permissions", result);
+            }
+        }
+    }
+
+    private void validateUnsupportedPreparedVariablePermissions(List<DynamicTableViewSnapshot.PreparedVariable> variables,
+                                                                DynamicTableViewValidationResult result) {
+        if (variables == null) {
+            return;
+        }
+        for (int i = 0; i < variables.size(); i++) {
+            DynamicTableViewSnapshot.PreparedVariable variable = variables.get(i);
+            if (variable != null && hasPermissions(variable.getPermissions())) {
+                addUnsupportedPermissionError("variables.prepared[" + i + "].permissions", result);
+            }
+        }
+    }
+
+    private void validateUnsupportedParentVariablePermissions(List<DynamicTableViewSnapshot.ParentVariable> variables,
+                                                              DynamicTableViewValidationResult result) {
+        if (variables == null) {
+            return;
+        }
+        for (int i = 0; i < variables.size(); i++) {
+            DynamicTableViewSnapshot.ParentVariable variable = variables.get(i);
+            if (variable != null && hasPermissions(variable.getPermissions())) {
+                addUnsupportedPermissionError("variables.parents[" + i + "].permissions", result);
+            }
+        }
+    }
+
+    private void validateUnsupportedProcessorPermissions(List<DynamicTableViewSnapshot.Processor> processors,
+                                                         String path,
+                                                         DynamicTableViewValidationResult result) {
+        if (processors == null) {
+            return;
+        }
+        for (int i = 0; i < processors.size(); i++) {
+            DynamicTableViewSnapshot.Processor processor = processors.get(i);
+            if (processor != null && hasPermissions(processor.getPermissions())) {
+                addUnsupportedPermissionError(path + "[" + i + "].permissions", result);
+            }
+        }
+    }
+
+    private void addUnsupportedPermissionError(String path, DynamicTableViewValidationResult result) {
+        result.addError(path, UNSUPPORTED_PERMISSION, "该区块权限不会落库，不能配置 permissions。");
+    }
+
+    private boolean hasPermissions(DynamicTableViewSnapshot.PermissionSet permissions) {
+        return permissions != null
+                && (!isBlank(permissions.getView())
+                || !isBlank(permissions.getCreate())
+                || !isBlank(permissions.getUpdate()));
     }
 
     private void validateColumn(String tableName, String columnName, String path, DynamicTableViewValidationResult result) {

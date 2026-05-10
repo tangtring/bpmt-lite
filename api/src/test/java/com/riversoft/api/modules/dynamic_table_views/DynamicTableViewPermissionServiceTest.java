@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class DynamicTableViewPermissionServiceTest {
@@ -59,11 +60,7 @@ public class DynamicTableViewPermissionServiceTest {
         assertEquals(Arrays.asList(
                 "pri-old-field-view",
                 "pri-old-section-view",
-                "pri-old-normal-view",
-                "pri-old-advanced-view",
                 "pri-old-limit-view",
-                "pri-old-prepared-view",
-                "pri-old-before-view",
                 "pri-old-system-tab-view",
                 "pri-old-item-button-view",
                 "pri-old-weixin-view"),
@@ -298,7 +295,7 @@ public class DynamicTableViewPermissionServiceTest {
     }
 
     @Test
-    public void preservesExistingNormalQueryPermissionByStableKey() {
+    public void doesNotManageNormalQueryPermissionByStableKey() {
         DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
         oldSnapshot.getQueries().getNormal().add(normalQuery("customerName", "pri-old-query"));
         DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
@@ -307,12 +304,13 @@ public class DynamicTableViewPermissionServiceTest {
         DynamicTableViewResponse.WritePlan plan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
 
-        assertEquals("pri-old-query", target.getQueries().getNormal().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-query"));
+        assertNull(target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertFalse(plan.getPermissionKeeps().contains("pri-old-query"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-query"));
     }
 
     @Test
-    public void generatesBeforeProcessorPermissionWhenAgentOmitsIt() {
+    public void doesNotGenerateBeforeProcessorPermissionWhenAgentOmitsIt() {
         DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
         DynamicTableViewSnapshot.Processor processor = new DynamicTableViewSnapshot.Processor();
         processor.setKey("prepareVo");
@@ -321,13 +319,12 @@ public class DynamicTableViewPermissionServiceTest {
         DynamicTableViewResponse.WritePlan plan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", null, target);
 
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view",
-                target.getProcessors().getBefore().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view"));
+        assertNull(target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertFalse(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view"));
     }
 
     @Test
-    public void keepsTargetPreparedVariablePermissionBeforeOldPermission() {
+    public void doesNotManagePreparedVariablePermissionBeforeOldPermission() {
         DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
         oldSnapshot.getVariables().getPrepared().add(preparedVariable("currentUser", "pri-old-variable"));
         DynamicTableViewSnapshot target = new DynamicTableViewSnapshot();
@@ -337,11 +334,12 @@ public class DynamicTableViewPermissionServiceTest {
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
 
         assertEquals("pri-target-variable", target.getVariables().getPrepared().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-variable"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-variable"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-variable"));
     }
 
     @Test
-    public void deletesOldAdvancedQueryPermissionWhenStableKeyRemoved() {
+    public void doesNotDeleteOldAdvancedQueryPermissionWhenStableKeyRemoved() {
         DynamicTableViewSnapshot oldSnapshot = new DynamicTableViewSnapshot();
         DynamicTableViewSnapshot.AdvancedQuery query = new DynamicTableViewSnapshot.AdvancedQuery();
         query.setKey("overdue");
@@ -352,11 +350,11 @@ public class DynamicTableViewPermissionServiceTest {
         DynamicTableViewResponse.WritePlan plan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
 
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-advanced-query"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-advanced-query"));
     }
 
     @Test
-    public void generatesPermissionsForAllScriptAndConfigBlocksWhenAgentOmitsThem() {
+    public void generatesOnlyPersistedScriptAndConfigBlockPermissionsWhenAgentOmitsThem() {
         DynamicTableViewSnapshot target = snapshotWithScriptAndConfigBlocks(null);
 
         DynamicTableViewResponse.WritePlan plan =
@@ -365,28 +363,16 @@ public class DynamicTableViewPermissionServiceTest {
         assertEquals("dyn.CRM_CUSTOMER_VIEW.sectionLine.basic.view",
                 target.getFields().getSectionLines().get(0).getPermissions().getView());
         assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.sectionLine.basic.view"));
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.normalQuery.customerName.view",
-                target.getQueries().getNormal().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.normalQuery.customerName.view"));
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.advancedQuery.overdue.view",
-                target.getQueries().getAdvanced().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.advancedQuery.overdue.view"));
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view",
-                target.getProcessors().getBefore().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.before.prepareVo.view"));
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.processor.after.syncLog.view",
-                target.getProcessors().getAfter().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.processor.after.syncLog.view"));
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.preparedVariable.currentUser.view",
-                target.getVariables().getPrepared().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.preparedVariable.currentUser.view"));
-        assertEquals("dyn.CRM_CUSTOMER_VIEW.parentVariable.parentOrder.view",
-                target.getVariables().getParents().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.parentVariable.parentOrder.view"));
+        assertNull(target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertNull(target.getQueries().getAdvanced().get(0).getPermissions().getView());
+        assertNull(target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertNull(target.getProcessors().getAfter().get(0).getPermissions().getView());
+        assertNull(target.getVariables().getPrepared().get(0).getPermissions().getView());
+        assertNull(target.getVariables().getParents().get(0).getPermissions().getView());
     }
 
     @Test
-    public void preservesOldPermissionsForAllScriptAndConfigBlocksByStableKey() {
+    public void preservesOnlyPersistedScriptAndConfigBlockPermissionsByStableKey() {
         DynamicTableViewSnapshot oldSnapshot = snapshotWithScriptAndConfigBlocks("old");
         DynamicTableViewSnapshot target = snapshotWithScriptAndConfigBlocks(null);
 
@@ -395,18 +381,12 @@ public class DynamicTableViewPermissionServiceTest {
 
         assertEquals("pri-old-section", target.getFields().getSectionLines().get(0).getPermissions().getView());
         assertTrue(plan.getPermissionKeeps().contains("pri-old-section"));
-        assertEquals("pri-old-normal", target.getQueries().getNormal().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-normal"));
-        assertEquals("pri-old-advanced", target.getQueries().getAdvanced().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-advanced"));
-        assertEquals("pri-old-before", target.getProcessors().getBefore().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-before"));
-        assertEquals("pri-old-after", target.getProcessors().getAfter().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-after"));
-        assertEquals("pri-old-prepared", target.getVariables().getPrepared().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-prepared"));
-        assertEquals("pri-old-parent", target.getVariables().getParents().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-old-parent"));
+        assertNull(target.getQueries().getNormal().get(0).getPermissions().getView());
+        assertNull(target.getQueries().getAdvanced().get(0).getPermissions().getView());
+        assertNull(target.getProcessors().getBefore().get(0).getPermissions().getView());
+        assertNull(target.getProcessors().getAfter().get(0).getPermissions().getView());
+        assertNull(target.getVariables().getPrepared().get(0).getPermissions().getView());
+        assertNull(target.getVariables().getParents().get(0).getPermissions().getView());
     }
 
     @Test
@@ -420,17 +400,17 @@ public class DynamicTableViewPermissionServiceTest {
         assertEquals("pri-target-section", target.getFields().getSectionLines().get(0).getPermissions().getView());
         assertTrue(plan.getPermissionKeeps().contains("pri-target-section"));
         assertEquals("pri-target-normal", target.getQueries().getNormal().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-normal"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-normal"));
         assertEquals("pri-target-advanced", target.getQueries().getAdvanced().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-advanced"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-advanced"));
         assertEquals("pri-target-before", target.getProcessors().getBefore().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-before"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-before"));
         assertEquals("pri-target-after", target.getProcessors().getAfter().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-after"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-after"));
         assertEquals("pri-target-prepared", target.getVariables().getPrepared().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-prepared"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-prepared"));
         assertEquals("pri-target-parent", target.getVariables().getParents().get(0).getPermissions().getView());
-        assertTrue(plan.getPermissionKeeps().contains("pri-target-parent"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-target-parent"));
     }
 
     @Test
@@ -442,12 +422,12 @@ public class DynamicTableViewPermissionServiceTest {
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
 
         assertTrue(plan.getPermissionDeletes().contains("pri-old-section"));
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-normal"));
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-advanced"));
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-before"));
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-after"));
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-prepared"));
-        assertTrue(plan.getPermissionDeletes().contains("pri-old-parent"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-normal"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-advanced"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-before"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-after"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-prepared"));
+        assertFalse(plan.getPermissionDeletes().contains("pri-old-parent"));
     }
 
     @Test

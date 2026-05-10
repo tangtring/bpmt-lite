@@ -47,22 +47,7 @@ public class DynamicTableViewPermissionService {
             applyFieldPermissions(viewKey, fields.getFormFields(), "formField", oldPermissions, targetStableKeys, plan);
             applySectionLinePermissions(viewKey, fields.getSectionLines(), oldPermissions, targetStableKeys, plan);
         }
-        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
-        if (queries != null) {
-            applyNormalQueryPermissions(viewKey, queries.getNormal(), oldPermissions, targetStableKeys, plan);
-            applyAdvancedQueryPermissions(viewKey, queries.getAdvanced(), oldPermissions, targetStableKeys, plan);
-        }
         applyLimitPermissions(viewKey, snapshot.getLimits(), oldPermissions, targetStableKeys, plan);
-        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
-        if (variables != null) {
-            applyPreparedVariablePermissions(viewKey, variables.getPrepared(), oldPermissions, targetStableKeys, plan);
-            applyParentVariablePermissions(viewKey, variables.getParents(), oldPermissions, targetStableKeys, plan);
-        }
-        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
-        if (processors != null) {
-            applyProcessorPermissions(viewKey, processors.getBefore(), "before", oldPermissions, targetStableKeys, plan);
-            applyProcessorPermissions(viewKey, processors.getAfter(), "after", oldPermissions, targetStableKeys, plan);
-        }
         DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
         if (subviews != null) {
             applySystemTabPermissions(viewKey, subviews.getSystemTabs(), oldPermissions, targetStableKeys, plan);
@@ -410,22 +395,7 @@ public class DynamicTableViewPermissionService {
             collectFieldPermissions(fields.getFormFields(), "formField", permissions);
             collectSectionLinePermissions(fields.getSectionLines(), permissions);
         }
-        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
-        if (queries != null) {
-            collectNormalQueryPermissions(queries.getNormal(), permissions);
-            collectAdvancedQueryPermissions(queries.getAdvanced(), permissions);
-        }
         collectLimitPermissions(snapshot.getLimits(), permissions);
-        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
-        if (variables != null) {
-            collectPreparedVariablePermissions(variables.getPrepared(), permissions);
-            collectParentVariablePermissions(variables.getParents(), permissions);
-        }
-        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
-        if (processors != null) {
-            collectProcessorPermissions(processors.getBefore(), "before", permissions);
-            collectProcessorPermissions(processors.getAfter(), "after", permissions);
-        }
         DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
         if (subviews != null) {
             collectSystemTabPermissions(subviews.getSystemTabs(), permissions);
@@ -598,21 +568,6 @@ public class DynamicTableViewPermissionService {
         DynamicTableViewSnapshot.Fields fields = snapshot.getFields();
         if (fields != null) {
             collectSectionLineStableKeys(fields.getSectionLines(), stableKeys);
-        }
-        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
-        if (queries != null) {
-            collectNormalQueryStableKeys(queries.getNormal(), stableKeys);
-            collectAdvancedQueryStableKeys(queries.getAdvanced(), stableKeys);
-        }
-        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
-        if (processors != null) {
-            collectProcessorStableKeys(processors.getBefore(), "before", stableKeys);
-            collectProcessorStableKeys(processors.getAfter(), "after", stableKeys);
-        }
-        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
-        if (variables != null) {
-            collectPreparedVariableStableKeys(variables.getPrepared(), stableKeys);
-            collectParentVariableStableKeys(variables.getParents(), stableKeys);
         }
     }
 
