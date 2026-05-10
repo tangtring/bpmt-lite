@@ -146,6 +146,12 @@ public class ApiDocsContractTest {
 
     private void assertRisk(JsonNode root, String path, String method, boolean writes, boolean ddl, String risk) {
         JsonNode operation = root.path("paths").path(path).path(method);
+        assertTrue("missing x-bpmt-writes-metadata " + method + " " + path,
+                operation.has("x-bpmt-writes-metadata"));
+        assertTrue("missing x-bpmt-executes-ddl " + method + " " + path,
+                operation.has("x-bpmt-executes-ddl"));
+        assertTrue("missing x-bpmt-risk-level " + method + " " + path,
+                operation.has("x-bpmt-risk-level"));
         assertEquals("writes metadata " + method + " " + path, writes, operation.path("x-bpmt-writes-metadata").asBoolean());
         assertEquals("executes ddl " + method + " " + path, ddl, operation.path("x-bpmt-executes-ddl").asBoolean());
         assertEquals("risk level " + method + " " + path, risk, operation.path("x-bpmt-risk-level").asText());
