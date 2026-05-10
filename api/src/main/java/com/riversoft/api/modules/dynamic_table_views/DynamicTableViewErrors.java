@@ -18,6 +18,10 @@ final class DynamicTableViewErrors {
         return new ApiException(400, "DYNAMIC_TABLE_VIEW_INVALID_SNAPSHOT", message);
     }
 
+    static ApiException serviceNotInitialized() {
+        return new ApiException(501, "DYNAMIC_TABLE_VIEW_SERVICE_NOT_INITIALIZED", "动态表视图 API 服务尚未初始化。");
+    }
+
     static ApiException confirmRequired() {
         return new ApiException(400, "DYNAMIC_TABLE_VIEW_CONFIRM_REQUIRED", "删除动态表视图必须传入 confirmViewKey 并与 viewKey 一致。");
     }
