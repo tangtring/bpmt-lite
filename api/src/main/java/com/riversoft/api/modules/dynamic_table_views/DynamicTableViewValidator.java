@@ -33,6 +33,7 @@ public class DynamicTableViewValidator {
         DynamicTableViewSnapshot.Base base = normalized.getBase();
         String tableName = trimToNull(base.getTableName());
         validateBase(base, tableName, result);
+        validateDefaultSortField(base, tableName, result);
         Map<String, Object> tableDefinition = validateTable(tableName, "base.tableName", result);
         validateFields(normalized, tableName, result);
         validateQueries(normalized, result);
@@ -109,6 +110,19 @@ public class DynamicTableViewValidator {
                 || base.getLayoutColumns().intValue() < 1
                 || base.getLayoutColumns().intValue() > 5) {
             result.addError("base.layoutColumns", INVALID, "base.layoutColumns 必须在 1 到 5 之间。");
+        }
+    }
+
+    private void validateDefaultSortField(DynamicTableViewSnapshot.Base base,
+                                          String tableName,
+                                          DynamicTableViewValidationResult result) {
+        DynamicTableViewSnapshot.Sort sort = base.getDefaultSort();
+        String fieldName = sort == null ? null : trimToNull(sort.getField());
+        if (tableName == null || fieldName == null || repository == null) {
+            return;
+        }
+        if (repository.findColumnDefinition(tableName, fieldName) == null) {
+            result.addError("base.defaultSort.field", FIELD_NOT_FOUND, "默认排序字段不存在。");
         }
     }
 

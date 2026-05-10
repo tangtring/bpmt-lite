@@ -37,6 +37,17 @@ public class DynamicTableViewValidatorTest {
     }
 
     @Test
+    public void validateRejectsUnknownDefaultSortField() {
+        DynamicTableViewSnapshot snapshot = minimalSnapshot();
+        snapshot.getBase().getDefaultSort().setField("UNKNOWN_SORT");
+
+        DynamicTableViewValidationResult result = new DynamicTableViewValidator(new FakeRepository()).validate(snapshot);
+
+        assertFalse(result.isValid());
+        assertError(result, "base.defaultSort.field", "DYNAMIC_TABLE_VIEW_FIELD_NOT_FOUND");
+    }
+
+    @Test
     public void validMinimalSnapshotPassesAndNormalizesDefaults() {
         DynamicTableViewSnapshot snapshot = minimalSnapshot();
         snapshot.getBase().setLayoutColumns(null);
