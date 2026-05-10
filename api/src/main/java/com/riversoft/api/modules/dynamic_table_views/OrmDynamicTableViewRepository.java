@@ -1,9 +1,15 @@
 package com.riversoft.api.modules.dynamic_table_views;
 
+import com.riversoft.core.BeanFactory;
 import com.riversoft.core.db.ORMService;
 import com.riversoft.platform.po.TbColumn;
 import com.riversoft.platform.po.TbTable;
 import com.riversoft.platform.po.VwUrl;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.Serializable;
 import java.sql.Types;
@@ -98,9 +104,20 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         }
     }
 
-    public void replaceViewConfig(String viewKey, Map<String, Object> tableMap) {
-        removeDynamicTableConfig(viewKey);
-        saveViewConfig(viewKey, tableMap);
+    public void replaceViewConfig(final String viewKey, final Map<String, Object> tableMap) {
+        TransactionTemplate template = new TransactionTemplate(transactionManager());
+        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        template.execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                removeDynamicTableConfig(viewKey);
+                saveViewConfig(viewKey, tableMap);
+            }
+        });
+    }
+
+    protected PlatformTransactionManager transactionManager() {
+        return (PlatformTransactionManager) BeanFactory.getInstance().getBean("transactionManager");
     }
 
     public void saveDynamicEntity(String entityName, Map<String, Object> values) {

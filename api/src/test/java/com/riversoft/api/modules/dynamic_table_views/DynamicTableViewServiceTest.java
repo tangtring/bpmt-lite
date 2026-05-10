@@ -3,6 +3,11 @@ package com.riversoft.api.modules.dynamic_table_views;
 import com.riversoft.api.http.ApiException;
 import com.riversoft.platform.po.VwUrl;
 import org.junit.Test;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -173,6 +178,44 @@ public class DynamicTableViewServiceTest {
         assertEquals(0, repository.flushes);
     }
 
+    @Test
+    public void ormReplaceViewConfigRunsRemoveAndSaveInRequiredTransaction() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
+
+        repository.replaceViewConfig("CRM_CUSTOMER_VIEW", new LinkedHashMap<String, Object>());
+
+        assertEquals(1, transactionManager.begins);
+        assertEquals(1, transactionManager.commits);
+        assertEquals(0, transactionManager.rollbacks);
+        assertEquals(TransactionDefinition.PROPAGATION_REQUIRED,
+                transactionManager.lastDefinition.getPropagationBehavior());
+        assertEquals(2, repository.operations.size());
+        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(0));
+        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(1));
+    }
+
+    @Test
+    public void ormReplaceViewConfigRollsBackWhenSaveFails() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
+        repository.failSave = true;
+
+        try {
+            repository.replaceViewConfig("CRM_CUSTOMER_VIEW", new LinkedHashMap<String, Object>());
+            fail("Expected save failure");
+        } catch (IllegalStateException e) {
+            assertEquals("save failed", e.getMessage());
+        }
+
+        assertEquals(1, transactionManager.begins);
+        assertEquals(0, transactionManager.commits);
+        assertEquals(1, transactionManager.rollbacks);
+        assertEquals(2, repository.operations.size());
+        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(0));
+        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(1));
+    }
+
     private DynamicTableViewSnapshot snapshot(String viewKey) {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         snapshot.setViewKey(viewKey);
@@ -320,6 +363,55 @@ public class DynamicTableViewServiceTest {
             VwUrl url = url(snapshot.getViewKey(), "dyn");
             urls.put(snapshot.getViewKey(), url);
             tables.put(snapshot.getViewKey(), new DynamicTableViewMapper().toTableMap(snapshot));
+        }
+    }
+
+    private static class TransactionalOrmRepository extends OrmDynamicTableViewRepository {
+        private final PlatformTransactionManager transactionManager;
+        private final List<String> operations = new ArrayList<String>();
+        private boolean failSave;
+
+        private TransactionalOrmRepository(PlatformTransactionManager transactionManager) {
+            this.transactionManager = transactionManager;
+        }
+
+        @Override
+        protected PlatformTransactionManager transactionManager() {
+            return transactionManager;
+        }
+
+        @Override
+        public void removeDynamicTableConfig(String viewKey) {
+            operations.add("remove:" + viewKey);
+        }
+
+        @Override
+        public void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
+            operations.add("save:" + viewKey);
+            if (failSave) {
+                throw new IllegalStateException("save failed");
+            }
+        }
+    }
+
+    private static class RecordingTransactionManager implements PlatformTransactionManager {
+        private int begins;
+        private int commits;
+        private int rollbacks;
+        private TransactionDefinition lastDefinition;
+
+        public TransactionStatus getTransaction(TransactionDefinition definition) throws TransactionException {
+            begins++;
+            lastDefinition = definition;
+            return new SimpleTransactionStatus();
+        }
+
+        public void commit(TransactionStatus status) throws TransactionException {
+            commits++;
+        }
+
+        public void rollback(TransactionStatus status) throws TransactionException {
+            rollbacks++;
         }
     }
 }
