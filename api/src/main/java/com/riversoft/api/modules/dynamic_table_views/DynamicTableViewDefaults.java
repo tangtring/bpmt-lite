@@ -1,10 +1,18 @@
 package com.riversoft.api.modules.dynamic_table_views;
 
+import com.riversoft.core.IDGenerator;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class DynamicTableViewDefaults {
     public DynamicTableViewSnapshot normalize(DynamicTableViewSnapshot snapshot) {
+        return normalize(snapshot, null);
+    }
+
+    public DynamicTableViewSnapshot normalize(DynamicTableViewSnapshot snapshot, DynamicTableViewRepository repository) {
         DynamicTableViewSnapshot normalized = snapshot == null ? new DynamicTableViewSnapshot() : snapshot;
         if (normalized.getBase() == null) {
             normalized.setBase(new DynamicTableViewSnapshot.Base());
@@ -36,12 +44,21 @@ public class DynamicTableViewDefaults {
 
         normalizeBase(normalized.getBase());
         normalizeFields(normalized.getFields());
+        normalizeSystemFieldWidgets(normalized, repository);
         normalizeQueries(normalized.getQueries());
         normalizeLimits(normalized.getLimits());
         normalizeVariables(normalized.getVariables());
         normalizeProcessors(normalized.getProcessors());
         normalizeSubviews(normalized.getSubviews());
         normalizeButtons(normalized.getButtons());
+        return normalized;
+    }
+
+    public DynamicTableViewSnapshot normalizeForCreate(DynamicTableViewSnapshot snapshot, DynamicTableViewRepository repository) {
+        DynamicTableViewSnapshot normalized = normalize(snapshot, repository);
+        if (isBlank(normalized.getViewKey())) {
+            normalized.setViewKey(IDGenerator.next());
+        }
         return normalized;
     }
 
@@ -79,6 +96,144 @@ public class DynamicTableViewDefaults {
         fillFieldKeys(fields.getComputedFields(), "computedField");
         fillFieldKeys(fields.getFormFields(), "formField");
         fillSectionLineKeys(fields.getSectionLines());
+    }
+
+    private void normalizeSystemFieldWidgets(DynamicTableViewSnapshot snapshot, DynamicTableViewRepository repository) {
+        if (repository == null || snapshot.getFields() == null || snapshot.getBase() == null) {
+            return;
+        }
+        String tableName = trimToNull(snapshot.getBase().getTableName());
+        if (tableName == null || snapshot.getFields().getSystemFields() == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Field field : snapshot.getFields().getSystemFields()) {
+            if (field == null || isBlank(field.getName())) {
+                continue;
+            }
+            Map<String, Object> column = repository.findColumnDefinition(tableName, field.getName());
+            if (column == null) {
+                continue;
+            }
+            normalizeSystemFieldWidget(field, column);
+        }
+    }
+
+    private void normalizeSystemFieldWidget(DynamicTableViewSnapshot.Field field, Map<String, Object> column) {
+        boolean primaryKey = booleanValue(column.get("primaryKey"));
+        boolean requiredField = primaryKey || booleanValue(column.get("required")) || booleanValue(column.get("notNull"));
+        String currentWidget = trimToNull(field.getWidget());
+        if (currentWidget == null) {
+            String widget = defaultWidget(column);
+            field.setWidget(requiredField ? appendRequired(widget) : widget);
+            if ("textarea".equals(widget)) {
+                field.setWholeLine(Boolean.TRUE);
+            }
+            return;
+        }
+        if (requiredField && currentWidget.indexOf("required:true") < 0) {
+            field.setWidget(appendRequired(currentWidget));
+        }
+    }
+
+    private String defaultWidget(Map<String, Object> column) {
+        String type = lowerString(firstNonNull(column.get("type"), column.get("typeName"), column.get("columnType")));
+        int length = intValue(firstNonNull(column.get("totalSize"), column.get("length")));
+        if (containsAny(type, "date", "time", "timestamp")) {
+            return "date";
+        }
+        if (containsAny(type, "clob", "text") || (containsAny(type, "char", "string", "varchar") && length > 1000)) {
+            return "textarea";
+        }
+        if (containsAny(type, "blob", "binary")) {
+            return "file";
+        }
+        if (containsAny(type, "int", "integer", "long", "bigint")) {
+            return "text{digits:true}";
+        }
+        if (containsAny(type, "number", "decimal", "numeric", "double", "float", "real")) {
+            return "text{number:true}";
+        }
+        return "text";
+    }
+
+    private String appendRequired(String widget) {
+        String safeWidget = isBlank(widget) ? "text" : widget;
+        int braceIndex = safeWidget.lastIndexOf('}');
+        if (braceIndex >= 0) {
+            String prefix = safeWidget.substring(0, braceIndex).trim();
+            if (prefix.endsWith("{")) {
+                return prefix + "required:true" + safeWidget.substring(braceIndex);
+            }
+            return prefix + ",required:true" + safeWidget.substring(braceIndex);
+        }
+        return safeWidget + "{required:true}";
+    }
+
+    private Object firstNonNull(Object first, Object second) {
+        return first != null ? first : second;
+    }
+
+    private Object firstNonNull(Object first, Object second, Object third) {
+        if (first != null) {
+            return first;
+        }
+        return second != null ? second : third;
+    }
+
+    private String lowerString(Object value) {
+        return value == null ? "" : String.valueOf(value).toLowerCase(Locale.ENGLISH);
+    }
+
+    private int intValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value != null) {
+            try {
+                return Integer.parseInt(String.valueOf(value));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    private boolean booleanValue(Object value) {
+        if (value instanceof Boolean) {
+            return ((Boolean) value).booleanValue();
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue() != 0;
+        }
+        if (value != null) {
+            String text = String.valueOf(value).trim();
+            return "true".equalsIgnoreCase(text) || "1".equals(text) || "Y".equalsIgnoreCase(text);
+        }
+        return false;
+    }
+
+    private boolean containsAny(String value, String first, String second) {
+        return value.indexOf(first) >= 0 || value.indexOf(second) >= 0;
+    }
+
+    private boolean containsAny(String value, String first, String second, String third) {
+        return value.indexOf(first) >= 0 || value.indexOf(second) >= 0 || value.indexOf(third) >= 0;
+    }
+
+    private boolean containsAny(String value, String first, String second, String third, String fourth) {
+        return value.indexOf(first) >= 0
+                || value.indexOf(second) >= 0
+                || value.indexOf(third) >= 0
+                || value.indexOf(fourth) >= 0;
+    }
+
+    private boolean containsAny(String value, String first, String second, String third, String fourth, String fifth, String sixth) {
+        return value.indexOf(first) >= 0
+                || value.indexOf(second) >= 0
+                || value.indexOf(third) >= 0
+                || value.indexOf(fourth) >= 0
+                || value.indexOf(fifth) >= 0
+                || value.indexOf(sixth) >= 0;
     }
 
     private void normalizeQueries(DynamicTableViewSnapshot.Queries queries) {
@@ -230,5 +385,13 @@ public class DynamicTableViewDefaults {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().length() == 0;
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.length() == 0 ? null : trimmed;
     }
 }
