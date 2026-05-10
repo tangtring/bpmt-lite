@@ -31,6 +31,7 @@ public class DynamicTableViewServiceTest {
 
         assertTrue(repository.savedUrls.isEmpty());
         assertTrue(repository.savedViewConfigs.isEmpty());
+        assertEquals(0, repository.createAttempts);
         assertEquals(Integer.valueOf(0), Integer.valueOf(repository.flushes));
         DynamicTableViewResponse.WritePlan plan = (DynamicTableViewResponse.WritePlan) result.get("plan");
         assertTrue(plan.isDryRun());
@@ -45,9 +46,11 @@ public class DynamicTableViewServiceTest {
 
         service.create(snapshot("CRM_CUSTOMER_VIEW"), false);
 
-        assertEquals(1, repository.savedUrls.size());
-        assertEquals("CRM_CUSTOMER_VIEW", repository.savedUrls.get(0).getViewKey());
-        assertTrue(repository.savedViewConfigs.containsKey("CRM_CUSTOMER_VIEW"));
+        assertEquals(1, repository.createAttempts);
+        assertEquals("CRM_CUSTOMER_VIEW", repository.createdUrl.getViewKey());
+        assertTrue(repository.createdViewConfigs.containsKey("CRM_CUSTOMER_VIEW"));
+        assertTrue(repository.savedUrls.isEmpty());
+        assertTrue(repository.savedViewConfigs.isEmpty());
         assertEquals(1, repository.flushes);
     }
 
@@ -95,7 +98,31 @@ public class DynamicTableViewServiceTest {
         assertEquals("NAME", patched.getFields().getSystemFields().get(0).getName());
         assertTrue(repository.savedViewConfigs.isEmpty());
         assertTrue(repository.removedTableConfigKeys.isEmpty());
+        DynamicTableViewResponse.WritePlan plan = (DynamicTableViewResponse.WritePlan) result.get("plan");
+        assertEquals(Collections.singletonList("fields"), plan.getUpdatedSections());
         assertEquals(0, repository.flushes);
+    }
+
+    @Test
+    public void patchFieldsRealPathCallsPatchViewConfigOnly() {
+        RecordingRepository repository = new RecordingRepository();
+        repository.seedDynView(snapshot("CRM_CUSTOMER_VIEW"));
+        DynamicTableViewService service = new DynamicTableViewService(repository);
+        DynamicTableViewSnapshot.Fields fields = new DynamicTableViewSnapshot.Fields();
+        DynamicTableViewSnapshot.Field name = field("NAME", "客户名称");
+        fields.setSystemFields(Collections.singletonList(name));
+        fields.setListOrder(Collections.singletonList("NAME"));
+
+        Map<String, Object> result = service.patch("CRM_CUSTOMER_VIEW", DynamicTableViewSection.FIELDS, fields, false);
+
+        DynamicTableViewResponse.WritePlan plan = (DynamicTableViewResponse.WritePlan) result.get("plan");
+        assertEquals(Collections.singletonList("fields"), plan.getUpdatedSections());
+        assertEquals(1, repository.patchAttempts);
+        assertEquals(DynamicTableViewSection.FIELDS, repository.patchedSections.get(0));
+        assertTrue(repository.patchedViewConfigs.containsKey("CRM_CUSTOMER_VIEW"));
+        assertEquals(0, repository.replaceAttempts);
+        assertEquals(0, repository.updateUrlAttempts);
+        assertEquals(1, repository.flushes);
     }
 
     @Test
@@ -116,12 +143,15 @@ public class DynamicTableViewServiceTest {
     @Test
     public void deleteConfirmedRemovesConfigNotBusinessTableFlags() {
         RecordingRepository repository = new RecordingRepository();
-        repository.seedDynView(snapshot("CRM_CUSTOMER_VIEW"));
+        repository.seedDynView(snapshotWithPermission("CRM_CUSTOMER_VIEW"));
         DynamicTableViewService service = new DynamicTableViewService(repository);
 
         Map<String, Object> result = service.delete("CRM_CUSTOMER_VIEW", "CRM_CUSTOMER_VIEW");
 
         assertEquals(Collections.singletonList("CRM_CUSTOMER_VIEW"), repository.removedViewKeys);
+        assertEquals(1, repository.removePlans.size());
+        assertTrue(repository.removePlans.get(0).getPermissionDeletes()
+                .contains("dyn.CRM_CUSTOMER_VIEW.field.ID.view"));
         assertEquals(Boolean.TRUE, result.get("deleted"));
         assertEquals(Boolean.FALSE, result.get("businessTableDeleted"));
         assertEquals(Boolean.FALSE, result.get("businessDataDeleted"));
@@ -152,9 +182,11 @@ public class DynamicTableViewServiceTest {
         service.replace("CRM_CUSTOMER_VIEW", snapshot("CRM_CUSTOMER_VIEW"), false);
 
         assertEquals(1, repository.replaceAttempts);
+        assertEquals("CRM_CUSTOMER_VIEW", repository.replacedUrl.getViewKey());
         assertTrue(repository.replacedViewConfigs.containsKey("CRM_CUSTOMER_VIEW"));
         assertTrue(repository.removedTableConfigKeys.isEmpty());
         assertTrue(repository.savedViewConfigs.isEmpty());
+        assertEquals(0, repository.updateUrlAttempts);
         assertEquals(1, repository.flushes);
     }
 
@@ -183,16 +215,18 @@ public class DynamicTableViewServiceTest {
         RecordingTransactionManager transactionManager = new RecordingTransactionManager();
         TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
 
-        repository.replaceViewConfig("CRM_CUSTOMER_VIEW", new LinkedHashMap<String, Object>());
+        repository.replaceViewConfig(url("CRM_CUSTOMER_VIEW", "dyn"), new LinkedHashMap<String, Object>(),
+                new DynamicTableViewResponse.WritePlan());
 
         assertEquals(1, transactionManager.begins);
         assertEquals(1, transactionManager.commits);
         assertEquals(0, transactionManager.rollbacks);
         assertEquals(TransactionDefinition.PROPAGATION_REQUIRED,
                 transactionManager.lastDefinition.getPropagationBehavior());
-        assertEquals(2, repository.operations.size());
-        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(0));
-        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(1));
+        assertEquals(3, repository.operations.size());
+        assertEquals("updateUrl:CRM_CUSTOMER_VIEW", repository.operations.get(0));
+        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(1));
+        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(2));
     }
 
     @Test
@@ -202,7 +236,8 @@ public class DynamicTableViewServiceTest {
         repository.failSave = true;
 
         try {
-            repository.replaceViewConfig("CRM_CUSTOMER_VIEW", new LinkedHashMap<String, Object>());
+            repository.replaceViewConfig(url("CRM_CUSTOMER_VIEW", "dyn"), new LinkedHashMap<String, Object>(),
+                    new DynamicTableViewResponse.WritePlan());
             fail("Expected save failure");
         } catch (IllegalStateException e) {
             assertEquals("save failed", e.getMessage());
@@ -211,8 +246,27 @@ public class DynamicTableViewServiceTest {
         assertEquals(1, transactionManager.begins);
         assertEquals(0, transactionManager.commits);
         assertEquals(1, transactionManager.rollbacks);
+        assertEquals(3, repository.operations.size());
+        assertEquals("updateUrl:CRM_CUSTOMER_VIEW", repository.operations.get(0));
+        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(1));
+        assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(2));
+    }
+
+    @Test
+    public void ormCreateViewConfigRunsUrlAndConfigInRequiredTransaction() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalOrmRepository repository = new TransactionalOrmRepository(transactionManager);
+
+        repository.createViewConfig(url("CRM_CUSTOMER_VIEW", "dyn"), new LinkedHashMap<String, Object>(),
+                new DynamicTableViewResponse.WritePlan());
+
+        assertEquals(1, transactionManager.begins);
+        assertEquals(1, transactionManager.commits);
+        assertEquals(0, transactionManager.rollbacks);
+        assertEquals(TransactionDefinition.PROPAGATION_REQUIRED,
+                transactionManager.lastDefinition.getPropagationBehavior());
         assertEquals(2, repository.operations.size());
-        assertEquals("remove:CRM_CUSTOMER_VIEW", repository.operations.get(0));
+        assertEquals("saveUrl:CRM_CUSTOMER_VIEW", repository.operations.get(0));
         assertEquals("save:CRM_CUSTOMER_VIEW", repository.operations.get(1));
     }
 
@@ -230,6 +284,14 @@ public class DynamicTableViewServiceTest {
         snapshot.getBase().getDefaultSort().setDirection("desc");
         snapshot.getFields().getSystemFields().add(field("ID", "主键"));
         snapshot.getFields().getListOrder().add("ID");
+        return snapshot;
+    }
+
+    private DynamicTableViewSnapshot snapshotWithPermission(String viewKey) {
+        DynamicTableViewSnapshot snapshot = snapshot(viewKey);
+        DynamicTableViewSnapshot.PermissionSet permissions = new DynamicTableViewSnapshot.PermissionSet();
+        permissions.setView("dyn." + viewKey + ".field.ID.view");
+        snapshot.getFields().getSystemFields().get(0).setPermissions(permissions);
         return snapshot;
     }
 
@@ -260,10 +322,19 @@ public class DynamicTableViewServiceTest {
         private final Map<String, Map<String, Object>> tables = new LinkedHashMap<String, Map<String, Object>>();
         private final List<VwUrl> savedUrls = new ArrayList<VwUrl>();
         private final Map<String, Map<String, Object>> savedViewConfigs = new LinkedHashMap<String, Map<String, Object>>();
+        private final Map<String, Map<String, Object>> createdViewConfigs = new LinkedHashMap<String, Map<String, Object>>();
         private final Map<String, Map<String, Object>> replacedViewConfigs = new LinkedHashMap<String, Map<String, Object>>();
+        private final Map<String, Map<String, Object>> patchedViewConfigs = new LinkedHashMap<String, Map<String, Object>>();
         private final List<String> removedViewKeys = new ArrayList<String>();
         private final List<String> removedTableConfigKeys = new ArrayList<String>();
+        private final List<DynamicTableViewResponse.WritePlan> removePlans = new ArrayList<DynamicTableViewResponse.WritePlan>();
+        private final List<DynamicTableViewSection> patchedSections = new ArrayList<DynamicTableViewSection>();
+        private VwUrl createdUrl;
+        private VwUrl replacedUrl;
+        private int createAttempts;
         private int replaceAttempts;
+        private int patchAttempts;
+        private int updateUrlAttempts;
         private boolean failReplace;
         private int flushes;
 
@@ -318,7 +389,18 @@ public class DynamicTableViewServiceTest {
         }
 
         public void updateUrl(VwUrl url) {
+            updateUrlAttempts++;
             urls.put(url.getViewKey(), url);
+        }
+
+        public void createViewConfig(VwUrl url,
+                                     Map<String, Object> tableMap,
+                                     DynamicTableViewResponse.WritePlan plan) {
+            createAttempts++;
+            createdUrl = url;
+            createdViewConfigs.put(url.getViewKey(), tableMap);
+            urls.put(url.getViewKey(), url);
+            tables.put(url.getViewKey(), tableMap);
         }
 
         public void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
@@ -333,6 +415,30 @@ public class DynamicTableViewServiceTest {
             }
             replacedViewConfigs.put(viewKey, tableMap);
             tables.put(viewKey, tableMap);
+        }
+
+        public void replaceViewConfig(VwUrl url,
+                                      Map<String, Object> tableMap,
+                                      DynamicTableViewResponse.WritePlan plan) {
+            replaceAttempts++;
+            if (failReplace) {
+                throw new IllegalStateException("replace failed");
+            }
+            replacedUrl = url;
+            urls.put(url.getViewKey(), url);
+            replacedViewConfigs.put(url.getViewKey(), tableMap);
+            tables.put(url.getViewKey(), tableMap);
+        }
+
+        public void patchViewConfig(VwUrl url,
+                                    DynamicTableViewSection section,
+                                    Map<String, Object> tableMap,
+                                    DynamicTableViewResponse.WritePlan plan) {
+            patchAttempts++;
+            patchedSections.add(section);
+            urls.put(url.getViewKey(), url);
+            patchedViewConfigs.put(url.getViewKey(), tableMap);
+            tables.put(url.getViewKey(), tableMap);
         }
 
         public void saveDynamicEntity(String entityName, Map<String, Object> values) {
@@ -351,6 +457,13 @@ public class DynamicTableViewServiceTest {
 
         public void removeViewConfig(String viewKey) {
             removedViewKeys.add(viewKey);
+            urls.remove(viewKey);
+            tables.remove(viewKey);
+        }
+
+        public void removeViewConfig(String viewKey, DynamicTableViewResponse.WritePlan plan) {
+            removedViewKeys.add(viewKey);
+            removePlans.add(plan);
             urls.remove(viewKey);
             tables.remove(viewKey);
         }
@@ -378,6 +491,17 @@ public class DynamicTableViewServiceTest {
         @Override
         protected PlatformTransactionManager transactionManager() {
             return transactionManager;
+        }
+
+        @Override
+        public VwUrl saveUrl(VwUrl url) {
+            operations.add("saveUrl:" + url.getViewKey());
+            return url;
+        }
+
+        @Override
+        public void updateUrl(VwUrl url) {
+            operations.add("updateUrl:" + url.getViewKey());
         }
 
         @Override

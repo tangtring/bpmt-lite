@@ -22,6 +22,13 @@ interface DynamicTableViewRepository {
 
     void updateUrl(VwUrl url);
 
+    default void createViewConfig(VwUrl url,
+                                  Map<String, Object> tableMap,
+                                  DynamicTableViewResponse.WritePlan plan) {
+        saveUrl(url);
+        saveViewConfig(url.getViewKey(), tableMap);
+    }
+
     default void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
         saveDynamicEntity("VwDynTable", tableMap);
     }
@@ -29,6 +36,21 @@ interface DynamicTableViewRepository {
     default void replaceViewConfig(String viewKey, Map<String, Object> tableMap) {
         removeDynamicTableConfig(viewKey);
         saveViewConfig(viewKey, tableMap);
+    }
+
+    default void replaceViewConfig(VwUrl url,
+                                   Map<String, Object> tableMap,
+                                   DynamicTableViewResponse.WritePlan plan) {
+        updateUrl(url);
+        replaceViewConfig(url.getViewKey(), tableMap);
+    }
+
+    default void patchViewConfig(VwUrl url,
+                                 DynamicTableViewSection section,
+                                 Map<String, Object> tableMap,
+                                 DynamicTableViewResponse.WritePlan plan) {
+        updateUrl(url);
+        replaceViewConfig(url.getViewKey(), tableMap);
     }
 
     void saveDynamicEntity(String entityName, Map<String, Object> values);
@@ -42,6 +64,10 @@ interface DynamicTableViewRepository {
     }
 
     void removeViewConfig(String viewKey);
+
+    default void removeViewConfig(String viewKey, DynamicTableViewResponse.WritePlan plan) {
+        removeViewConfig(viewKey);
+    }
 
     void flushAndClearViewCache(String viewKey);
 }

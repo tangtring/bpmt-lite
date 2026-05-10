@@ -2,6 +2,9 @@ package com.riversoft.api.modules.dynamic_table_views;
 
 import com.riversoft.core.BeanFactory;
 import com.riversoft.core.db.ORMService;
+import com.riversoft.core.db.ORMService.QueryVO;
+import com.riversoft.platform.po.CmPri;
+import com.riversoft.platform.po.CmPriGroupRelate;
 import com.riversoft.platform.po.TbColumn;
 import com.riversoft.platform.po.TbTable;
 import com.riversoft.platform.po.VwUrl;
@@ -15,8 +18,10 @@ import java.io.Serializable;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,6 +88,19 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         ORMService.getInstance().updatePO(url);
     }
 
+    public void createViewConfig(final VwUrl url,
+                                 final Map<String, Object> tableMap,
+                                 final DynamicTableViewResponse.WritePlan plan) {
+        inTransaction(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                saveUrl(url);
+                saveViewConfig(url.getViewKey(), tableMap);
+                removePermissions(plan);
+            }
+        });
+    }
+
     @SuppressWarnings("unchecked")
     public void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
         Map<String, Object> table = new LinkedHashMap<String, Object>();
@@ -105,15 +123,58 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
     }
 
     public void replaceViewConfig(final String viewKey, final Map<String, Object> tableMap) {
-        TransactionTemplate template = new TransactionTemplate(transactionManager());
-        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-        template.execute(new TransactionCallbackWithoutResult() {
+        inTransaction(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
                 removeDynamicTableConfig(viewKey);
                 saveViewConfig(viewKey, tableMap);
             }
         });
+    }
+
+    public void replaceViewConfig(final VwUrl url,
+                                  final Map<String, Object> tableMap,
+                                  final DynamicTableViewResponse.WritePlan plan) {
+        inTransaction(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                updateUrl(url);
+                removeDynamicTableConfig(url.getViewKey());
+                removePermissions(plan);
+                saveViewConfig(url.getViewKey(), tableMap);
+            }
+        });
+    }
+
+    public void patchViewConfig(final VwUrl url,
+                                final DynamicTableViewSection section,
+                                final Map<String, Object> tableMap,
+                                final DynamicTableViewResponse.WritePlan plan) {
+        inTransaction(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                updateUrl(url);
+                patchDynamicTableConfig(url.getViewKey(), section, tableMap);
+                removePermissions(plan);
+            }
+        });
+    }
+
+    public void removeViewConfig(final String viewKey, final DynamicTableViewResponse.WritePlan plan) {
+        inTransaction(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                removeDynamicTableConfig(viewKey);
+                ORMService.getInstance().removeByPk(VwUrl.class.getName(), viewKey);
+                removeViewPermissions(viewKey, plan);
+            }
+        });
+    }
+
+    protected void inTransaction(TransactionCallbackWithoutResult callback) {
+        TransactionTemplate template = new TransactionTemplate(transactionManager());
+        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        template.execute(callback);
     }
 
     protected PlatformTransactionManager transactionManager() {
@@ -215,6 +276,151 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         if (foreigns instanceof Collection) {
             for (Object foreign : (Collection<Object>) foreigns) {
                 saveMappedChild(foreign);
+            }
+        }
+    }
+
+    private void patchDynamicTableConfig(String viewKey,
+                                         DynamicTableViewSection section,
+                                         Map<String, Object> tableMap) {
+        if (DynamicTableViewSection.BASE.equals(section) || DynamicTableViewSection.SCRIPTS.equals(section)) {
+            updateDynamicEntity("VwDynTable", tableValues(tableMap));
+            return;
+        }
+        removeSectionConfig(viewKey, section);
+        for (String childKey : sectionChildKeys(section)) {
+            saveMappedValue(tableMap.get(childKey));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void saveMappedValue(Object value) {
+        if (value instanceof Collection) {
+            for (Object item : (Collection<Object>) value) {
+                saveMappedChild(item);
+            }
+        } else {
+            saveMappedChild(value);
+        }
+    }
+
+    private Map<String, Object> tableValues(Map<String, Object> tableMap) {
+        Map<String, Object> table = new LinkedHashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : tableMap.entrySet()) {
+            if (!CHILD_KEYS.contains(entry.getKey())) {
+                table.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return table;
+    }
+
+    private void removeSectionConfig(String viewKey, DynamicTableViewSection section) {
+        if (DynamicTableViewSection.FIELDS.equals(section)) {
+            removeEntitiesByViewKey(viewKey, "VwDynColumn", "VwDynColumnShow", "VwDynColumnForm", "VwDynColumnLine");
+        } else if (DynamicTableViewSection.QUERIES.equals(section)) {
+            removeEntitiesByViewKey(viewKey, "VwDynQuery", "VwDynQueryExt");
+        } else if (DynamicTableViewSection.LIMITS.equals(section)) {
+            removeEntitiesByViewKey(viewKey, "VwDynLimit");
+        } else if (DynamicTableViewSection.PROCESSORS.equals(section)) {
+            removeEntitiesByViewKey(viewKey, "VwDynExecBefore", "VwDynExecAfter");
+        } else if (DynamicTableViewSection.VARIABLES.equals(section)) {
+            removeParentVariables(viewKey);
+            removeEntitiesByViewKey(viewKey, "VwDynExecPrepare", "VwDynParent");
+        } else if (DynamicTableViewSection.SUBVIEWS.equals(section)) {
+            removeEntitiesByViewKey(viewKey, "VwDynSubSys", "VwDynSubView");
+        } else if (DynamicTableViewSection.BUTTONS.equals(section)) {
+            removeEntitiesByViewKey(viewKey, "VwDynBtnSys", "VwDynBtnItem", "VwDynBtnSummary");
+        } else if (DynamicTableViewSection.WEIXIN.equals(section)) {
+            ORMService.getInstance().removeByPk("VwDynWeixin", viewKey);
+        }
+    }
+
+    private void removeParentVariables(String viewKey) {
+        @SuppressWarnings("unchecked")
+        List<String> parentKeys = (List<String>) ORMService.getInstance()
+                .queryHQL("select parentKey from VwDynParent where viewKey = ?", viewKey);
+        if (parentKeys != null && !parentKeys.isEmpty()) {
+            ORMService.getInstance().executeHQL("delete from VwDynParentForeign where parentKey in (:list)",
+                    new QueryVO("list", parentKeys));
+        }
+    }
+
+    private void removeEntitiesByViewKey(String viewKey, String... entityNames) {
+        for (String entityName : entityNames) {
+            ORMService.getInstance().executeHQL("delete from " + entityName + " where viewKey = ?", viewKey);
+        }
+    }
+
+    private List<String> sectionChildKeys(DynamicTableViewSection section) {
+        if (DynamicTableViewSection.FIELDS.equals(section)) {
+            return keys("columns", "showColumns", "formColumns", "lineColumns");
+        }
+        if (DynamicTableViewSection.QUERIES.equals(section)) {
+            return keys("querys", "extQuerys");
+        }
+        if (DynamicTableViewSection.LIMITS.equals(section)) {
+            return keys("limits");
+        }
+        if (DynamicTableViewSection.PROCESSORS.equals(section)) {
+            return keys("beforeExecs", "afterExecs");
+        }
+        if (DynamicTableViewSection.VARIABLES.equals(section)) {
+            return keys("prepareExecs", "parents");
+        }
+        if (DynamicTableViewSection.SUBVIEWS.equals(section)) {
+            return keys("sysSubs", "viewSubs");
+        }
+        if (DynamicTableViewSection.BUTTONS.equals(section)) {
+            return keys("sysBtns", "itemBtns", "summaryBtns");
+        }
+        if (DynamicTableViewSection.WEIXIN.equals(section)) {
+            return keys("weixin");
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> keys(String... keys) {
+        List<String> values = new ArrayList<String>();
+        Collections.addAll(values, keys);
+        return values;
+    }
+
+    private void removePermissions(DynamicTableViewResponse.WritePlan plan) {
+        if (plan == null || plan.getPermissionDeletes() == null || plan.getPermissionDeletes().isEmpty()) {
+            return;
+        }
+        removePermissionKeys(plan.getPermissionDeletes(), plan);
+    }
+
+    private void removeViewPermissions(String viewKey, DynamicTableViewResponse.WritePlan plan) {
+        Set<String> priKeys = new LinkedHashSet<String>();
+        if (plan != null && plan.getPermissionDeletes() != null) {
+            priKeys.addAll(plan.getPermissionDeletes());
+        }
+        @SuppressWarnings("unchecked")
+        List<String> viewPriKeys = (List<String>) ORMService.getInstance().queryHQL("select priKey from "
+                + CmPri.class.getName() + " where catelogType = ? and catelogKey = ?",
+                CmPri.Catelog.VIEW.getCode(), viewKey);
+        if (viewPriKeys != null) {
+            priKeys.addAll(viewPriKeys);
+        }
+        removePermissionKeys(priKeys, plan);
+    }
+
+    private void removePermissionKeys(Collection<String> priKeys, DynamicTableViewResponse.WritePlan plan) {
+        if (priKeys == null || priKeys.isEmpty()) {
+            return;
+        }
+        Set<String> activePermissions = new LinkedHashSet<String>();
+        if (plan != null) {
+            activePermissions.addAll(plan.getPermissionCreates());
+            activePermissions.addAll(plan.getPermissionKeeps());
+        }
+        for (String priKey : priKeys) {
+            if (priKey != null && priKey.trim().length() > 0 && !activePermissions.contains(priKey)) {
+                ORMService.getInstance().executeHQL("delete from " + CmPriGroupRelate.class.getName()
+                        + " where priKey = ?", priKey);
+                ORMService.getInstance().removeByPk(CmPri.class.getName(), priKey);
             }
         }
     }

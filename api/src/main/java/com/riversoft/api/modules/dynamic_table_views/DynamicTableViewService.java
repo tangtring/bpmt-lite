@@ -78,8 +78,7 @@ public class DynamicTableViewService {
             throw DynamicTableViewErrors.invalidSnapshot(validation);
         }
         if (!dryRun) {
-            repository.saveUrl(toUrl(normalized, null));
-            repository.saveViewConfig(normalized.getViewKey(), mapper.toTableMap(normalized));
+            repository.createViewConfig(toUrl(normalized, null), mapper.toTableMap(normalized), plan);
             repository.flushAndClearViewCache(normalized.getViewKey());
         }
         return DynamicTableViewResponse.write(normalized, validation.getWarnings(), plan);
@@ -100,8 +99,7 @@ public class DynamicTableViewService {
             throw DynamicTableViewErrors.invalidSnapshot(validation);
         }
         if (!dryRun) {
-            repository.updateUrl(toUrl(normalized, existingUrl));
-            repository.replaceViewConfig(viewKey, mapper.toTableMap(normalized));
+            repository.replaceViewConfig(toUrl(normalized, existingUrl), mapper.toTableMap(normalized), plan);
             repository.flushAndClearViewCache(viewKey);
         }
         return DynamicTableViewResponse.write(normalized, validation.getWarnings(), plan);
@@ -112,17 +110,37 @@ public class DynamicTableViewService {
                                      Object body,
                                      boolean dryRun) {
         VwUrl existingUrl = requireDynUrl(viewKey);
+        DynamicTableViewSnapshot oldSnapshot = mapper.toSnapshot(existingUrl, repository.findTable(viewKey));
         DynamicTableViewSnapshot current = mapper.toSnapshot(existingUrl, repository.findTable(viewKey));
         applySection(current, section, body);
-        return replace(viewKey, current, dryRun);
+        DynamicTableViewSnapshot normalized = defaults.normalize(current, repository);
+        normalized.setViewKey(viewKey);
+        DynamicTableViewResponse.WritePlan plan = permissionService.apply(viewKey, oldSnapshot, normalized);
+        plan.setDryRun(dryRun);
+        plan.getUpdates().add("VW_DYN_TABLE_" + section.name());
+        plan.getUpdatedSections().add(section.value());
+        DynamicTableViewValidationResult validation = validator.validate(normalized);
+        if (!validation.isValid()) {
+            throw DynamicTableViewErrors.invalidSnapshot(validation);
+        }
+        if (!dryRun) {
+            repository.patchViewConfig(toUrl(normalized, existingUrl), section, mapper.toTableMap(normalized), plan);
+            repository.flushAndClearViewCache(viewKey);
+        }
+        return DynamicTableViewResponse.write(normalized, validation.getWarnings(), plan);
     }
 
     public Map<String, Object> delete(String viewKey, String confirmViewKey) {
         if (!StringUtils.equals(viewKey, confirmViewKey)) {
             throw DynamicTableViewErrors.confirmRequired();
         }
-        requireDynUrl(viewKey);
-        repository.removeViewConfig(viewKey);
+        VwUrl existingUrl = requireDynUrl(viewKey);
+        DynamicTableViewSnapshot oldSnapshot = mapper.toSnapshot(existingUrl, repository.findTable(viewKey));
+        DynamicTableViewResponse.WritePlan plan = permissionService.apply(viewKey, oldSnapshot, null);
+        plan.getDeletes().add("VW_URL");
+        plan.getDeletes().add("VW_DYN_TABLE");
+        plan.getDeletes().add("VW_DYN_TABLE_CHILDREN");
+        repository.removeViewConfig(viewKey, plan);
         repository.flushAndClearViewCache(viewKey);
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("viewKey", viewKey);
