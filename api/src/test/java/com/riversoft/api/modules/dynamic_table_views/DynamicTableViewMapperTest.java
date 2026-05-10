@@ -103,6 +103,26 @@ public class DynamicTableViewMapperTest {
         assertFalse(snapshot.getFields().getFormFields().get(0).getShowInList().booleanValue());
     }
 
+    @Test
+    public void exportsSectionLinePermissions() {
+        Map<String, Object> url = new LinkedHashMap<String, Object>();
+        url.put("viewKey", "CRM_CUSTOMER_VIEW");
+
+        Map<String, Object> stringPriLine = sectionLine("basic", "基础信息", "pri-line-basic", 1);
+        Map<String, Object> mapPriLine = sectionLine("extra", "扩展信息", priMap("pri-line-extra"), 2);
+        Map<String, Object> table = new LinkedHashMap<String, Object>();
+        table.put("viewKey", "CRM_CUSTOMER_VIEW");
+        table.put("name", "CRM_CUSTOMER");
+        table.put("lineColumns", Arrays.asList(stringPriLine, mapPriLine));
+
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewMapper().toSnapshot(url, table);
+
+        assertEquals("pri-line-basic",
+                snapshot.getFields().getSectionLines().get(0).getPermissions().getView());
+        assertEquals("pri-line-extra",
+                snapshot.getFields().getSectionLines().get(1).getPermissions().getView());
+    }
+
     private Map<String, Object> column(String name, String displayName) {
         Map<String, Object> column = new LinkedHashMap<String, Object>();
         column.put("name", name);
@@ -128,5 +148,20 @@ public class DynamicTableViewMapperTest {
         column.put("contentType", Integer.valueOf(1));
         column.put("contentScript", "return vo." + name + ";");
         return column;
+    }
+
+    private Map<String, Object> sectionLine(String key, String displayName, Object pri, int sort) {
+        Map<String, Object> line = new LinkedHashMap<String, Object>();
+        line.put("key", key);
+        line.put("busiName", displayName);
+        line.put("pri", pri);
+        line.put("sort", Integer.valueOf(sort));
+        return line;
+    }
+
+    private Map<String, Object> priMap(String priKey) {
+        Map<String, Object> pri = new LinkedHashMap<String, Object>();
+        pri.put("priKey", priKey);
+        return pri;
     }
 }

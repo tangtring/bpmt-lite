@@ -723,7 +723,13 @@ public class DynamicTableViewPermissionService {
         if (hasText(field.getKey())) {
             return field.getKey();
         }
-        return "index:" + index;
+        if (hasText(field.getName())) {
+            return "index:" + index + ":name:" + field.getName();
+        }
+        if (hasText(field.getDisplayName())) {
+            return "index:" + index + ":displayName:" + field.getDisplayName();
+        }
+        return null;
     }
 
     private String permissionFieldId(DynamicTableViewSnapshot.Field field) {

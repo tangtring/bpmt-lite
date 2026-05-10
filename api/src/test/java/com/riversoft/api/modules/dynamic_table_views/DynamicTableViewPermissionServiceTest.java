@@ -176,8 +176,8 @@ public class DynamicTableViewPermissionServiceTest {
 
     @Test
     public void preservesComputedFieldPermissionByIndexWhenKeyMissing() {
-        DynamicTableViewSnapshot oldSnapshot = snapshotWithComputedFieldWithoutKey("old");
-        DynamicTableViewSnapshot target = snapshotWithComputedFieldWithoutKey(null);
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithComputedFieldWithoutKey("CALC_TOTAL", "old");
+        DynamicTableViewSnapshot target = snapshotWithComputedFieldWithoutKey("CALC_TOTAL", null);
 
         DynamicTableViewResponse.WritePlan plan =
                 new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
@@ -191,6 +191,29 @@ public class DynamicTableViewPermissionServiceTest {
         assertTrue(plan.getPermissionKeeps().contains("pri-old-computed-index-view"));
         assertTrue(plan.getPermissionKeeps().contains("pri-old-computed-index-create"));
         assertTrue(plan.getPermissionKeeps().contains("pri-old-computed-index-update"));
+    }
+
+    @Test
+    public void doesNotRetainUnkeyedComputedFieldPermissionWhenNameChanges() {
+        DynamicTableViewSnapshot oldSnapshot = snapshotWithComputedFieldWithoutKey("OLD_TOTAL", "old");
+        DynamicTableViewSnapshot target = snapshotWithComputedFieldWithoutKey("NEW_TOTAL", null);
+
+        DynamicTableViewResponse.WritePlan plan =
+                new DynamicTableViewPermissionService().apply("CRM_CUSTOMER_VIEW", oldSnapshot, target);
+
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.NEW_TOTAL.view",
+                target.getFields().getComputedFields().get(0).getPermissions().getView());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.NEW_TOTAL.create",
+                target.getFields().getComputedFields().get(0).getPermissions().getCreate());
+        assertEquals("dyn.CRM_CUSTOMER_VIEW.field.NEW_TOTAL.update",
+                target.getFields().getComputedFields().get(0).getPermissions().getUpdate());
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.NEW_TOTAL.view"));
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.NEW_TOTAL.create"));
+        assertTrue(plan.getPermissionCreates().contains("dyn.CRM_CUSTOMER_VIEW.field.NEW_TOTAL.update"));
+        assertFalse(plan.getPermissionKeeps().contains("pri-old-computed-index-view"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-computed-index-view"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-computed-index-create"));
+        assertTrue(plan.getPermissionDeletes().contains("pri-old-computed-index-update"));
     }
 
     @Test
@@ -564,9 +587,10 @@ public class DynamicTableViewPermissionServiceTest {
         return snapshot;
     }
 
-    private DynamicTableViewSnapshot snapshotWithComputedFieldWithoutKey(String permissionSuffix) {
+    private DynamicTableViewSnapshot snapshotWithComputedFieldWithoutKey(String name, String permissionSuffix) {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         DynamicTableViewSnapshot.Field field = new DynamicTableViewSnapshot.Field();
+        field.setName(name);
         if (permissionSuffix != null) {
             field.getPermissions().setView("pri-" + permissionSuffix + "-computed-index-view");
             field.getPermissions().setCreate("pri-" + permissionSuffix + "-computed-index-create");

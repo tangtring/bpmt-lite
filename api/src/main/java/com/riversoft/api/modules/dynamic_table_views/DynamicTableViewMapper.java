@@ -126,6 +126,9 @@ class DynamicTableViewMapper {
             line.setKey(firstString(row, null, "id", "key"));
             line.setDisplayName(stringValue(row, "busiName"));
             line.setStyle(stringValue(row, "style"));
+            DynamicTableViewSnapshot.PermissionSet permissions = new DynamicTableViewSnapshot.PermissionSet();
+            permissions.setView(permissionValue(row.get("pri")));
+            line.setPermissions(permissions);
             result.add(line);
         }
         return result;
