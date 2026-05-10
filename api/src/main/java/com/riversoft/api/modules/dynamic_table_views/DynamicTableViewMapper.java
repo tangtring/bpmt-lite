@@ -13,6 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 class DynamicTableViewMapper {
+    private enum FieldSource {
+        SYSTEM,
+        COMPUTED,
+        FORM
+    }
+
     DynamicTableViewSnapshot toSnapshot(VwUrl url, Map<String, Object> table) {
         Map<String, Object> urlMap = new LinkedHashMap<String, Object>();
         if (url != null) {
@@ -64,24 +70,24 @@ class DynamicTableViewMapper {
 
     private DynamicTableViewSnapshot.Fields toFields(Map<String, Object> table) {
         DynamicTableViewSnapshot.Fields fields = new DynamicTableViewSnapshot.Fields();
-        fields.setSystemFields(toFields(collectionValue(table, "columns"), true));
-        fields.setComputedFields(toFields(collectionValue(table, "showColumns"), false));
-        fields.setFormFields(toFields(collectionValue(table, "formColumns"), false));
+        fields.setSystemFields(toFields(collectionValue(table, "columns"), FieldSource.SYSTEM));
+        fields.setComputedFields(toFields(collectionValue(table, "showColumns"), FieldSource.COMPUTED));
+        fields.setFormFields(toFields(collectionValue(table, "formColumns"), FieldSource.FORM));
         fields.setSectionLines(toSectionLines(collectionValue(table, "lineColumns")));
         fields.setListOrder(toListOrder(table));
         return fields;
     }
 
-    private List<DynamicTableViewSnapshot.Field> toFields(List<Map<String, Object>> rows, boolean systemColumn) {
+    private List<DynamicTableViewSnapshot.Field> toFields(List<Map<String, Object>> rows, FieldSource source) {
         List<DynamicTableViewSnapshot.Field> result = new ArrayList<DynamicTableViewSnapshot.Field>();
         for (Map<String, Object> row : sortByInt(rows, "sort")) {
             DynamicTableViewSnapshot.Field field = new DynamicTableViewSnapshot.Field();
             field.setKey(firstString(row, null, "id", "key", "subKey"));
             field.setName(firstString(row, null, "name", "sortField"));
             field.setDisplayName(stringValue(row, "busiName"));
-            field.setShowInDetail(Boolean.valueOf(boolFromInt(intValue(row, "showFlag"), true)));
-            field.setShowInForm(Boolean.valueOf(boolFromInt(intValue(row, "formFlag"), false)));
-            field.setShowInList(Boolean.valueOf(intValue(row, "listSort") != null));
+            field.setShowInDetail(Boolean.valueOf(showInDetail(row, source)));
+            field.setShowInForm(Boolean.valueOf(showInForm(row, source)));
+            field.setShowInList(Boolean.valueOf(showInList(row)));
             field.setWidget(stringValue(row, "widget"));
             field.setContent(scriptValue(row, "contentType", "contentScript"));
             field.setWidgetParam(scriptValue(row, "widgetParamType", "widgetParamScript"));
@@ -92,12 +98,25 @@ class DynamicTableViewMapper {
             field.setWholeLine(Boolean.valueOf(boolFromInt(intValue(row, "whole"), false)));
             DynamicTableViewSnapshot.PermissionSet permissions = new DynamicTableViewSnapshot.PermissionSet();
             permissions.setView(permissionValue(row.get("pri")));
-            permissions.setCreate(permissionValue(row.get(systemColumn ? "createPri" : "editPri")));
+            permissions.setCreate(permissionValue(row.get(source == FieldSource.SYSTEM ? "createPri" : "editPri")));
             permissions.setUpdate(permissionValue(row.get("updatePri")));
             field.setPermissions(permissions);
             result.add(field);
         }
         return result;
+    }
+
+    private boolean showInDetail(Map<String, Object> row, FieldSource source) {
+        return boolFromInt(intValue(row, "showFlag"), source != FieldSource.FORM);
+    }
+
+    private boolean showInForm(Map<String, Object> row, FieldSource source) {
+        return boolFromInt(intValue(row, "formFlag"), source == FieldSource.FORM);
+    }
+
+    private boolean showInList(Map<String, Object> row) {
+        Integer listSort = intValue(row, "listSort");
+        return listSort != null && listSort.intValue() >= 0;
     }
 
     private List<DynamicTableViewSnapshot.SectionLine> toSectionLines(List<Map<String, Object>> rows) {
@@ -119,6 +138,9 @@ class DynamicTableViewMapper {
         rows = sortByInt(rows, "listSort");
         List<String> result = new ArrayList<String>();
         for (Map<String, Object> row : rows) {
+            if (!showInList(row)) {
+                continue;
+            }
             String name = firstString(row, null, "name", "key", "sortField");
             if (name != null) {
                 result.add(name);

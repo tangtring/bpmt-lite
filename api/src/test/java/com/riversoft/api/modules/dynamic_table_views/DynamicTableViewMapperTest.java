@@ -3,10 +3,13 @@ package com.riversoft.api.modules.dynamic_table_views;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DynamicTableViewMapperTest {
     @Test
@@ -61,6 +64,45 @@ public class DynamicTableViewMapperTest {
         assertEquals("SECOND_FIELD", snapshot.getFields().getListOrder().get(1));
     }
 
+    @Test
+    public void hidesNegativeListSortFromListOrder() {
+        Map<String, Object> url = new LinkedHashMap<String, Object>();
+        url.put("viewKey", "CRM_CUSTOMER_VIEW");
+
+        Map<String, Object> hidden = column("HIDDEN_FIELD", "隐藏字段");
+        hidden.put("listSort", Integer.valueOf(-1));
+
+        Map<String, Object> table = new LinkedHashMap<String, Object>();
+        table.put("viewKey", "CRM_CUSTOMER_VIEW");
+        table.put("name", "CRM_CUSTOMER");
+        table.put("columns", Collections.singleton(hidden));
+
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewMapper().toSnapshot(url, table);
+
+        assertFalse(snapshot.getFields().getSystemFields().get(0).getShowInList().booleanValue());
+        assertTrue(snapshot.getFields().getListOrder().isEmpty());
+    }
+
+    @Test
+    public void exportsFormOnlyColumnsWithFormDefaults() {
+        Map<String, Object> url = new LinkedHashMap<String, Object>();
+        url.put("viewKey", "CRM_CUSTOMER_VIEW");
+
+        Map<String, Object> formOnly = formColumn("FORM_NOTE", "表单备注");
+
+        Map<String, Object> table = new LinkedHashMap<String, Object>();
+        table.put("viewKey", "CRM_CUSTOMER_VIEW");
+        table.put("name", "CRM_CUSTOMER");
+        table.put("formColumns", Collections.singleton(formOnly));
+
+        DynamicTableViewSnapshot snapshot = new DynamicTableViewMapper().toSnapshot(url, table);
+
+        assertEquals("FORM_NOTE", snapshot.getFields().getFormFields().get(0).getName());
+        assertFalse(snapshot.getFields().getFormFields().get(0).getShowInDetail().booleanValue());
+        assertTrue(snapshot.getFields().getFormFields().get(0).getShowInForm().booleanValue());
+        assertFalse(snapshot.getFields().getFormFields().get(0).getShowInList().booleanValue());
+    }
+
     private Map<String, Object> column(String name, String displayName) {
         Map<String, Object> column = new LinkedHashMap<String, Object>();
         column.put("name", name);
@@ -71,6 +113,18 @@ public class DynamicTableViewMapperTest {
         column.put("sort", Integer.valueOf(1));
         column.put("widget", "text");
         column.put("whole", Integer.valueOf(0));
+        column.put("contentType", Integer.valueOf(1));
+        column.put("contentScript", "return vo." + name + ";");
+        return column;
+    }
+
+    private Map<String, Object> formColumn(String name, String displayName) {
+        Map<String, Object> column = new LinkedHashMap<String, Object>();
+        column.put("name", name);
+        column.put("busiName", displayName);
+        column.put("sort", Integer.valueOf(1));
+        column.put("widget", "textarea");
+        column.put("whole", Integer.valueOf(1));
         column.put("contentType", Integer.valueOf(1));
         column.put("contentScript", "return vo." + name + ";");
         return column;

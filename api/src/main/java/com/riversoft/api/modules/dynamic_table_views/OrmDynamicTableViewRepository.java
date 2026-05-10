@@ -79,7 +79,7 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
 
     public void updateDynamicEntity(String entityName, Map<String, Object> values) {
         values.put("$type$", entityName);
-        ORMService.getInstance().update(values);
+        ORMService.getInstance().merge(values);
     }
 
     public void removeDynamicEntity(String entityName, Object id) {
