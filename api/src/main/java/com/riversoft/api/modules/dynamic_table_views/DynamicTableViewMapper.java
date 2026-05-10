@@ -133,8 +133,9 @@ class DynamicTableViewMapper {
             row.put("widgetContentType", scriptType(field.getWidgetContent()));
             row.put("widgetContentScript", scriptText(field.getWidgetContent()));
             row.put("listSort", Integer.valueOf(listSort(listOrder, field.getName(), field.getShowInList())));
-            row.put("createPri", pri(permission(field.getPermissions(), "create")));
-            row.put("updatePri", pri(permission(field.getPermissions(), "update")));
+            row.put("pri", pri(permission(field.getPermissions(), "view"), row, "主表字段", "查看"));
+            row.put("createPri", pri(permission(field.getPermissions(), "create"), row, "主表字段", "录入"));
+            row.put("updatePri", pri(permission(field.getPermissions(), "update"), row, "主表字段", "编辑"));
             result.add(row);
         }
         return result;
@@ -156,6 +157,7 @@ class DynamicTableViewMapper {
             row.put("contentType", scriptType(field.getContent(), Integer.valueOf(3)));
             row.put("contentScript", scriptText(field.getContent(), ""));
             row.put("listSort", Integer.valueOf(listSort(listOrder, fieldReference(field), field.getShowInList())));
+            row.put("pri", pri(permission(field.getPermissions(), "view"), row, "展示字段", "查看"));
             result.add(row);
         }
         return result;
@@ -175,7 +177,8 @@ class DynamicTableViewMapper {
             row.put("name", fieldReference(field));
             row.put("contentType", scriptType(field.getContent(), Integer.valueOf(3)));
             row.put("contentScript", scriptText(field.getContent(), ""));
-            row.put("editPri", pri(permission(field.getPermissions(), "update")));
+            row.put("pri", pri(permission(field.getPermissions(), "view"), row, "表单字段", "查看"));
+            row.put("editPri", pri(permission(field.getPermissions(), "update"), row, "表单字段", "编辑"));
             result.add(row);
         }
         return result;
@@ -196,7 +199,6 @@ class DynamicTableViewMapper {
         row.put("widgetParamType", scriptType(field.getWidgetParam()));
         row.put("widgetParamScript", scriptText(field.getWidgetParam()));
         row.put("sort", Integer.valueOf(sort));
-        row.put("pri", pri(permission(field.getPermissions(), "view")));
         return row;
     }
 
@@ -216,7 +218,7 @@ class DynamicTableViewMapper {
             row.put("style", line.getStyle());
             row.put("expandFlag", Integer.valueOf(1));
             row.put("sort", Integer.valueOf(i));
-            row.put("pri", pri(permission(line.getPermissions(), "view")));
+            row.put("pri", pri(permission(line.getPermissions(), "view"), row, "字段分割线", "查看"));
             result.add(row);
         }
         return result;
@@ -289,7 +291,7 @@ class DynamicTableViewMapper {
             row.put("sqlType", scriptType(limit.getSql()));
             row.put("sqlScript", scriptText(limit.getSql()));
             row.put("sort", Integer.valueOf(i));
-            row.put("pri", pri(permission(limit.getPermissions(), "view")));
+            row.put("pri", pri(permission(limit.getPermissions(), "view"), row, "数据限制", "查看"));
             result.add(row);
         }
         return result;
@@ -401,7 +403,7 @@ class DynamicTableViewMapper {
             row.put("busiName", tab.getDisplayName());
             row.put("style", tab.getStyle());
             row.put("sort", Integer.valueOf(i));
-            row.put("pri", pri(permission(tab.getPermissions(), "view")));
+            row.put("pri", pri(permission(tab.getPermissions(), "view"), row, "系统页签", "查看"));
             result.add(row);
         }
         return result;
@@ -426,7 +428,7 @@ class DynamicTableViewMapper {
             row.put("paramType", scriptType(tab.getParam()));
             row.put("paramScript", scriptText(tab.getParam()));
             row.put("sort", Integer.valueOf(i));
-            row.put("pri", pri(permission(tab.getPermissions(), "view")));
+            row.put("pri", pri(permission(tab.getPermissions(), "view"), row, "视图页签", "查看"));
             result.add(row);
         }
         return result;
@@ -451,7 +453,7 @@ class DynamicTableViewMapper {
             row.put("styleClass", button.getStyleClass());
             row.put("description", button.getDescription());
             row.put("sort", Integer.valueOf(i));
-            row.put("pri", pri(permission(button.getPermissions(), "view")));
+            row.put("pri", pri(permission(button.getPermissions(), "view"), row, "系统按钮", "查看"));
             result.add(row);
         }
         return result;
@@ -480,7 +482,7 @@ class DynamicTableViewMapper {
             row.put("paramScript", scriptText(button.getParam()));
             row.put("confirmMsg", button.getConfirmMessage());
             row.put("sort", Integer.valueOf(i));
-            row.put("pri", pri(permission(button.getPermissions(), "view")));
+            row.put("pri", pri(permission(button.getPermissions(), "view"), row, "自定义按钮", "查看"));
             result.add(row);
         }
         return result;
@@ -502,7 +504,7 @@ class DynamicTableViewMapper {
         row.put("desScript", scriptText(weixin.getDescription()));
         row.put("dateType", scriptType(weixin.getDate()));
         row.put("dateScript", scriptText(weixin.getDate()));
-        row.put("pri", pri(permission(weixin.getPermissions(), "view")));
+        row.put("pri", pri(permission(weixin.getPermissions(), "view"), row, "微信配置", "查看"));
         return row;
     }
 
@@ -887,13 +889,25 @@ class DynamicTableViewMapper {
         return permissions.getView();
     }
 
-    private CmPri pri(String priKey) {
+    private CmPri pri(String priKey, Map<String, Object> owner, String... labels) {
         if (priKey == null || priKey.trim().length() == 0) {
             return null;
         }
         CmPri pri = new CmPri();
         pri.setPriKey(priKey);
-        pri.setBusiName(priKey);
+        pri.setType(Integer.valueOf(1));
+        pri.setCheckType(Integer.valueOf(2));
+        pri.setCheckScript("${true}");
+        pri.setDevelopmentInfo(owner, labels);
+        if (pri.getCatelogType() == null) {
+            pri.setCatelogType((Integer) CmPri.Catelog.VIEW.getCode());
+        }
+        if (pri.getCatelogKey() == null || pri.getCatelogKey().trim().length() == 0) {
+            pri.setCatelogKey(stringValue(owner, "viewKey"));
+        }
+        if (pri.getBusiName() == null || pri.getBusiName().trim().length() == 0) {
+            pri.setBusiName(priKey);
+        }
         return pri;
     }
 

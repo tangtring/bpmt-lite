@@ -98,6 +98,11 @@ class OrmDynamicTableViewRepository implements DynamicTableViewRepository {
         }
     }
 
+    public void replaceViewConfig(String viewKey, Map<String, Object> tableMap) {
+        removeDynamicTableConfig(viewKey);
+        saveViewConfig(viewKey, tableMap);
+    }
+
     public void saveDynamicEntity(String entityName, Map<String, Object> values) {
         values.put("$type$", entityName);
         ORMService.getInstance().save(values);

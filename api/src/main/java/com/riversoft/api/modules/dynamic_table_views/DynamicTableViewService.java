@@ -100,9 +100,8 @@ public class DynamicTableViewService {
             throw DynamicTableViewErrors.invalidSnapshot(validation);
         }
         if (!dryRun) {
-            repository.removeDynamicTableConfig(viewKey);
             repository.updateUrl(toUrl(normalized, existingUrl));
-            repository.saveViewConfig(viewKey, mapper.toTableMap(normalized));
+            repository.replaceViewConfig(viewKey, mapper.toTableMap(normalized));
             repository.flushAndClearViewCache(viewKey);
         }
         return DynamicTableViewResponse.write(normalized, validation.getWarnings(), plan);

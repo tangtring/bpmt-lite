@@ -138,6 +138,41 @@ public class DynamicTableViewServiceTest {
         }
     }
 
+    @Test
+    public void replaceRealPathCallsRepositoryReplaceViewConfigOnce() {
+        RecordingRepository repository = new RecordingRepository();
+        repository.seedDynView(snapshot("CRM_CUSTOMER_VIEW"));
+        DynamicTableViewService service = new DynamicTableViewService(repository);
+
+        service.replace("CRM_CUSTOMER_VIEW", snapshot("CRM_CUSTOMER_VIEW"), false);
+
+        assertEquals(1, repository.replaceAttempts);
+        assertTrue(repository.replacedViewConfigs.containsKey("CRM_CUSTOMER_VIEW"));
+        assertTrue(repository.removedTableConfigKeys.isEmpty());
+        assertTrue(repository.savedViewConfigs.isEmpty());
+        assertEquals(1, repository.flushes);
+    }
+
+    @Test
+    public void replaceFailureDoesNotRemoveBeforeSaveAtServiceLayer() {
+        RecordingRepository repository = new RecordingRepository();
+        repository.seedDynView(snapshot("CRM_CUSTOMER_VIEW"));
+        repository.failReplace = true;
+        DynamicTableViewService service = new DynamicTableViewService(repository);
+
+        try {
+            service.replace("CRM_CUSTOMER_VIEW", snapshot("CRM_CUSTOMER_VIEW"), false);
+            fail("Expected replace failure");
+        } catch (IllegalStateException e) {
+            assertEquals("replace failed", e.getMessage());
+        }
+
+        assertEquals(1, repository.replaceAttempts);
+        assertTrue(repository.removedTableConfigKeys.isEmpty());
+        assertTrue(repository.savedViewConfigs.isEmpty());
+        assertEquals(0, repository.flushes);
+    }
+
     private DynamicTableViewSnapshot snapshot(String viewKey) {
         DynamicTableViewSnapshot snapshot = new DynamicTableViewSnapshot();
         snapshot.setViewKey(viewKey);
@@ -182,8 +217,11 @@ public class DynamicTableViewServiceTest {
         private final Map<String, Map<String, Object>> tables = new LinkedHashMap<String, Map<String, Object>>();
         private final List<VwUrl> savedUrls = new ArrayList<VwUrl>();
         private final Map<String, Map<String, Object>> savedViewConfigs = new LinkedHashMap<String, Map<String, Object>>();
+        private final Map<String, Map<String, Object>> replacedViewConfigs = new LinkedHashMap<String, Map<String, Object>>();
         private final List<String> removedViewKeys = new ArrayList<String>();
         private final List<String> removedTableConfigKeys = new ArrayList<String>();
+        private int replaceAttempts;
+        private boolean failReplace;
         private int flushes;
 
         public List<VwUrl> listDynUrls(int start, int limit) {
@@ -242,6 +280,15 @@ public class DynamicTableViewServiceTest {
 
         public void saveViewConfig(String viewKey, Map<String, Object> tableMap) {
             savedViewConfigs.put(viewKey, tableMap);
+            tables.put(viewKey, tableMap);
+        }
+
+        public void replaceViewConfig(String viewKey, Map<String, Object> tableMap) {
+            replaceAttempts++;
+            if (failReplace) {
+                throw new IllegalStateException("replace failed");
+            }
+            replacedViewConfigs.put(viewKey, tableMap);
             tables.put(viewKey, tableMap);
         }
 

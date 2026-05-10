@@ -26,6 +26,11 @@ interface DynamicTableViewRepository {
         saveDynamicEntity("VwDynTable", tableMap);
     }
 
+    default void replaceViewConfig(String viewKey, Map<String, Object> tableMap) {
+        removeDynamicTableConfig(viewKey);
+        saveViewConfig(viewKey, tableMap);
+    }
+
     void saveDynamicEntity(String entityName, Map<String, Object> values);
 
     void updateDynamicEntity(String entityName, Map<String, Object> values);
