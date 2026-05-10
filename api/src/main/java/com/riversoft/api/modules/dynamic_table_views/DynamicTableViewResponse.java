@@ -125,6 +125,9 @@ public final class DynamicTableViewResponse {
         private List<String> creates = new ArrayList<String>();
         private List<String> updates = new ArrayList<String>();
         private List<String> deletes = new ArrayList<String>();
+        private List<String> permissionCreates = new ArrayList<String>();
+        private List<String> permissionKeeps = new ArrayList<String>();
+        private List<String> permissionDeletes = new ArrayList<String>();
 
         public boolean isDryRun() {
             return dryRun;
@@ -156,6 +159,30 @@ public final class DynamicTableViewResponse {
 
         public void setDeletes(List<String> deletes) {
             this.deletes = deletes;
+        }
+
+        public List<String> getPermissionCreates() {
+            return permissionCreates;
+        }
+
+        public void setPermissionCreates(List<String> permissionCreates) {
+            this.permissionCreates = permissionCreates;
+        }
+
+        public List<String> getPermissionKeeps() {
+            return permissionKeeps;
+        }
+
+        public void setPermissionKeeps(List<String> permissionKeeps) {
+            this.permissionKeeps = permissionKeeps;
+        }
+
+        public List<String> getPermissionDeletes() {
+            return permissionDeletes;
+        }
+
+        public void setPermissionDeletes(List<String> permissionDeletes) {
+            this.permissionDeletes = permissionDeletes;
         }
     }
 }

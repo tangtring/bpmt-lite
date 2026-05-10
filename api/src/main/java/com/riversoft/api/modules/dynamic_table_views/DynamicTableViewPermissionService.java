@@ -1,0 +1,518 @@
+package com.riversoft.api.modules.dynamic_table_views;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class DynamicTableViewPermissionService {
+    public DynamicTableViewResponse.WritePlan apply(String viewKey,
+                                                    DynamicTableViewSnapshot oldSnapshot,
+                                                    DynamicTableViewSnapshot target) {
+        DynamicTableViewResponse.WritePlan plan = new DynamicTableViewResponse.WritePlan();
+        apply(viewKey, oldSnapshot, target, plan);
+        return plan;
+    }
+
+    public DynamicTableViewResponse.WritePlan apply(String viewKey,
+                                                    DynamicTableViewSnapshot oldSnapshot,
+                                                    DynamicTableViewSnapshot target,
+                                                    DynamicTableViewResponse.WritePlan plan) {
+        DynamicTableViewResponse.WritePlan effectivePlan =
+                plan == null ? new DynamicTableViewResponse.WritePlan() : plan;
+        Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions = new HashMap<String, DynamicTableViewSnapshot.PermissionSet>();
+        collectPermissionSets(oldSnapshot, oldPermissions);
+
+        Set<String> targetStableKeys = new HashSet<String>();
+        applyTargetPermissions(viewKey, target, oldPermissions, targetStableKeys, effectivePlan);
+        collectStableKeysWithoutPermissions(target, targetStableKeys);
+        collectDeletedPermissions(oldSnapshot, targetStableKeys, effectivePlan);
+        return effectivePlan;
+    }
+
+    private void applyTargetPermissions(String viewKey,
+                                        DynamicTableViewSnapshot snapshot,
+                                        Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                        Set<String> targetStableKeys,
+                                        DynamicTableViewResponse.WritePlan plan) {
+        if (snapshot == null) {
+            return;
+        }
+        DynamicTableViewSnapshot.Fields fields = snapshot.getFields();
+        if (fields != null) {
+            applyFieldPermissions(viewKey, fields.getSystemFields(), "systemField", oldPermissions, targetStableKeys, plan);
+            applyFieldPermissions(viewKey, fields.getComputedFields(), "computedField", oldPermissions, targetStableKeys, plan);
+            applyFieldPermissions(viewKey, fields.getFormFields(), "formField", oldPermissions, targetStableKeys, plan);
+        }
+        applyLimitPermissions(viewKey, snapshot.getLimits(), oldPermissions, targetStableKeys, plan);
+        DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
+        if (subviews != null) {
+            applySystemTabPermissions(viewKey, subviews.getSystemTabs(), oldPermissions, targetStableKeys, plan);
+            applyViewTabPermissions(viewKey, subviews.getViewTabs(), oldPermissions, targetStableKeys, plan);
+        }
+        DynamicTableViewSnapshot.Buttons buttons = snapshot.getButtons();
+        if (buttons != null) {
+            applySystemButtonPermissions(viewKey, buttons.getSystem(), oldPermissions, targetStableKeys, plan);
+            applyCustomButtonPermissions(viewKey, buttons.getItem(), "itemButton", oldPermissions, targetStableKeys, plan);
+            applyCustomButtonPermissions(viewKey, buttons.getSummary(), "summaryButton", oldPermissions, targetStableKeys, plan);
+        }
+        DynamicTableViewSnapshot.Weixin weixin = snapshot.getWeixin();
+        if (weixin != null) {
+            String stableKey = "weixin";
+            targetStableKeys.add(stableKey);
+            if (weixin.getPermissions() == null) {
+                weixin.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(weixin.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".weixin.view", plan);
+        }
+    }
+
+    private void applyFieldPermissions(String viewKey,
+                                       List<DynamicTableViewSnapshot.Field> fields,
+                                       String stablePrefix,
+                                       Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                       Set<String> targetStableKeys,
+                                       DynamicTableViewResponse.WritePlan plan) {
+        if (fields == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Field field : fields) {
+            if (field == null) {
+                continue;
+            }
+            String stableKey = stablePrefix + ":" + stableFieldId(field, stablePrefix);
+            if (!hasText(stableFieldId(field, stablePrefix))) {
+                continue;
+            }
+            targetStableKeys.add(stableKey);
+            if (field.getPermissions() == null) {
+                field.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            String permissionId = permissionFieldId(field);
+            if (!hasText(permissionId)) {
+                continue;
+            }
+            DynamicTableViewSnapshot.PermissionSet old = oldPermissions.get(stableKey);
+            applyPermission(field.getPermissions(), old, "view", "dyn." + viewKey + ".field." + permissionId + ".view", plan);
+            applyPermission(field.getPermissions(), old, "create", "dyn." + viewKey + ".field." + permissionId + ".create", plan);
+            applyPermission(field.getPermissions(), old, "update", "dyn." + viewKey + ".field." + permissionId + ".update", plan);
+        }
+    }
+
+    private void applyLimitPermissions(String viewKey,
+                                       List<DynamicTableViewSnapshot.Limit> limits,
+                                       Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                       Set<String> targetStableKeys,
+                                       DynamicTableViewResponse.WritePlan plan) {
+        if (limits == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Limit limit : limits) {
+            if (limit == null || !hasText(limit.getKey())) {
+                continue;
+            }
+            String stableKey = "limit:" + limit.getKey();
+            targetStableKeys.add(stableKey);
+            if (limit.getPermissions() == null) {
+                limit.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(limit.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".limit." + limit.getKey() + ".view", plan);
+        }
+    }
+
+    private void applySystemTabPermissions(String viewKey,
+                                           List<DynamicTableViewSnapshot.SystemTab> tabs,
+                                           Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                           Set<String> targetStableKeys,
+                                           DynamicTableViewResponse.WritePlan plan) {
+        if (tabs == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SystemTab tab : tabs) {
+            if (tab == null || !hasText(tab.getName())) {
+                continue;
+            }
+            String stableKey = "systemTab:" + tab.getName();
+            targetStableKeys.add(stableKey);
+            if (tab.getPermissions() == null) {
+                tab.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(tab.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".systemTab." + tab.getName() + ".view", plan);
+        }
+    }
+
+    private void applyViewTabPermissions(String viewKey,
+                                         List<DynamicTableViewSnapshot.ViewTab> tabs,
+                                         Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                         Set<String> targetStableKeys,
+                                         DynamicTableViewResponse.WritePlan plan) {
+        if (tabs == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.ViewTab tab : tabs) {
+            if (tab == null || !hasText(tab.getKey())) {
+                continue;
+            }
+            String stableKey = "viewTab:" + tab.getKey();
+            targetStableKeys.add(stableKey);
+            if (tab.getPermissions() == null) {
+                tab.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(tab.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".viewTab." + tab.getKey() + ".view", plan);
+        }
+    }
+
+    private void applySystemButtonPermissions(String viewKey,
+                                              List<DynamicTableViewSnapshot.SystemButton> buttons,
+                                              Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                              Set<String> targetStableKeys,
+                                              DynamicTableViewResponse.WritePlan plan) {
+        if (buttons == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SystemButton button : buttons) {
+            if (button == null || !hasText(button.getName()) || button.getType() == null) {
+                continue;
+            }
+            String stableKey = "systemButton:" + button.getName() + ":" + button.getType();
+            targetStableKeys.add(stableKey);
+            if (button.getPermissions() == null) {
+                button.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(button.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + ".systemButton." + button.getName() + "." + button.getType() + ".view", plan);
+        }
+    }
+
+    private void applyCustomButtonPermissions(String viewKey,
+                                              List<DynamicTableViewSnapshot.CustomButton> buttons,
+                                              String stablePrefix,
+                                              Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions,
+                                              Set<String> targetStableKeys,
+                                              DynamicTableViewResponse.WritePlan plan) {
+        if (buttons == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.CustomButton button : buttons) {
+            if (button == null || !hasText(button.getKey())) {
+                continue;
+            }
+            String stableKey = stablePrefix + ":" + button.getKey();
+            targetStableKeys.add(stableKey);
+            if (button.getPermissions() == null) {
+                button.setPermissions(new DynamicTableViewSnapshot.PermissionSet());
+            }
+            applyViewPermission(button.getPermissions(), oldPermissions.get(stableKey),
+                    "dyn." + viewKey + "." + stablePrefix + "." + button.getKey() + ".view", plan);
+        }
+    }
+
+    private void applyViewPermission(DynamicTableViewSnapshot.PermissionSet target,
+                                     DynamicTableViewSnapshot.PermissionSet old,
+                                     String generated,
+                                     DynamicTableViewResponse.WritePlan plan) {
+        applyPermission(target, old, "view", generated, plan);
+    }
+
+    private void applyPermission(DynamicTableViewSnapshot.PermissionSet target,
+                                 DynamicTableViewSnapshot.PermissionSet old,
+                                 String property,
+                                 String generated,
+                                 DynamicTableViewResponse.WritePlan plan) {
+        String existing = getPermission(target, property);
+        if (hasText(existing)) {
+            add(plan.getPermissionKeeps(), existing);
+            return;
+        }
+        String oldValue = old == null ? null : getPermission(old, property);
+        if (hasText(oldValue)) {
+            setPermission(target, property, oldValue);
+            add(plan.getPermissionKeeps(), oldValue);
+            return;
+        }
+        setPermission(target, property, generated);
+        add(plan.getPermissionCreates(), generated);
+    }
+
+    private void collectPermissionSets(DynamicTableViewSnapshot snapshot,
+                                       Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (snapshot == null) {
+            return;
+        }
+        DynamicTableViewSnapshot.Fields fields = snapshot.getFields();
+        if (fields != null) {
+            collectFieldPermissions(fields.getSystemFields(), "systemField", permissions);
+            collectFieldPermissions(fields.getComputedFields(), "computedField", permissions);
+            collectFieldPermissions(fields.getFormFields(), "formField", permissions);
+        }
+        collectLimitPermissions(snapshot.getLimits(), permissions);
+        DynamicTableViewSnapshot.Subviews subviews = snapshot.getSubviews();
+        if (subviews != null) {
+            collectSystemTabPermissions(subviews.getSystemTabs(), permissions);
+            collectViewTabPermissions(subviews.getViewTabs(), permissions);
+        }
+        DynamicTableViewSnapshot.Buttons buttons = snapshot.getButtons();
+        if (buttons != null) {
+            collectSystemButtonPermissions(buttons.getSystem(), permissions);
+            collectCustomButtonPermissions(buttons.getItem(), "itemButton", permissions);
+            collectCustomButtonPermissions(buttons.getSummary(), "summaryButton", permissions);
+        }
+        if (snapshot.getWeixin() != null && snapshot.getWeixin().getPermissions() != null) {
+            permissions.put("weixin", snapshot.getWeixin().getPermissions());
+        }
+    }
+
+    private void collectFieldPermissions(List<DynamicTableViewSnapshot.Field> fields,
+                                         String stablePrefix,
+                                         Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (fields == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Field field : fields) {
+            String id = stableFieldId(field, stablePrefix);
+            if (hasText(id) && field.getPermissions() != null) {
+                permissions.put(stablePrefix + ":" + id, field.getPermissions());
+            }
+        }
+    }
+
+    private void collectLimitPermissions(List<DynamicTableViewSnapshot.Limit> limits,
+                                         Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (limits == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Limit limit : limits) {
+            if (limit != null && hasText(limit.getKey()) && limit.getPermissions() != null) {
+                permissions.put("limit:" + limit.getKey(), limit.getPermissions());
+            }
+        }
+    }
+
+    private void collectSystemTabPermissions(List<DynamicTableViewSnapshot.SystemTab> tabs,
+                                             Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (tabs == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SystemTab tab : tabs) {
+            if (tab != null && hasText(tab.getName()) && tab.getPermissions() != null) {
+                permissions.put("systemTab:" + tab.getName(), tab.getPermissions());
+            }
+        }
+    }
+
+    private void collectViewTabPermissions(List<DynamicTableViewSnapshot.ViewTab> tabs,
+                                           Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (tabs == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.ViewTab tab : tabs) {
+            if (tab != null && hasText(tab.getKey()) && tab.getPermissions() != null) {
+                permissions.put("viewTab:" + tab.getKey(), tab.getPermissions());
+            }
+        }
+    }
+
+    private void collectSystemButtonPermissions(List<DynamicTableViewSnapshot.SystemButton> buttons,
+                                                Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (buttons == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SystemButton button : buttons) {
+            if (button != null && hasText(button.getName()) && button.getType() != null && button.getPermissions() != null) {
+                permissions.put("systemButton:" + button.getName() + ":" + button.getType(), button.getPermissions());
+            }
+        }
+    }
+
+    private void collectCustomButtonPermissions(List<DynamicTableViewSnapshot.CustomButton> buttons,
+                                                String stablePrefix,
+                                                Map<String, DynamicTableViewSnapshot.PermissionSet> permissions) {
+        if (buttons == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.CustomButton button : buttons) {
+            if (button != null && hasText(button.getKey()) && button.getPermissions() != null) {
+                permissions.put(stablePrefix + ":" + button.getKey(), button.getPermissions());
+            }
+        }
+    }
+
+    private void collectStableKeysWithoutPermissions(DynamicTableViewSnapshot snapshot, Set<String> stableKeys) {
+        if (snapshot == null) {
+            return;
+        }
+        DynamicTableViewSnapshot.Fields fields = snapshot.getFields();
+        if (fields != null) {
+            collectSectionLineStableKeys(fields.getSectionLines(), stableKeys);
+        }
+        DynamicTableViewSnapshot.Queries queries = snapshot.getQueries();
+        if (queries != null) {
+            collectNormalQueryStableKeys(queries.getNormal(), stableKeys);
+            collectAdvancedQueryStableKeys(queries.getAdvanced(), stableKeys);
+        }
+        DynamicTableViewSnapshot.Processors processors = snapshot.getProcessors();
+        if (processors != null) {
+            collectProcessorStableKeys(processors.getBefore(), "before", stableKeys);
+            collectProcessorStableKeys(processors.getAfter(), "after", stableKeys);
+        }
+        DynamicTableViewSnapshot.Variables variables = snapshot.getVariables();
+        if (variables != null) {
+            collectPreparedVariableStableKeys(variables.getPrepared(), stableKeys);
+            collectParentVariableStableKeys(variables.getParents(), stableKeys);
+        }
+    }
+
+    private void collectDeletedPermissions(DynamicTableViewSnapshot oldSnapshot,
+                                           Set<String> targetStableKeys,
+                                           DynamicTableViewResponse.WritePlan plan) {
+        Map<String, DynamicTableViewSnapshot.PermissionSet> oldPermissions =
+                new HashMap<String, DynamicTableViewSnapshot.PermissionSet>();
+        collectPermissionSets(oldSnapshot, oldPermissions);
+        for (Map.Entry<String, DynamicTableViewSnapshot.PermissionSet> entry : oldPermissions.entrySet()) {
+            if (!targetStableKeys.contains(entry.getKey())) {
+                addPermissionDeletes(entry.getValue(), plan);
+            }
+        }
+    }
+
+    private void addPermissionDeletes(DynamicTableViewSnapshot.PermissionSet permissions,
+                                      DynamicTableViewResponse.WritePlan plan) {
+        if (permissions == null) {
+            return;
+        }
+        addIfText(plan.getPermissionDeletes(), permissions.getView());
+        addIfText(plan.getPermissionDeletes(), permissions.getCreate());
+        addIfText(plan.getPermissionDeletes(), permissions.getUpdate());
+    }
+
+    private void collectSectionLineStableKeys(List<DynamicTableViewSnapshot.SectionLine> lines, Set<String> stableKeys) {
+        if (lines == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.SectionLine line : lines) {
+            if (line != null && hasText(line.getKey())) {
+                stableKeys.add("sectionLine:" + line.getKey());
+            }
+        }
+    }
+
+    private void collectNormalQueryStableKeys(List<DynamicTableViewSnapshot.NormalQuery> queries, Set<String> stableKeys) {
+        if (queries == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.NormalQuery query : queries) {
+            if (query != null && hasText(query.getKey())) {
+                stableKeys.add("normalQuery:" + query.getKey());
+            }
+        }
+    }
+
+    private void collectAdvancedQueryStableKeys(List<DynamicTableViewSnapshot.AdvancedQuery> queries, Set<String> stableKeys) {
+        if (queries == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.AdvancedQuery query : queries) {
+            if (query != null && hasText(query.getKey())) {
+                stableKeys.add("advancedQuery:" + query.getKey());
+            }
+        }
+    }
+
+    private void collectProcessorStableKeys(List<DynamicTableViewSnapshot.Processor> processors,
+                                            String phase,
+                                            Set<String> stableKeys) {
+        if (processors == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.Processor processor : processors) {
+            if (processor != null && hasText(processor.getKey())) {
+                stableKeys.add("processor:" + phase + ":" + processor.getKey());
+            }
+        }
+    }
+
+    private void collectPreparedVariableStableKeys(List<DynamicTableViewSnapshot.PreparedVariable> variables,
+                                                   Set<String> stableKeys) {
+        if (variables == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.PreparedVariable variable : variables) {
+            if (variable != null && hasText(variable.getKey())) {
+                stableKeys.add("preparedVariable:" + variable.getKey());
+            }
+        }
+    }
+
+    private void collectParentVariableStableKeys(List<DynamicTableViewSnapshot.ParentVariable> variables,
+                                                 Set<String> stableKeys) {
+        if (variables == null) {
+            return;
+        }
+        for (DynamicTableViewSnapshot.ParentVariable variable : variables) {
+            if (variable != null && hasText(variable.getKey())) {
+                stableKeys.add("parentVariable:" + variable.getKey());
+            }
+        }
+    }
+
+    private String stableFieldId(DynamicTableViewSnapshot.Field field, String stablePrefix) {
+        if (field == null) {
+            return null;
+        }
+        if ("systemField".equals(stablePrefix)) {
+            return field.getName();
+        }
+        return field.getKey();
+    }
+
+    private String permissionFieldId(DynamicTableViewSnapshot.Field field) {
+        if (hasText(field.getName())) {
+            return field.getName();
+        }
+        return field.getKey();
+    }
+
+    private String getPermission(DynamicTableViewSnapshot.PermissionSet permissions, String property) {
+        if ("view".equals(property)) {
+            return permissions.getView();
+        }
+        if ("create".equals(property)) {
+            return permissions.getCreate();
+        }
+        if ("update".equals(property)) {
+            return permissions.getUpdate();
+        }
+        return null;
+    }
+
+    private void setPermission(DynamicTableViewSnapshot.PermissionSet permissions, String property, String value) {
+        if ("view".equals(property)) {
+            permissions.setView(value);
+        } else if ("create".equals(property)) {
+            permissions.setCreate(value);
+        } else if ("update".equals(property)) {
+            permissions.setUpdate(value);
+        }
+    }
+
+    private boolean hasText(String value) {
+        return value != null && value.trim().length() > 0;
+    }
+
+    private void addIfText(List<String> values, String value) {
+        if (hasText(value)) {
+            add(values, value);
+        }
+    }
+
+    private void add(List<String> values, String value) {
+        if (!values.contains(value)) {
+            values.add(value);
+        }
+    }
+}
