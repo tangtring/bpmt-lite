@@ -43,6 +43,26 @@
     a {
       color: #0b69a3;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: #ffffff;
+    }
+    th, td {
+      border: 1px solid #d9e2ec;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #edf2f7;
+      color: #243b53;
+    }
+    ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
     .panel {
       background: #ffffff;
       border: 1px solid #d9e2ec;
@@ -79,6 +99,12 @@
     .method.put {
       background: #b7791f;
     }
+    .method.patch {
+      background: #805ad5;
+    }
+    .method.delete {
+      background: #c53030;
+    }
     code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
@@ -105,7 +131,7 @@
 <body>
   <header>
     <h1>BPMT Lite API Docs</h1>
-    <p class="muted">v1.4.0 动态表结构 API。文档公开访问，业务接口需要 HMAC 请求头。</p>
+    <p class="muted">v1.7.0 动态表结构 API 与动态表视图 API。文档公开访问，业务接口需要 HMAC 请求头。</p>
   </header>
   <main>
     <section class="panel">
@@ -125,12 +151,163 @@
   + SHA256_HEX(BODY)
 
 signature = HEX(HMAC_SHA256(APP_SECRET, canonical))</pre>
-      <p class="muted">PATH 使用公开请求 URI，例如 <code>/api/v1/dynamic-tables</code>。NORMALIZED_QUERY 按解码后的参数名和值排序后再编码。</p>
+      <p class="muted">PATH 使用公开请求 URI，例如 <code>/api/v1/dynamic-table-views</code>。NORMALIZED_QUERY 按解码后的参数名和值排序后再编码。</p>
     </section>
 
     <section class="panel">
-      <h2>接口</h2>
-      <p class="muted">动态表列表支持 <code>sort</code>/<code>order</code> 排序；默认 <code>sort=createDate&amp;order=desc</code>，便于优先看到新创建的表。允许的排序字段以 OpenAPI 为准。</p>
+      <h2>动态表视图 API</h2>
+      <p>只管理 dyn 动态表视图，只维护 <code>/{viewKey}.view</code> 对应视图配置；不纳入菜单、首页、按钮入口等导航配置。</p>
+      <p>删除视图不会删除动态表和业务数据，也不会删除日志表或日志数据。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>方法</th>
+            <th>路径</th>
+            <th>说明</th>
+            <th>风险</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>GET</code></td>
+            <td><code>/api/v1/dynamic-table-views</code></td>
+            <td>分页列出 dyn 视图。</td>
+            <td><code>x-bpmt-risk-level=read</code></td>
+          </tr>
+          <tr>
+            <td><code>POST</code></td>
+            <td><code>/api/v1/dynamic-table-views?dryRun=true</code></td>
+            <td>创建视图；<code>dryRun</code> 为 query 参数。</td>
+            <td>写元数据，不执行 DDL，高风险</td>
+          </tr>
+          <tr>
+            <td><code>POST</code></td>
+            <td><code>/api/v1/dynamic-table-views:validate</code></td>
+            <td>校验并规范化快照，不落库。</td>
+            <td><code>x-bpmt-risk-level=read</code></td>
+          </tr>
+          <tr>
+            <td><code>GET</code></td>
+            <td><code>/api/v1/dynamic-table-views/{viewKey}</code></td>
+            <td>导出完整快照；返回的 <code>snapshot</code> 可作为 <code>PUT</code> baseline。</td>
+            <td><code>x-bpmt-risk-level=read</code></td>
+          </tr>
+          <tr>
+            <td><code>PUT</code></td>
+            <td><code>/api/v1/dynamic-table-views/{viewKey}?dryRun=true</code></td>
+            <td>完整替换视图配置。</td>
+            <td>写元数据，不执行 DDL，高风险</td>
+          </tr>
+          <tr>
+            <td><code>PATCH</code></td>
+            <td><code>/api/v1/dynamic-table-views/{viewKey}/{section}?dryRun=true</code></td>
+            <td>局部替换一个 section，可选 <code>base</code>、<code>fields</code>、<code>queries</code>、<code>limits</code>、<code>processors</code>、<code>variables</code>、<code>subviews</code>、<code>buttons</code>、<code>weixin</code>、<code>scripts</code>。</td>
+            <td>写元数据，不执行 DDL，高风险</td>
+          </tr>
+          <tr>
+            <td><code>DELETE</code></td>
+            <td><code>/api/v1/dynamic-table-views/{viewKey}?confirmViewKey=CRM_CUSTOMER_VIEW</code></td>
+            <td>删除视图配置，需要确认参数。</td>
+            <td>写元数据，不执行 DDL，高风险</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted">写接口在 OpenAPI 中均标注 <code>x-bpmt-writes-metadata=true</code>、<code>x-bpmt-executes-ddl=false</code>、<code>x-bpmt-risk-level=high</code>。</p>
+    </section>
+
+    <section class="panel">
+      <h2>快照示例</h2>
+      <pre>{
+  "viewKey": "CRM_CUSTOMER_VIEW",
+  "description": "客户视图",
+  "loginRequired": true,
+  "base": {
+    "tableName": "CRM_CUSTOMER",
+    "displayName": "客户",
+    "layoutColumns": 2,
+    "initQuery": true,
+    "pageLimit": 20
+  },
+  "fields": {
+    "systemFields": [
+      {
+        "key": "CUSTOMER_ID",
+        "name": "CUSTOMER_ID",
+        "displayName": "客户ID",
+        "permissions": {
+          "view": "dyn.CRM_CUSTOMER_VIEW.field.CUSTOMER_ID.view"
+        }
+      }
+    ],
+    "computedFields": [],
+    "formFields": [],
+    "sectionLines": [],
+    "listOrder": ["CUSTOMER_ID"]
+  },
+  "queries": {
+    "normal": [],
+    "advanced": []
+  },
+  "limits": [],
+  "variables": {
+    "prepared": [],
+    "parents": []
+  },
+  "processors": {
+    "before": [],
+    "after": []
+  },
+  "subviews": {
+    "systemTabs": [],
+    "viewTabs": []
+  },
+  "buttons": {
+    "system": [],
+    "item": [],
+    "summary": []
+  },
+  "scripts": {}
+}</pre>
+    </section>
+
+    <section class="panel">
+      <h2>validate 与 dryRun</h2>
+      <p><code>POST /api/v1/dynamic-table-views:validate</code> 只做校验、默认值规范化、脚本风险扫描和权限限制检查。</p>
+      <pre>curl -sS "$BASE_URL/v1/dynamic-table-views:validate" \
+  -H "X-BPMT-App-Key: $APP_KEY" \
+  -H "X-BPMT-Timestamp: $TIMESTAMP" \
+  -H "X-BPMT-Nonce: $NONCE" \
+  -H "X-BPMT-Signature: $SIGNATURE" \
+  -H "Content-Type: application/json" \
+  --data @view-snapshot.json</pre>
+      <p><code>dryRun=true</code> 用于创建、替换和局部 patch，返回 <code>plan.dryRun=true</code> 与写入计划，但不写入配置。</p>
+      <pre>curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW/fields?dryRun=true" \
+  -X PATCH \
+  -H "X-BPMT-App-Key: $APP_KEY" \
+  -H "X-BPMT-Timestamp: $TIMESTAMP" \
+  -H "X-BPMT-Nonce: $NONCE" \
+  -H "X-BPMT-Signature: $SIGNATURE" \
+  -H "Content-Type: application/json" \
+  --data @fields-section.json</pre>
+    </section>
+
+    <section class="panel">
+      <h2>权限与风险</h2>
+      <p>只有底层 dyn HBM 有 <code>PRI</code> 的字段、分割线、限制、子视图、按钮、微信等支持 <code>permissions</code>。</p>
+      <p>查询、变量、处理器 <code>permissions</code> 会被校验拒绝，返回 <code>UNSUPPORTED_PERMISSION</code>。</p>
+      <p>脚本字段会进行风险扫描。包含删除、反射、进程执行、文件操作等高风险脚本时，应先使用 <code>validate</code> 或 <code>dryRun=true</code> 获取 warnings，再人工复核。</p>
+      <p>删除视图需要显式确认：</p>
+      <pre>curl -sS "$BASE_URL/v1/dynamic-table-views/CRM_CUSTOMER_VIEW?confirmViewKey=CRM_CUSTOMER_VIEW" \
+  -X DELETE \
+  -H "X-BPMT-App-Key: $APP_KEY" \
+  -H "X-BPMT-Timestamp: $TIMESTAMP" \
+  -H "X-BPMT-Nonce: $NONCE" \
+  -H "X-BPMT-Signature: $SIGNATURE"</pre>
+    </section>
+
+    <section class="panel">
+      <h2>接口索引</h2>
+      <p class="muted">下面从 OpenAPI 动态读取完整接口清单。</p>
       <div id="endpoints" class="muted">正在读取 OpenAPI...</div>
     </section>
   </main>
